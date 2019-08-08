@@ -86,7 +86,7 @@ class TrajectoryPlotter:
         if plot=='All' or plot=='x' or plot=='xu' or plot=='xy' or plot=='xuj':
             # For all states
             for i in range( sys.n ):
-                plots[j].plot( self.traj.t , self.traj.traj.x_sol[:,i] , 'b')
+                plots[j].plot( self.traj.t , self.traj.x_sol[:,i] , 'b')
                 plots[j].set_ylabel(sys.state_label[i] +'\n'+
                 sys.state_units[i] , fontsize=self.fontsize )
                 plots[j].grid(True)
@@ -410,15 +410,16 @@ class Animator:
         # Animation
         inter      =  40.             # ms --> 25 frame per second
         frame_dt   =  inter / 1000. 
+        sim_dt = (self.sys.sim.t[-1] - self.sys.sim.t[0]) / (self.sys.sim.t.size - 1)
         
-        if ( frame_dt * time_factor_video )  < self.sys.sim.dt :
+        if ( frame_dt * time_factor_video )  < sim_dt :
             # Simulation is slower than video
             
             # don't skip steps
             self.skip_steps = 1
             
             # adjust frame speed to simulation                                    
-            inter           = self.sys.sim.dt * 1000. / time_factor_video 
+            inter           = sim_dt * 1000. / time_factor_video 
             
             n_frame         = self.sys.sim.n
             
@@ -426,7 +427,7 @@ class Animator:
             # Simulation is faster than video
             
             # --> number of simulation frame to skip between video frames
-            factor          =  frame_dt / self.sys.sim.dt * time_factor_video
+            factor          =  frame_dt / sim_dt * time_factor_video
             self.skip_steps =  int( factor  ) 
             
             # --> number of video frames
@@ -472,7 +473,7 @@ class Animator:
             
         # Update time
         self.time_text.set_text(self.time_template % 
-                                ( i * self.skip_steps * self.sys.sim.dt )
+                                ( i * self.skip_steps * sim_dt )
                                 )
         
         # Update domain
