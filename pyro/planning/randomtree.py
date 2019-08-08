@@ -11,7 +11,7 @@ import mpl_toolkits.mplot3d.axes3d as p3
 
 ###############################################################################
 from pyro.dynamic  import system
-from pyro.analysis import simulation, Trajectory, TrajectoryPlotter
+from pyro.analysis import Trajectory, TrajectoryPlotter
 from pyro.signal   import timefiltering
 from pyro.planning import plan
 
@@ -386,13 +386,8 @@ class RRT:
         
         #
         self.solution_is_found = True
-    
-    
-    ############################
-    def filter_solution( self , fc = 3 ):
-        
-        self.trajectory.lowpassfilter( fc )
-    
+
+
     ############################
     def save_solution(self, name = 'RRT_Solution.npy' ):
         

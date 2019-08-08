@@ -263,65 +263,13 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         tf : final time
         
         """
-        
-        self.sim = simulation.CLosedLoopSimulation( self , tf , n , solver )
-        self.sim.x0 = x0
-        self.sim.compute()
-        
-        
-    ###########################################################################
-    def plot_trajectory(self , x0 , tf = 10 , n = 10001 , solver = 'ode'):
-        """ 
-        Simulation of time evolution of the system
-        ------------------------------------------------
-        x0 : initial time
-        tf : final time
-        
-        """
 
-        self.compute_trajectory( x0 , tf , n , solver )
-        
-        self.sim.plot('xu')
-        
-        
-    ###########################################################################
-    def plot_phase_plane_trajectory(self, x0, tf=10, x_axis=0, y_axis=1):
-        """ 
-        Simulates the system and plot the trajectory in the Phase Plane 
-        ------------------------------------------------
-        x0 : initial time
-        tf : final time
-        x_axis : index of state on x axis
-        y_axis : index of state on y axis
-        
-        """
-        
-        self.sim = simulation.CLosedLoopSimulation( self , tf )
-        
-        self.sim.x0 = x0
-        self.sim.compute()
-        self.sim.phase_plane_trajectory_closed_loop( x_axis , y_axis )
-        
-    
-    ###########################################################################
-    def plot_phase_plane_trajectory_3d(self , x0, tf=10,
-                                     x_axis=0, y_axis=1, z_axis=2):
-        """ 
-        Simulates the system and plot the trajectory in the Phase Plane 
-        ---------------------------------------------------------------
-        x0 : initial time
-        tf : final time
-        x_axis : index of state on x axis
-        y_axis : index of state on y axis
-        
-        """
-        
-        self.sim = simulation.CLosedLoopSimulation( self , tf )
-        
-        self.sim.x0 = x0
-        self.sim.compute()
-        self.sim.phase_plane_trajectory_3d( x_axis , y_axis , z_axis )
-        
+        self.sim = simulation.CLosedLoopSimulator( self , tf , n , solver, x0=x0 )\
+            .compute()
+
+        return self.sim
+
+
     #############################################
     # Make graph function use the internal sys
     #############################################

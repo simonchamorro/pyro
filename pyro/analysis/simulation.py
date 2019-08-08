@@ -28,50 +28,53 @@ class Trajectory() :
 
         self.x_sol  = x
         self.u_sol  = u
-        self.t_sol  = t
+        self.t  = t
         self.dx_sol = dx
         self.y_sol  = y
 
         self._compute_size()
 
     ############################
-    def save(self, name = 'trajectory_solution.npy' ):
-
+    def _to_array(self):
         data = np.array( [ self.x_sol ,
-                           self.u_sol ,
-                           self.t_sol ,
-                           self.dx_sol,
-                           self.y_sol ] )
+            self.u_sol ,
+            self.t ,
+            self.dx_sol,
+            self.y_sol ] )
+        return data
 
-        np.save( name , data )
+    def save(self, name = 'trajectory_solution.npy' ):
+        np.save( name , self._to_array())
 
     ############################
-    @staticmethod
-    def load(name):
-
-        data = np.load( name )
-        tj = Trajectory(
+    @classmethod
+    def _from_array(cls, data):
+        tj = cls(
             x  = data[0],
             u  = data[1],
             t  = data[2],
             dx = data[3],
             y  = data[4],
         )
-
         return tj
+
+    @classmethod
+    def load(cls, name):
+        data = np.load( name )
+        return cls._from_array(data)
 
     ############################
     def _compute_size(self):
 
-        self.time_final = self.t_sol.max()
-        self.time_steps = self.t_sol.size
+        self.time_final = self.t.max()
+        self.time_steps = self.t.size
 
         self.n = self.time_steps
         self.m = self.u_sol.shape[1]
 
         # Check consistency between signals
         for arr in [self.x_sol, self.y_sol, self.u_sol, self.dx_sol]:
-            if arr.size[0] != self.n:
+            if arr.shape[0] != self.n:
                 raise ValueError("Result arrays must have same length along axis 0")
 
     ############################
@@ -80,7 +83,7 @@ class Trajectory() :
 
         if t < self.time_final:
             # Find time index
-            i = (np.abs(self.t_sol - t)).argmin()
+            i = (np.abs(self.t - t)).argmin()
 
             # Find associated control input
             u = self.u_sol[i,:]
@@ -92,12 +95,50 @@ class Trajectory() :
         """ get x from time """
 
         # Find time index
-        i = (np.abs(self.t_sol - t)).argmin()
+        i = (np.abs(self.t - t)).argmin()
 
         # Find associated control input
         x = self.x_sol[i,:]
 
         return x
+
+class ClosedLoopTrajectory(Trajectory):
+    """Trajectory with extra signals"""
+    def __init__(self, x, u, t, dx, y, r):
+        self.x_sol  = x
+        self.u_sol  = u
+        self.t  = t
+        self.dx_sol = dx
+        self.y_sol  = y
+        self.r_sol = r
+
+    def _compute_size(self):
+        super()._compute_size()
+        if self.r_sol.shape != self.u_sol.shape:
+            raise ValueError("r and u must have same shape")
+
+    def _to_array(self):
+        data = np.array([
+            self.x_sol,
+            self.u_sol,
+            self.t,
+            self.dx_sol,
+            self.y_sol,
+            self.r_sol,
+        ])
+        return data
+
+    @classmethod
+    def _from_array(cls, data):
+        tj = cls(
+            x  = data[0],
+            u  = data[1],
+            t  = data[2],
+            dx = data[3],
+            y  = data[4],
+            r =  data[5],
+        )
+        return tj
 
 
 class Simulator:
@@ -110,62 +151,74 @@ class Simulator:
     solver : 'ode' or 'euler'
     """
     ############################
-    def __init__(self, ContinuousDynamicSystem, tf=10, n=10001, solver='ode'):
+    def __init__(self, ContinuousDynamicSystem, tf=10, n=10001, solver='ode', x0=None):
         self.cds = ContinuousDynamicSystem
         self.t0 = 0
         self.tf = tf
         self.n  = int(n)
         self.dt = ( tf + 0.0 - self.t0 ) / ( n - 1 )
-        self.x0 = np.zeros( self.cds.n )
         self.solver = solver
+        self.x0 = x0
+
+        if self.x0 is None:
+            self.x0 = np.zeros( self.cds.n )
 
 
     ##############################
     def compute(self):
         """ Integrate trought time """
-        
-        self.t  = np.linspace( self.t0 , self.tf , self.n )
-        self.dt = ( self.tf + 0.0 - self.t0 ) / ( self.n - 1 )
-        
-        self.J  = 0
-        
+
+        t  = np.linspace( self.t0 , self.tf , self.n )
+
         if self.solver == 'ode':
-        
-            self.x_sol = odeint( self.cds.fbar , self.x0 , self.t)   
+            x_sol = odeint( self.cds.fbar , self.x0 , t)
 
             # Compute inputs-output values
-            self.y_sol = np.zeros(( self.n , self.cds.p ))  
-            self.u_sol = np.zeros((self.n,self.cds.m))
-            
+            y_sol = np.zeros(( self.n , self.cds.p ))
+            u_sol = np.zeros((self.n,self.cds.m))
+            dx_sol = np.zeros((self.n,self.cds.n))
+
+            for i in range(self.n):
+                xi = x_sol[i,:]
+                ui = self.cds.ubar
+                ti = t[i]
+
+                dx_sol[i,:] = self.cds.f( xi , ui , ti )
+                y_sol[i,:]  = self.cds.h( xi , ui , ti )
+                u_sol[i,:]  = ui
+
+        elif self.solver == 'euler':
+
+            x_sol = np.zeros((self.n,self.cds.n))
+            dx_sol = np.zeros((self.n,self.cds.n))
+            u_sol = np.zeros((self.n,self.cds.m))
+            y_sol = np.zeros((self.n,self.cds.p))
+
+            # Initial State
+            x_sol[0,:] = self.x0
+            dt = ( self.tf + 0.0 - self.t0 ) / ( self.n - 1 )
             for i in range(self.n):
 
-                x = self.x_sol[i,:]  
-                u = self.cds.ubar
-                t = self.t[i]
-                
-                self.y_sol[i,:] = self.cds.h( x , u , t )
-                self.u_sol[i,:] = u
-                
-        elif self.solver == 'euler':
-            
-            self.x_sol = np.zeros((self.n,self.cds.n))
-            self.u_sol = np.zeros((self.n,self.cds.m))
-            self.y_sol = np.zeros((self.n,self.cds.p))
-            
-            # Initial State    
-            self.x_sol[0,:] = self.x0
-            
-            for i in range(self.n):
-                
-                x = self.x_sol[i,:]
-                u = self.cds.ubar
-                t = self.t[i]
-                
+                xi = x_sol[i,:]
+                ui = self.cds.ubar
+                ti = t[i]
+
                 if i+1<self.n:
-                    self.x_sol[i+1,:] = self.cds.f( x , u , t ) * self.dt + x
-                
-                self.y_sol[i,:] = self.cds.h( x , u , t )
-                self.u_sol[i,:] = u
+                    dx_sol[i] = self.cds.f( xi , ui , ti )
+                    x_sol[i+1,:] = dx_sol[i]*dt + xi
+
+                y_sol[i,:] = self.cds.h( xi , ui , ti )
+                u_sol[i,:] = ui
+
+        sol = Trajectory(
+            x=x_sol,
+            u=u_sol,
+            t=t,
+            dx=dx_sol,
+            y=y_sol
+        )
+
+        return sol
 
 
 ###############################################################################
@@ -185,35 +238,45 @@ class CLosedLoopSimulator(Simulator):
     internal control inputs
     """
     ###########################################################################
-    def __init__(self, CLSystem , tf = 10 , n = 10001 , solver = 'ode' ):
-        super().__init__(self, CLSystem , tf, n, solver)
-
-        self.sys = CLSystem.sys
-        self.ctl = CLSystem.ctl
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sys = self.cds.sys
+        self.ctl = self.cds.ctl
 
     ###########################################################################
     def compute(self):
-        
-        super().compute()
-        
-        self.compute_inputs()
-        
+
+        sol = super().compute()
+        r, u = self._compute_inputs(sol)
+
+        cltraj = ClosedLoopTrajectory(
+            x= sol.x_sol,
+            u= u,
+            t= sol.t,
+            dx=sol.dx_sol,
+            y=sol.y_sol,
+            r=r,
+        )
+
+        return cltraj
+
     ###########################################################################
-    def compute_inputs(self):
+    def _compute_inputs(self, sol):
         """ Compute internal control signal of the closed-loop system """
-        
-        self.r_sol = self.u_sol.copy() # reference is input of combined sys
-        self.u_sol = np.zeros((self.n,self.sys.m))
-        
+
+        r_sol = sol.u_sol.copy() # reference is input of combined sys
+        u_sol = np.zeros((self.n,self.sys.m))
+
         # Compute internal input signal
         for i in range(self.n):
-            
-            r = self.r_sol[i,:] 
-            y = self.y_sol[i,:] 
-            t = self.t[i]
-            
-            self.u_sol[i,:] = self.ctl.c( y , r , t )
 
+            ri = r_sol[i,:]
+            yi = sol.y_sol[i,:]
+            ti = sol.t[i]
+
+            u_sol[i,:] = self.ctl.c( yi , ri , ti )
+
+        return (r_sol, u_sol)
 
 '''
 #################################################################

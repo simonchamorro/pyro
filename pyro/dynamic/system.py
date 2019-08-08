@@ -276,11 +276,10 @@ class ContinuousDynamicSystem:
         tf : final time
         
         """
-        
-        self.sim = simulation.Simulation( self , tf , n , solver )
-        self.sim.x0 = x0
-        self.sim.compute()
-        
+        self.sim = simulation.Simulator( self , tf , n , solver, x0=x0 ).compute()
+        return self.sim
+
+
     #############################
     def plot_trajectory(self , x0 , tf = 10 , n = 10001 , solver = 'ode'):
         """ 
@@ -291,11 +290,10 @@ class ContinuousDynamicSystem:
         
         """
 
-        self.compute_trajectory( x0 , tf , n , solver )
-        
-        self.sim.plot()
-        
-        
+        sim = self.compute_trajectory( x0 , tf , n , solver )
+        graphical.TrajectoryPlotter(self, sim).plot()
+
+
     #############################
     def plot_phase_plane_trajectory(self , x0, tf=10, x_axis=0, y_axis=1):
         """ 
@@ -307,14 +305,13 @@ class ContinuousDynamicSystem:
         y_axis : index of state on y axis
         
         """
-        
-        self.sim = simulation.Simulation( self , tf )
-        
-        self.sim.x0 = x0
-        self.sim.compute()
-        self.sim.phase_plane_trajectory( x_axis , y_axis )
-        
-    
+
+        sim = self.compute_trajectory( x0 , tf)
+
+        graphical.TrajectoryPlotter(self, sim)\
+            .phase_plane_trajectory( x_axis , y_axis )
+
+
     #############################
     def plot_phase_plane_trajectory_3d(self , x0, tf=10,
                                        x_axis=0, y_axis=1, z_axis=2):
@@ -327,14 +324,12 @@ class ContinuousDynamicSystem:
         y_axis : index of state on y axis
         
         """
-        
-        self.sim = simulation.Simulation( self , tf )
-        
-        self.sim.x0 = x0
-        self.sim.compute()
-        self.sim.phase_plane_trajectory_3d( x_axis , y_axis , z_axis )
-        
-    
+        sim = self.compute_trajectory( x0 , tf)
+
+        graphical.TrajectoryPlotter(self, sim)\
+            .phase_plane_trajectory_3d( x_axis , y_axis, z_axis )
+
+
     #############################################
     def show(self, q , x_axis = 0 , y_axis = 1 ):
         """ Plot figure of configuration q """
