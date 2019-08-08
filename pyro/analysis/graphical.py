@@ -6,12 +6,208 @@ Created on Thu Nov  8 21:05:55 2018
 """
 
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import mpl_toolkits.mplot3d.axes3d as p3
 
+from pyro.analysis import phaseanalysis
+
+# Embed font type in PDF
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype']  = 42
+
 ###############################################################################
-        
+
+class TrajectoryPlotter:
+    def __init__(self, cds, traj):
+        self.sys = cds
+        self.traj = traj
+
+        # Ploting
+        self.fontsize = 5
+        self.figsize  = (4, 3)
+        self.dpi      = 300
+
+    def plot(self, plot = 'x' , show = True ):
+        """
+        Create a figure with trajectories for states, inputs, outputs and cost
+        ----------------------------------------------------------------------
+        plot = 'All'
+        plot = 'xu'
+        plot = 'xy'
+        plot = 'x'
+        plot = 'u'
+        plot = 'y'
+        plot = 'j'
+        """
+
+        sys = self.sys
+
+        # For closed-loop systems, extract the inner Dynamic system for plotting
+        try:
+            sys = self.sys.cds # sys is the global system
+        except AttributeError:
+            pass
+
+        # Number of subplots
+        if plot == 'All':
+            l = sys.n + sys.m + sys.p + 2
+        elif plot == 'xuj':
+            l = sys.n + sys.m + 2
+        elif plot == 'xu':
+            l = sys.n + sys.m
+        elif plot == 'xy':
+            l = sys.n + sys.p
+        elif plot == 'x':
+            l = sys.n
+        elif plot == 'u':
+            l = sys.m
+        elif plot == 'y':
+            l = sys.p
+        elif plot == 'j':
+            l = 2
+        else:
+            raise ValueError('not a valid ploting argument')
+
+        simfig , plots = plt.subplots(l, sharex=True, figsize=self.figsize,
+                                      dpi=self.dpi, frameon=True)
+
+        #######################################################################
+        #Fix bug for single variable plotting
+        if l == 1:
+            plots = [plots]
+        #######################################################################
+
+        simfig.canvas.set_window_title('Trajectory for ' + self.sys.name)
+
+        j = 0 # plot index
+
+        if plot=='All' or plot=='x' or plot=='xu' or plot=='xy' or plot=='xuj':
+            # For all states
+            for i in range( sys.n ):
+                plots[j].plot( self.traj.t , self.traj.traj.x_sol[:,i] , 'b')
+                plots[j].set_ylabel(sys.state_label[i] +'\n'+
+                sys.state_units[i] , fontsize=self.fontsize )
+                plots[j].grid(True)
+                plots[j].tick_params( labelsize = self.fontsize )
+                j = j + 1
+
+        if plot == 'All' or plot == 'u' or plot == 'xu' or plot == 'xuj':
+            # For all inputs
+            for i in range( sys.m ):
+                plots[j].plot( self.traj.t , self.traj.u_sol[:,i] , 'r')
+                plots[j].set_ylabel(sys.input_label[i] + '\n' +
+                sys.input_units[i] , fontsize=self.fontsize )
+                plots[j].grid(True)
+                plots[j].tick_params( labelsize = self.fontsize )
+                j = j + 1
+
+        if plot == 'All' or plot == 'y' or plot == 'xy':
+            # For all outputs
+            for i in range( sys.p ):
+                plots[j].plot( self.traj.t , self.traj.y_sol[:,i] , 'k')
+                plots[j].set_ylabel(sys.output_label[i] + '\n' +
+                sys.output_units[i] , fontsize=self.fontsize )
+                plots[j].grid(True)
+                plots[j].tick_params( labelsize = self.fontsize )
+                j = j + 1
+
+        if plot == 'All' or plot == 'j' or plot == 'xuj':
+            # Cost function
+            plots[j].plot( self.traj.t , self.traj.dJ_sol[:] , 'b')
+            plots[j].set_ylabel('dJ', fontsize=self.fontsize )
+            plots[j].grid(True)
+            plots[j].tick_params( labelsize = self.fontsize )
+            j = j + 1
+            plots[j].plot( self.traj.t , self.traj.J_sol[:] , 'r')
+            plots[j].set_ylabel('J', fontsize=self.fontsize )
+            plots[j].grid(True)
+            plots[j].tick_params( labelsize = self.fontsize )
+            j = j + 1
+
+        plots[l-1].set_xlabel('Time [sec]', fontsize=self.fontsize )
+
+        simfig.tight_layout()
+
+        if show:
+            simfig.show()
+
+        self.fig   = simfig
+        self.plots = plots
+
+    def phase_plane_trajectory(self , x_axis , y_axis ):
+        """ """
+        pp = phaseanalysis.PhasePlot( self.sys , x_axis , y_axis )
+        pp.plot()
+
+        traj = self.traj
+
+        plt.plot(traj.x_sol[:,x_axis], traj.x_sol[:,y_axis], 'b-') # path
+        plt.plot([traj.x_sol[0,x_axis]], [traj.x_sol[0,y_axis]], 'o') # start
+        plt.plot([traj.x_sol[-1,x_axis]], [traj.x_sol[-1,y_axis]], 's') # end
+
+        pp.phasefig.tight_layout()
+
+    ###########################################################################
+    def phase_plane_trajectory_3d(self , x_axis , y_axis , z_axis):
+        """ """
+        pp = phaseanalysis.PhasePlot3( self.sys , x_axis, y_axis, z_axis)
+
+        pp.plot()
+
+        traj = self.traj
+        pp.ax.plot(traj.x_sol[:,x_axis],
+                        traj.x_sol[:,y_axis],
+                        traj.x_sol[:,z_axis],
+                        'b-') # path
+        pp.ax.plot([traj.x_sol[0,x_axis]],
+                        [traj.x_sol[0,y_axis]],
+                        [traj.x_sol[0,z_axis]],
+                        'o') # start
+        pp.ax.plot([traj.x_sol[-1,x_axis]],
+                        [traj.x_sol[-1,y_axis]],
+                        [traj.x_sol[-1,z_axis]],
+                        's') # start # end
+
+        pp.ax.set_xlim( self.sys.x_lb[ x_axis ] ,
+                             self.sys.x_ub[ x_axis ])
+        pp.ax.set_ylim( self.sys.x_lb[ y_axis ] ,
+                             self.sys.x_ub[ y_axis ])
+        pp.ax.set_zlim( self.sys.x_lb[ z_axis ] ,
+                             self.sys.x_ub[ z_axis ])
+
+        pp.phasefig.tight_layout()
+
+            ###########################################################################
+    def phase_plane_trajectory_closed_loop(self , x_axis , y_axis ):
+        """ """
+        pp = phaseanalysis.PhasePlot( self.sys , x_axis , y_axis )
+
+        pp.compute_grid()
+        pp.plot_init()
+
+        # Closed-loop Behavior
+        pp.color = 'r'
+        pp.compute_vector_field()
+        pp.plot_vector_field()
+
+        # Open-Loop Behavior
+        pp.f     = self.sys.f
+        pp.ubar  = self.sys.ubar
+        pp.color = 'b'
+        pp.compute_vector_field()
+        pp.plot_vector_field()
+
+        pp.plot_finish()
+
+        # Plot trajectory
+        plt.plot(self.traj.x_sol[:,x_axis], self.traj.x_sol[:,y_axis], 'b-') # path
+        plt.plot([self.traj.x_sol[0,x_axis]], [self.traj.x_sol[0,y_axis]], 'o') # start
+        plt.plot([self.traj.x_sol[-1,x_axis]], [self.traj.x_sol[-1,y_axis]], 's') # end
+
+        plt.tight_layout()
+
 class Animator:
     """ 
 
@@ -292,10 +488,7 @@ class Animator:
         
         return self.lines, self.time_text, self.ani_ax
     
-    
-    
-    
-    
+
 '''
 ###############################################################################
 ##################          Main                         ######################

@@ -11,20 +11,96 @@ import matplotlib.pyplot as plt
 
 from scipy.integrate import odeint
 
-# Embed font type in PDF
-matplotlib.rcParams['pdf.fonttype'] = 42
-matplotlib.rcParams['ps.fonttype']  = 42
-
-
-from pyro.analysis import costfunction 
-from pyro.analysis import phaseanalysis
-
-       
 ##################################################################### #####
 # Simulation Objects
 ##########################################################################
-    
-class Simulation:
+
+class Trajectory() :
+    """Simulation data"""
+    ############################
+    def __init__(self, x, u, t, dx, y):
+        """
+        x:  array of dim = ( time-steps , sys.n )
+        u:  array of dim = ( time-steps , sys.m )
+        t:  array of dim = ( time-steps , 1 )
+        y:  array of dim = ( time-steps , sys.p )
+        """
+
+        self.x_sol  = x
+        self.u_sol  = u
+        self.t_sol  = t
+        self.dx_sol = dx
+        self.y_sol  = y
+
+        self._compute_size()
+
+    ############################
+    def save(self, name = 'trajectory_solution.npy' ):
+
+        data = np.array( [ self.x_sol ,
+                           self.u_sol ,
+                           self.t_sol ,
+                           self.dx_sol,
+                           self.y_sol ] )
+
+        np.save( name , data )
+
+    ############################
+    @staticmethod
+    def load(name):
+
+        data = np.load( name )
+        tj = Trajectory(
+            x  = data[0],
+            u  = data[1],
+            t  = data[2],
+            dx = data[3],
+            y  = data[4],
+        )
+
+        return tj
+
+    ############################
+    def _compute_size(self):
+
+        self.time_final = self.t_sol.max()
+        self.time_steps = self.t_sol.size
+
+        self.n = self.time_steps
+        self.m = self.u_sol.shape[1]
+
+        # Check consistency between signals
+        for arr in [self.x_sol, self.y_sol, self.u_sol, self.dx_sol]:
+            if arr.size[0] != self.n:
+                raise ValueError("Result arrays must have same length along axis 0")
+
+    ############################
+    def t2u(self, t ):
+        """ get u from time """
+
+        if t < self.time_final:
+            # Find time index
+            i = (np.abs(self.t_sol - t)).argmin()
+
+            # Find associated control input
+            u = self.u_sol[i,:]
+
+        return u
+
+    ############################
+    def t2x(self, t ):
+        """ get x from time """
+
+        # Find time index
+        i = (np.abs(self.t_sol - t)).argmin()
+
+        # Find associated control input
+        x = self.x_sol[i,:]
+
+        return x
+
+
+class Simulator:
     """ 
     Simulation Class for open-loop ContinuousDynamicalSystem 
     --------------------------------------------------------
@@ -35,7 +111,6 @@ class Simulation:
     """
     ############################
     def __init__(self, ContinuousDynamicSystem, tf=10, n=10001, solver='ode'):
-        
         self.cds = ContinuousDynamicSystem
         self.t0 = 0
         self.tf = tf
@@ -43,16 +118,8 @@ class Simulation:
         self.dt = ( tf + 0.0 - self.t0 ) / ( n - 1 )
         self.x0 = np.zeros( self.cds.n )
         self.solver = solver
-        
-        # Ploting
-        self.fontsize = 5
-        self.figsize  = (4,3)
-        self.dpi      = 300
-        
-        # Cost computing
-        self.cf = costfunction.QuadraticCostFunction( ContinuousDynamicSystem )
 
-        
+
     ##############################
     def compute(self):
         """ Integrate trought time """
@@ -99,190 +166,13 @@ class Simulation:
                 
                 self.y_sol[i,:] = self.cds.h( x , u , t )
                 self.u_sol[i,:] = u
-                
-                
-    ##############################
-    def compute_cost(self):
-        """ Integrate cost trought time """
-        
-        self.J      = 0  # cost integral
-        self.dJ_sol = np.zeros((self.n,1))
-        self.J_sol  = np.zeros((self.n,1))
-        
-        for i in range(self.n):
 
-            x = self.x_sol[i,:]  
-            u = self.u_sol[i,:] 
-            y = self.y_sol[i,:] 
-            t = self.t[i]
-            
-            dJ = self.cf.g(x, u, t)
-            self.J  = dJ * self.dt + self.J
-            
-            self.dJ_sol[i] = dJ
-            self.J_sol[i]  = self.J
-        
-        # Final cost
-        self.J = self.cf.h(x, t) + self.J
-        self.J_sol[-1] = self.J
-       
-        
-    ###########################################################################
-    def plot(self, plot = 'x' , show = True ):
-        """
-        Create a figure with trajectories for states, inputs, outputs and cost
-        ----------------------------------------------------------------------
-        plot = 'All'
-        plot = 'xu'
-        plot = 'xy'
-        plot = 'x'
-        plot = 'u'
-        plot = 'y'
-        plot = 'j'
-        """
-        
-        # To work for both open-loop/closed-loop inputs structure
-        try:
-            sys = self.sys # sys is the open-loop dynamic of a closed-loop
-        except:
-            sys = self.cds # sys is the global system
-        else:
-            pass
-                
-        # Number of subplots
-        if plot == 'All':
-            l = sys.n + sys.m + sys.p + 2
-        elif plot == 'xuj':
-            l = sys.n + sys.m + 2
-        elif plot == 'xu':
-            l = sys.n + sys.m
-        elif plot == 'xy':
-            l = sys.n + sys.p
-        elif plot == 'x':
-            l = sys.n
-        elif plot == 'u':
-            l = sys.m
-        elif plot == 'y':
-            l = sys.p
-        elif plot == 'j':
-            l = 2
-        else:
-            raise ValueError('not a valid ploting argument')
-            
-        simfig , plots = plt.subplots(l, sharex=True, figsize=self.figsize, 
-                                      dpi=self.dpi, frameon=True)
-        
-        #######################################################################
-        #Fix bug for single variable plotting
-        if l == 1:
-            plots = [plots]
-        #######################################################################
-        
-        simfig.canvas.set_window_title('Trajectory for ' + self.cds.name)
-        
-        j = 0 # plot index
-        
-        if plot=='All' or plot=='x' or plot=='xu' or plot=='xy' or plot=='xuj':
-            # For all states
-            for i in range( sys.n ):
-                plots[j].plot( self.t , self.x_sol[:,i] , 'b')
-                plots[j].set_ylabel(sys.state_label[i] +'\n'+ 
-                sys.state_units[i] , fontsize=self.fontsize )
-                plots[j].grid(True)
-                plots[j].tick_params( labelsize = self.fontsize )
-                j = j + 1
-                
-        if plot == 'All' or plot == 'u' or plot == 'xu' or plot == 'xuj':
-            # For all inputs
-            for i in range( sys.m ):
-                plots[j].plot( self.t , self.u_sol[:,i] , 'r')
-                plots[j].set_ylabel(sys.input_label[i] + '\n' +
-                sys.input_units[i] , fontsize=self.fontsize )
-                plots[j].grid(True)
-                plots[j].tick_params( labelsize = self.fontsize )
-                j = j + 1
-            
-        if plot == 'All' or plot == 'y' or plot == 'xy':
-            # For all outputs
-            for i in range( sys.p ):
-                plots[j].plot( self.t , self.y_sol[:,i] , 'k')
-                plots[j].set_ylabel(sys.output_label[i] + '\n' + 
-                sys.output_units[i] , fontsize=self.fontsize )
-                plots[j].grid(True)
-                plots[j].tick_params( labelsize = self.fontsize )
-                j = j + 1
-                
-        if plot == 'All' or plot == 'j' or plot == 'xuj':
-            # Cost function
-            plots[j].plot( self.t , self.dJ_sol[:] , 'b')
-            plots[j].set_ylabel('dJ', fontsize=self.fontsize )
-            plots[j].grid(True)
-            plots[j].tick_params( labelsize = self.fontsize )
-            j = j + 1
-            plots[j].plot( self.t , self.J_sol[:] , 'r')
-            plots[j].set_ylabel('J', fontsize=self.fontsize )
-            plots[j].grid(True)
-            plots[j].tick_params( labelsize = self.fontsize )
-            j = j + 1
-               
-        plots[l-1].set_xlabel('Time [sec]', fontsize=self.fontsize )
-        
-        simfig.tight_layout()
-        
-        if show:
-            simfig.show()
-        
-        self.fig   = simfig
-        self.plots = plots
-        
-        
-    ###########################################################################
-    def phase_plane_trajectory(self , x_axis , y_axis ):
-        """ """
-        self.pp = phaseanalysis.PhasePlot( self.cds , x_axis , y_axis )
-        self.pp.plot()
-               
-        plt.plot(self.x_sol[:,x_axis], self.x_sol[:,y_axis], 'b-') # path
-        plt.plot([self.x_sol[0,x_axis]], [self.x_sol[0,y_axis]], 'o') # start
-        plt.plot([self.x_sol[-1,x_axis]], [self.x_sol[-1,y_axis]], 's') # end
-        
-        self.pp.phasefig.tight_layout()
-        
-        
-    ###########################################################################
-    def phase_plane_trajectory_3d(self , x_axis , y_axis , z_axis):
-        """ """
-        self.pp = phaseanalysis.PhasePlot3( self.cds , x_axis, y_axis, z_axis)
-        
-        self.pp.plot()
-        
-        self.pp.ax.plot(self.x_sol[:,x_axis], 
-                        self.x_sol[:,y_axis], 
-                        self.x_sol[:,z_axis], 
-                        'b-') # path
-        self.pp.ax.plot([self.x_sol[0,x_axis]],
-                        [self.x_sol[0,y_axis]], 
-                        [self.x_sol[0,z_axis]], 
-                        'o') # start
-        self.pp.ax.plot([self.x_sol[-1,x_axis]],
-                        [self.x_sol[-1,y_axis]], 
-                        [self.x_sol[-1,z_axis]], 
-                        's') # start # end
-        
-        self.pp.ax.set_xlim( self.cds.x_lb[ x_axis ] , 
-                             self.cds.x_ub[ x_axis ])
-        self.pp.ax.set_ylim( self.cds.x_lb[ y_axis ] , 
-                             self.cds.x_ub[ y_axis ])
-        self.pp.ax.set_zlim( self.cds.x_lb[ z_axis ] , 
-                             self.cds.x_ub[ z_axis ])
-        
-        self.pp.phasefig.tight_layout()
 
 ###############################################################################
 # Closed Loop Simulation
 ###############################################################################
     
-class CLosedLoopSimulation( Simulation ):
+class CLosedLoopSimulator(Simulator):
     """ 
     Simulation Class for closed-loop ContinuousDynamicalSystem 
     --------------------------------------------------------
@@ -296,20 +186,15 @@ class CLosedLoopSimulation( Simulation ):
     """
     ###########################################################################
     def __init__(self, CLSystem , tf = 10 , n = 10001 , solver = 'ode' ):
-        
-        Simulation.__init__(self, CLSystem , tf, n, solver) 
-        
+        super().__init__(self, CLSystem , tf, n, solver)
+
         self.sys = CLSystem.sys
         self.ctl = CLSystem.ctl
-        
-        # Cost computing
-        self.cf = costfunction.QuadraticCostFunction( self.sys )
-        
-        
+
     ###########################################################################
     def compute(self):
         
-        Simulation.compute(self)
+        super().compute()
         
         self.compute_inputs()
         
@@ -328,40 +213,7 @@ class CLosedLoopSimulation( Simulation ):
             t = self.t[i]
             
             self.u_sol[i,:] = self.ctl.c( y , r , t )
-            
-            
-    ###########################################################################
-    def phase_plane_trajectory_closed_loop(self , x_axis , y_axis ):
-        """ """
-        self.pp = phaseanalysis.PhasePlot( self.cds , x_axis , y_axis )
-        
-        self.pp.compute_grid()
-        self.pp.plot_init()
-        
-        # Closed-loop Behavior
-        self.pp.color = 'r'
-        self.pp.compute_vector_field()
-        self.pp.plot_vector_field()
-        
-        # Open-Loop Behavior
-        self.pp.f     = self.sys.f
-        self.pp.ubar  = self.sys.ubar
-        self.pp.color = 'b'
-        self.pp.compute_vector_field()
-        self.pp.plot_vector_field()
-        
-        self.pp.plot_finish()
-        
-        # Plot trajectory
-        plt.plot(self.x_sol[:,x_axis], self.x_sol[:,y_axis], 'b-') # path
-        plt.plot([self.x_sol[0,x_axis]], [self.x_sol[0,y_axis]], 'o') # start
-        plt.plot([self.x_sol[-1,x_axis]], [self.x_sol[-1,y_axis]], 's') # end
-        
-        plt.tight_layout()
-            
-        
-            
-    
+
 
 '''
 #################################################################
