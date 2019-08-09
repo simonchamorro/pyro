@@ -11,12 +11,17 @@ import matplotlib.pyplot as plt
 
 from scipy.integrate import odeint
 
+from .graphical import TrajectoryPlotter
+
 ##################################################################### #####
 # Simulation Objects
 ##########################################################################
 
 class Trajectory() :
     """Simulation data"""
+
+    _dict_keys = ('x_sol', 'u_sol', 't', 'dx_sol', 'y_sol')
+
     ############################
     def __init__(self, x, u, t, dx, y):
         """
@@ -35,33 +40,22 @@ class Trajectory() :
         self._compute_size()
 
     ############################
-    def _to_array(self):
-        data = np.array( [ self.x_sol ,
-            self.u_sol ,
-            self.t ,
-            self.dx_sol,
-            self.y_sol ] )
-        return data
+    def _to_dict(self):
+        return {k: getattr(self, k) for k in self._dict_keys}
 
     def save(self, name = 'trajectory_solution.npy' ):
-        np.save( name , self._to_array())
+        as_dict = self._to_dict()
+        np.savez( name , **as_dict)
 
     ############################
     @classmethod
-    def _from_array(cls, data):
-        tj = cls(
-            x  = data[0],
-            u  = data[1],
-            t  = data[2],
-            dx = data[3],
-            y  = data[4],
-        )
-        return tj
+    def _from_dict(cls, data):
+        return cls(**data)
 
     @classmethod
     def load(cls, name):
-        data = np.load( name )
-        return cls._from_array(data)
+        with np.load(name) as data:
+            return cls._from_dict(data)
 
     ############################
     def _compute_size(self):
@@ -102,8 +96,17 @@ class Trajectory() :
 
         return x
 
+    def plot(self, params):
+        TrajectoryPlotter(self.sys, self).plot(params)
+
+    def phase_plane_trajectory(self, x_axis, y_axis):
+        TrajectoryPlotter(self.sys, self).plot(x_axis, y_axis)
+
 class ClosedLoopTrajectory(Trajectory):
     """Trajectory with extra signals"""
+
+    _dict_keys = ('x_sol', 'u_sol', 't', 'dx_sol', 'y_sol', 'r_sol')
+
     def __init__(self, x, u, t, dx, y, r):
         self.x_sol  = x
         self.u_sol  = u
@@ -116,29 +119,6 @@ class ClosedLoopTrajectory(Trajectory):
         super()._compute_size()
         if self.r_sol.shape != self.u_sol.shape:
             raise ValueError("r and u must have same shape")
-
-    def _to_array(self):
-        data = np.array([
-            self.x_sol,
-            self.u_sol,
-            self.t,
-            self.dx_sol,
-            self.y_sol,
-            self.r_sol,
-        ])
-        return data
-
-    @classmethod
-    def _from_array(cls, data):
-        tj = cls(
-            x  = data[0],
-            u  = data[1],
-            t  = data[2],
-            dx = data[3],
-            y  = data[4],
-            r =  data[5],
-        )
-        return tj
 
 
 class Simulator:

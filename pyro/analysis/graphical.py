@@ -29,6 +29,10 @@ class TrajectoryPlotter:
         self.figsize  = (4, 3)
         self.dpi      = 300
 
+        # Workaround for backwards compatibility
+        # TODO: Remove this
+        cds.sim = traj
+
     def plot(self, plot = 'x' , show = True ):
         """
         Create a figure with trajectories for states, inputs, outputs and cost
@@ -246,6 +250,8 @@ class Animator:
         self.linestyle = 'o-'
         self.fontsize  = 5
         
+    def _get_sim_stepsize(self):
+        return (self.sys.sim.t[-1] - self.sys.sim.t[0]) / (self.sys.sim.t.size - 1)
     
     ###########################################################################
     def show(self, q , x_axis = 0 , y_axis = 1 ):
@@ -339,9 +345,11 @@ class Animator:
         # Init list
         self.ani_lines_pts = []
         self.ani_domains   = []
+
+        nsteps = self.sys.sim.t.size
         
         # For all simulation data points
-        for i in range( self.sys.sim.n ):
+        for i in range( nsteps ):
             # Get configuration q from simulation
             q               = self.sys.xut2q(self.sys.sim.x_sol[i,:] ,
                                              self.sys.sim.u_sol[i,:] , 
@@ -410,7 +418,7 @@ class Animator:
         # Animation
         inter      =  40.             # ms --> 25 frame per second
         frame_dt   =  inter / 1000. 
-        sim_dt = (self.sys.sim.t[-1] - self.sys.sim.t[0]) / (self.sys.sim.t.size - 1)
+        sim_dt = self._get_sim_stepsize()
         
         if ( frame_dt * time_factor_video )  < sim_dt :
             # Simulation is slower than video
@@ -421,7 +429,7 @@ class Animator:
             # adjust frame speed to simulation                                    
             inter           = sim_dt * 1000. / time_factor_video 
             
-            n_frame         = self.sys.sim.n
+            n_frame         = nsteps
             
         else:
             # Simulation is faster than video
@@ -431,7 +439,7 @@ class Animator:
             self.skip_steps =  int( factor  ) 
             
             # --> number of video frames
-            n_frame         =  int( self.sys.sim.n / self.skip_steps )               
+            n_frame         =  int( nsteps / self.skip_steps )
         
         # ANIMATION
         # blit=True option crash on mac
@@ -457,7 +465,6 @@ class Animator:
     
     ######################################
     def __animate__(self,i):
-        
         # Update lines
         for j, line in enumerate(self.lines):
             if self.is_3d:
@@ -473,7 +480,7 @@ class Animator:
             
         # Update time
         self.time_text.set_text(self.time_template % 
-                                ( i * self.skip_steps * sim_dt )
+                                ( i * self.skip_steps * self._get_sim_stepsize() )
                                 )
         
         # Update domain

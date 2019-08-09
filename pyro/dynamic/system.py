@@ -277,6 +277,7 @@ class ContinuousDynamicSystem:
         
         """
         self.sim = simulation.Simulator( self , tf , n , solver, x0=x0 ).compute()
+        self.sim.sys = self
         return self.sim
 
 
