@@ -53,9 +53,27 @@ class Trajectory() :
         return cls(**data)
 
     @classmethod
+    def _from_array(cls, data):
+        return cls(
+            x=data[0],
+            u=data[1],
+            t=data[2],
+            dx=data[3],
+            y=data[4]
+    )
+
+    @classmethod
     def load(cls, name):
-        with np.load(name) as data:
-            return cls._from_dict(data)
+        try:
+            # try to load as new format (np.savez)
+            with np.load(name) as data:
+                return cls._from_dict(data)
+
+        except ValueError:
+            # If that fails, try to load as "legacy" numpy object array
+            data = np.load(name, allow_pickle=True)
+            return cls._from_array(data)
+
 
     ############################
     def _compute_size(self):
@@ -68,19 +86,21 @@ class Trajectory() :
 
         # Check consistency between signals
         for arr in [self.x_sol, self.y_sol, self.u_sol, self.dx_sol]:
-            if arr.shape[0] != self.n:
+            if (arr is not None) and (arr.shape[0] != self.n):
                 raise ValueError("Result arrays must have same length along axis 0")
 
     ############################
     def t2u(self, t ):
         """ get u from time """
 
-        if t < self.time_final:
-            # Find time index
-            i = (np.abs(self.t - t)).argmin()
+        if t > self.time_final:
+            raise ValueError("Got time t greater than final time")
 
-            # Find associated control input
-            u = self.u_sol[i,:]
+            # Find time index
+        i = (np.abs(self.t - t)).argmin()
+
+        # Find associated control input
+        u = self.u_sol[i,:]
 
         return u
 
@@ -97,10 +117,10 @@ class Trajectory() :
         return x
 
     def plot(self, params):
-        TrajectoryPlotter(self.sys, self).plot(params)
+        TrajectoryPlotter(self.sys).plot(self, params)
 
     def phase_plane_trajectory(self, x_axis, y_axis):
-        TrajectoryPlotter(self.sys, self).plot(x_axis, y_axis)
+        TrajectoryPlotter(self.sys).phase_plane_trajectory(self, x_axis, y_axis)
 
 class ClosedLoopTrajectory(Trajectory):
     """Trajectory with extra signals"""

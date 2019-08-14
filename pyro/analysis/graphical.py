@@ -20,20 +20,15 @@ matplotlib.rcParams['ps.fonttype']  = 42
 ###############################################################################
 
 class TrajectoryPlotter:
-    def __init__(self, cds, traj):
+    def __init__(self, cds):
         self.sys = cds
-        self.traj = traj
 
         # Ploting
         self.fontsize = 5
         self.figsize  = (4, 3)
         self.dpi      = 300
 
-        # Workaround for backwards compatibility
-        # TODO: Remove this
-        cds.sim = traj
-
-    def plot(self, plot = 'x' , show = True ):
+    def plot(self, traj, plot = 'x' , show = True ):
         """
         Create a figure with trajectories for states, inputs, outputs and cost
         ----------------------------------------------------------------------
@@ -45,6 +40,10 @@ class TrajectoryPlotter:
         plot = 'y'
         plot = 'j'
         """
+
+        # For backwards compatibility
+        #TODO: Remove this
+        self.sys.sim = traj
 
         sys = self.sys
 
@@ -90,7 +89,7 @@ class TrajectoryPlotter:
         if plot=='All' or plot=='x' or plot=='xu' or plot=='xy' or plot=='xuj':
             # For all states
             for i in range( sys.n ):
-                plots[j].plot( self.traj.t , self.traj.x_sol[:,i] , 'b')
+                plots[j].plot( traj.t , traj.x_sol[:,i] , 'b')
                 plots[j].set_ylabel(sys.state_label[i] +'\n'+
                 sys.state_units[i] , fontsize=self.fontsize )
                 plots[j].grid(True)
@@ -100,7 +99,7 @@ class TrajectoryPlotter:
         if plot == 'All' or plot == 'u' or plot == 'xu' or plot == 'xuj':
             # For all inputs
             for i in range( sys.m ):
-                plots[j].plot( self.traj.t , self.traj.u_sol[:,i] , 'r')
+                plots[j].plot( traj.t , traj.u_sol[:,i] , 'r')
                 plots[j].set_ylabel(sys.input_label[i] + '\n' +
                 sys.input_units[i] , fontsize=self.fontsize )
                 plots[j].grid(True)
@@ -110,7 +109,7 @@ class TrajectoryPlotter:
         if plot == 'All' or plot == 'y' or plot == 'xy':
             # For all outputs
             for i in range( sys.p ):
-                plots[j].plot( self.traj.t , self.traj.y_sol[:,i] , 'k')
+                plots[j].plot( traj.t , traj.y_sol[:,i] , 'k')
                 plots[j].set_ylabel(sys.output_label[i] + '\n' +
                 sys.output_units[i] , fontsize=self.fontsize )
                 plots[j].grid(True)
@@ -119,12 +118,12 @@ class TrajectoryPlotter:
 
         if plot == 'All' or plot == 'j' or plot == 'xuj':
             # Cost function
-            plots[j].plot( self.traj.t , self.traj.dJ_sol[:] , 'b')
+            plots[j].plot( traj.t , traj.dJ_sol[:] , 'b')
             plots[j].set_ylabel('dJ', fontsize=self.fontsize )
             plots[j].grid(True)
             plots[j].tick_params( labelsize = self.fontsize )
             j = j + 1
-            plots[j].plot( self.traj.t , self.traj.J_sol[:] , 'r')
+            plots[j].plot( traj.t , traj.J_sol[:] , 'r')
             plots[j].set_ylabel('J', fontsize=self.fontsize )
             plots[j].grid(True)
             plots[j].tick_params( labelsize = self.fontsize )
@@ -140,12 +139,14 @@ class TrajectoryPlotter:
         self.fig   = simfig
         self.plots = plots
 
-    def phase_plane_trajectory(self , x_axis , y_axis ):
+    def phase_plane_trajectory(self, traj, x_axis=0, y_axis=1):
         """ """
+        # For backwards compatibility
+        #TODO: Remove this
+        self.sys.sim = traj
+
         pp = phaseanalysis.PhasePlot( self.sys , x_axis , y_axis )
         pp.plot()
-
-        traj = self.traj
 
         plt.plot(traj.x_sol[:,x_axis], traj.x_sol[:,y_axis], 'b-') # path
         plt.plot([traj.x_sol[0,x_axis]], [traj.x_sol[0,y_axis]], 'o') # start
@@ -154,13 +155,15 @@ class TrajectoryPlotter:
         pp.phasefig.tight_layout()
 
     ###########################################################################
-    def phase_plane_trajectory_3d(self , x_axis , y_axis , z_axis):
+    def phase_plane_trajectory_3d(self, traj, x_axis=0, y_axis=1, z_axis=2):
         """ """
+        # For backwards compatibility
+        #TODO: Remove this
+        self.sys.sim = traj
         pp = phaseanalysis.PhasePlot3( self.sys , x_axis, y_axis, z_axis)
 
         pp.plot()
 
-        traj = self.traj
         pp.ax.plot(traj.x_sol[:,x_axis],
                         traj.x_sol[:,y_axis],
                         traj.x_sol[:,z_axis],
@@ -184,8 +187,11 @@ class TrajectoryPlotter:
         pp.phasefig.tight_layout()
 
             ###########################################################################
-    def phase_plane_trajectory_closed_loop(self , x_axis , y_axis ):
+    def phase_plane_trajectory_closed_loop(self, traj, x_axis, y_axis):
         """ """
+        # For backwards compatibility
+        #TODO: Remove this
+        self.sys.sim = traj
         pp = phaseanalysis.PhasePlot( self.sys , x_axis , y_axis )
 
         pp.compute_grid()
@@ -206,9 +212,9 @@ class TrajectoryPlotter:
         pp.plot_finish()
 
         # Plot trajectory
-        plt.plot(self.traj.x_sol[:,x_axis], self.traj.x_sol[:,y_axis], 'b-') # path
-        plt.plot([self.traj.x_sol[0,x_axis]], [self.traj.x_sol[0,y_axis]], 'o') # start
-        plt.plot([self.traj.x_sol[-1,x_axis]], [self.traj.x_sol[-1,y_axis]], 's') # end
+        plt.plot(traj.x_sol[:,x_axis], traj.x_sol[:,y_axis], 'b-') # path
+        plt.plot([traj.x_sol[0,x_axis]], [traj.x_sol[0,y_axis]], 'o') # start
+        plt.plot([traj.x_sol[-1,x_axis]], [traj.x_sol[-1,y_axis]], 's') # end
 
         plt.tight_layout()
 
@@ -249,10 +255,7 @@ class Animator:
         self.dpi       = 300
         self.linestyle = 'o-'
         self.fontsize  = 5
-        
-    def _get_sim_stepsize(self):
-        return (self.sys.sim.t[-1] - self.sys.sim.t[0]) / (self.sys.sim.t.size - 1)
-    
+
     ###########################################################################
     def show(self, q , x_axis = 0 , y_axis = 1 ):
         """ Plot figure of configuration q """
@@ -320,19 +323,9 @@ class Animator:
         plt.show()
         
     
+
     ###########################################################################
-    def plot_animation(self, x0 , tf = 10 , n = 10001 , solver = 'ode',  
-                             save = False , file_name = 'Ani'  ):
-        """ Simulate and animate system """
-        
-        self.sys.compute_trajectory( x0 , tf , n , solver )
-        
-        self.animate_simulation( 1.0 , save , file_name )
-        
-        
-                
-    ###########################################################################
-    def animate_simulation(self, time_factor_video =  1.0 , is_3d = False, 
+    def animate_simulation(self, traj, time_factor_video =  1.0 , is_3d = False, 
                                  save = False , file_name = 'Animation' ):
         """ 
         Show Animation of the simulation 
@@ -346,14 +339,15 @@ class Animator:
         self.ani_lines_pts = []
         self.ani_domains   = []
 
-        nsteps = self.sys.sim.t.size
-        
+        nsteps = traj.t.size
+        self.sim_dt = (traj.t[-1] - traj.t[0]) / (traj.t.size - 1)
+
         # For all simulation data points
         for i in range( nsteps ):
             # Get configuration q from simulation
-            q               = self.sys.xut2q(self.sys.sim.x_sol[i,:] ,
-                                             self.sys.sim.u_sol[i,:] , 
-                                             self.sys.sim.t[i] )
+            q               = self.sys.xut2q(traj.x_sol[i,:] ,
+                                             traj.u_sol[i,:] , 
+                                             traj.t[i] )
             
             #TODO fix dependency on sys.sim
             
@@ -418,16 +412,15 @@ class Animator:
         # Animation
         inter      =  40.             # ms --> 25 frame per second
         frame_dt   =  inter / 1000. 
-        sim_dt = self._get_sim_stepsize()
         
-        if ( frame_dt * time_factor_video )  < sim_dt :
+        if ( frame_dt * time_factor_video )  < self.sim_dt :
             # Simulation is slower than video
             
             # don't skip steps
             self.skip_steps = 1
             
             # adjust frame speed to simulation                                    
-            inter           = sim_dt * 1000. / time_factor_video 
+            inter           = self.sim_dt * 1000. / time_factor_video 
             
             n_frame         = nsteps
             
@@ -435,7 +428,7 @@ class Animator:
             # Simulation is faster than video
             
             # --> number of simulation frame to skip between video frames
-            factor          =  frame_dt / sim_dt * time_factor_video
+            factor          =  frame_dt / self.sim_dt * time_factor_video
             self.skip_steps =  int( factor  ) 
             
             # --> number of video frames
@@ -480,7 +473,7 @@ class Animator:
             
         # Update time
         self.time_text.set_text(self.time_template % 
-                                ( i * self.skip_steps * self._get_sim_stepsize() )
+                                ( i * self.skip_steps * self.sim_dt )
                                 )
         
         # Update domain

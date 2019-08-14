@@ -10,7 +10,7 @@ import numpy as np
 ###############################################################################
 from pyro.dynamic  import pendulum
 from pyro.control  import nonlinear
-from pyro.planning import plan
+from pyro.analysis import Trajectory
 ###############################################################################
 
 sys  = pendulum.DoublePendulum()
@@ -19,7 +19,7 @@ sys  = pendulum.DoublePendulum()
 # Controller
 this_file_dir = Path(__file__).parent
 traj_file = this_file_dir.joinpath(Path('double_pendulum_rrt.npy'))
-traj = plan.load_trajectory(str(traj_file))
+traj = Trajectory.load(str(traj_file))
 ctl  = nonlinear.SlidingModeController( sys , traj )
 
 # goal

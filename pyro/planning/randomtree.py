@@ -11,9 +11,9 @@ import mpl_toolkits.mplot3d.axes3d as p3
 
 ###############################################################################
 from pyro.dynamic  import system
-from pyro.analysis import Trajectory, TrajectoryPlotter
 from pyro.signal   import timefiltering
 from pyro.planning import plan
+from pyro.analysis import Trajectory
 
 
 ###############################################################################
@@ -401,8 +401,7 @@ class RRT:
     ############################
     def plot_open_loop_solution(self, params = 'xu' ):
 
-        plotter = TrajectoryPlotter(self.sys, self.trajectory)
-        plotter.plot(params)
+        self.sys.get_plotter().plot(self.trajectory, params)
 
 
     ##################################################################

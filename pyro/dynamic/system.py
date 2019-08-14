@@ -251,7 +251,10 @@ class ContinuousDynamicSystem:
     ###########################################################################
     # Quick Analysis Shorcuts
     ###########################################################################
-        
+
+    def get_plotter(self):
+        return graphical.TrajectoryPlotter(self)
+
     #############################
     def plot_phase_plane(self , x_axis = 0 , y_axis = 1 ):
         """ 
@@ -292,7 +295,7 @@ class ContinuousDynamicSystem:
         """
 
         sim = self.compute_trajectory( x0 , tf , n , solver )
-        graphical.TrajectoryPlotter(self, sim).plot()
+        self.get_plotter().plot(sim)
 
 
     #############################
@@ -308,9 +311,7 @@ class ContinuousDynamicSystem:
         """
 
         sim = self.compute_trajectory( x0 , tf)
-
-        graphical.TrajectoryPlotter(self, sim)\
-            .phase_plane_trajectory( x_axis , y_axis )
+        self.get_plotter().phase_plane_trajectory(sim, x_axis , y_axis)
 
 
     #############################
@@ -326,10 +327,10 @@ class ContinuousDynamicSystem:
         
         """
         sim = self.compute_trajectory( x0 , tf)
+        self.get_plotter().phase_plane_trajectory_3d(sim, x_axis , y_axis, z_axis)
 
-        graphical.TrajectoryPlotter(self, sim)\
-            .phase_plane_trajectory_3d( x_axis , y_axis, z_axis )
-
+    def get_animator(self):
+        return graphical.Animator(self)
 
     #############################################
     def show(self, q , x_axis = 0 , y_axis = 1 ):
@@ -354,10 +355,10 @@ class ContinuousDynamicSystem:
     def plot_animation(self, x0 , tf = 10 , n = 10001 , solver = 'ode' ):
         """ Simulate and animate system """
         
-        self.compute_trajectory( x0 , tf , n , solver )
+        sim = self.compute_trajectory( x0 , tf , n , solver )
         
-        self.ani = graphical.Animator( self )
-        self.ani.animate_simulation( 1.0 )
+        self.ani = self.get_animator()
+        self.ani.animate_simulation(sim, time_factor_video=1.0)
         
     ##############################
     def animate_simulation(self, time_factor_video =  1.0 , is_3d = False, save = False , file_name = 'RobotSim' ):
@@ -366,9 +367,13 @@ class ContinuousDynamicSystem:
         ----------------------------------
         time_factor_video < 1 --> Slow motion video        
         
-        """  
-        self.ani = graphical.Animator( self )
-        self.ani.animate_simulation( time_factor_video , is_3d, save , file_name )
+        """
+        self.ani = self.get_animator()
+        self.ani.animate_simulation(self.sim,
+                                    time_factor_video=time_factor_video,
+                                    is_3d=is_3d,
+                                    save=save,
+                                    file_name=file_name)
 
 
 '''

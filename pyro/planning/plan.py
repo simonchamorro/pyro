@@ -28,8 +28,12 @@ class OpenLoopController( controller.StaticController ) :
         self.k = 1   
         self.m = trajectory.m
         self.n = trajectory.n
-        self.p = trajectory.n
-        
+
+        if trajectory.y_sol is not None:
+            self.p = trajectory.y_sol.shape[1]
+        else:
+            self.p = trajectory.x_sol.shape[1]
+
         controller.StaticController.__init__(self, self.k, self.m, self.p)
         
         # Label
@@ -47,3 +51,7 @@ class OpenLoopController( controller.StaticController ) :
     def load_from_file(name):
         traj = Trajectory.load(name)
         return OpenLoopController(traj)
+
+    @property
+    def time_final(self):
+        return self.trajectory.time_final

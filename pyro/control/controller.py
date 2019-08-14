@@ -292,13 +292,11 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
     ###########################################################################
     def plot_animation(self, x0 , tf = 10 , n = 10001 , solver = 'ode' ):
         """ Simulate and animate system """
-        
-        self.compute_trajectory( x0 , tf , n , solver )
-        
-        self.ani = graphical.Animator( self.sys )
-        self.ani.sys.sim = self.sim
-        self.ani.animate_simulation( 1.0 )
-        
+
+        sim = self.compute_trajectory( x0 , tf , n , solver )
+        self.sys.get_animator().animate_simulation(sim)
+
+
     ###########################################################################
     def animate_simulation(self, time_factor_video =  1.0 , is_3d = False, 
                            save = False , file_name = 'RobotSim' ):
@@ -307,12 +305,15 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         ----------------------------------
         time_factor_video < 1 --> Slow motion video        
         
-        """  
-        
-        self.ani = graphical.Animator( self.sys )
-        self.ani.sys.sim = self.sim
-        self.ani.animate_simulation( time_factor_video , is_3d, 
-                                     save , file_name )
+        """
+        self.sys.get_animator().animate_simulation(
+            self.sim,
+            time_factor_video=time_factor_video,
+            is_3d=is_3d,
+            save=save,
+            file_name=file_name
+        )
+
 
         
         
