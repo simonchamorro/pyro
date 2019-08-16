@@ -29,18 +29,22 @@ di.ubar = np.array([1]) # constant input = 1
 di.plot_phase_plane()
 
 # Simulation
-x0 = np.array([0,0])
-di.plot_trajectory( x0 )
-di.sim.plot('y')
+sim = di.compute_trajectory(x0=np.array([0,0]))
+di.get_plotter().plot(sim)
+di.get_plotter().plot(sim, 'y')
+
 
 # Cost computing
-di.sim.compute_cost()
-di.sim.plot('xuj')
+
+# Weights for quadratic cost function
+q, r, v = np.ones(di.n), np.ones(di.m), np.ones(di.p)
+
+qcf = costfunction.QuadraticCostFunction(q, r, v)
+di.get_plotter().plot(sim, 'xuj', cost=qcf.eval(di.sim))
 
 # Time cost
-di.sim.cf = costfunction.TimeCostFunction( di )
-di.sim.compute_cost()
-di.sim.plot('j')
+tcf = costfunction.TimeCostFunction( di.xbar )
+di.get_plotter().plot(sim, 'j', cost=tcf.eval(sim))
 
 # Phase plane trajectory
-di.plot_phase_plane_trajectory( x0 )
+di.get_plotter().phase_plane_trajectory( sim )

@@ -24,6 +24,9 @@ cl_sys = ctl + sys
 
 # Simultation
 x_start  = np.array([-3.14,0,0,0])
-cl_sys.plot_phase_plane_trajectory(x_start, tf=ctl.time_final)
+
+# Stop the simulation before the end of the recorded trajectory because the ODE
+# solver needs to evaluate the function at points after tf
+cl_sys.plot_phase_plane_trajectory(x_start, tf=(ctl.time_final - 0.01))
 cl_sys.sim.plot('xu')
 cl_sys.animate_simulation()

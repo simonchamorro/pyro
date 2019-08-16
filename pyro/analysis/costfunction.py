@@ -7,12 +7,22 @@ Created on Fri Aug 07 11:51:55 2015
 
 import numpy as np
 
-    
+from abc import ABC
+
+from collections import namedtuple
+
+from scipy.integrate import cumtrapz
+
+
 ##########################################################################
 # Cost functions
-##########################################################################       
+##########################################################################
 
-class CostFunction:
+# Data class for holding the results of a CostFunction
+Cost = namedtuple('Cost', ['J', 'dJ'])
+
+
+class CostFunction(ABC):
     """ 
     Mother class for cost functions of continuous dynamical systems
     ----------------------------------------------
@@ -26,16 +36,13 @@ class CostFunction:
     ###########################################################################
     # The two following functions needs to be implemented by child classes
     ###########################################################################
-    
+
     ############################
-    def __init__(self, ContinuousDynamicSystem ):
-        
-        self.sys = ContinuousDynamicSystem
-        
+    def __init__(self):
         self.INF = 1E3
         self.EPS = 1E-3
-        
-        
+
+
     #############################
     def h(self, x , t = 0):
         """ Final cost function """
@@ -44,11 +51,41 @@ class CostFunction:
     
     
     #############################
-    def g(self, x , u , t = 0 ):
+    def g(self, x , u , y, t ):
         """ step cost function """
         
         raise NotImplementedError
-        
+
+    def eval(self, traj):
+        """Compute cost of simulation
+
+        Parameters
+        ----------
+        traj : instance of `pyro.analysis.Trajectory`
+
+        Returns
+        -------
+        namedtuple with the following attributes:
+
+        J : array of size ``traj.n`` (number of timesteps in trajectory)
+            Cumulative value of cost integral at each time step. The total cost is
+            therefore ``J[-1]``.
+
+        dJ : array of size ``traj.n`` (number of timesteps in trajectory)
+            Value of cost function evaluated at each point of the tracjectory.
+        """
+
+        dJ = np.empty(traj.n)
+        for i in range(traj.n):
+            x = traj.x_sol[i,:]
+            u = traj.u_sol[i,:]
+            y = traj.y_sol[i, :]
+            t = traj.t[i]
+            dJ[i] = self.g(x, u, y, t)
+
+        J = cumtrapz(y=dJ, x=traj.t, initial=0)
+
+        return Cost(J, dJ)
 
 #############################################################################
      
@@ -68,21 +105,24 @@ class QuadraticCostFunction( CostFunction ):
     """
     
     ############################
-    def __init__(self, ContinuousDynamicSystem ):
-        
-        CostFunction.__init__( self , ContinuousDynamicSystem )
-        
-        self.xbar = np.zeros( self.sys.n )
-        self.ubar = np.zeros( self.sys.m )
-        self.ybar = np.zeros( self.sys.p )
-        
+    def __init__(self, q, r, v):
+        super().__init__()
+
+        self.n = q.shape[0]
+        self.m = r.shape[0]
+        self.p = v.shape[0]
+
+        self.xbar = np.zeros(self.n)
+        self.ubar = np.zeros(self.m)
+        self.ybar = np.zeros(self.p)
+
         # Quadratic cost weights
-        self.Q = np.diag( np.ones( self.sys.n ) )
-        self.R = np.diag( np.ones( self.sys.m ) )
-        self.V = np.diag( np.zeros( self.sys.p ) )
-        
+        self.Q = np.diag( q )
+        self.R = np.diag( r )
+        self.V = np.diag( v )
+
         self.ontarget_check = True
-        
+
     #############################
     def h(self, x , t = 0):
         """ Final cost function with zero value """
@@ -91,11 +131,26 @@ class QuadraticCostFunction( CostFunction ):
     
     
     #############################
-    def g(self, x , u , t = 0 ):
+    def g(self, x, u, y, t):
         """ Quadratic additive cost """
-        
-        y = self.sys.h( x , u , t )
-        
+
+        # Check dimensions
+        if not x.shape[0] == self.Q.shape[0]:
+            raise ValueError(
+                "Array x of shape %s does not match weights Q with %d components" \
+                % (x.shape, self.Q.shape[0])
+            )
+        if not u.shape[0] == self.R.shape[0]:
+            raise ValueError(
+                "Array u of shape %s does not match weights R with %d components" \
+                % (u.shape, self.R.shape[0])
+            )
+        if not y.shape[0] == self.V.shape[0]:
+            raise ValueError(
+                "Array y of shape %s does not match weights V with %d components" \
+                % (y.shape, self.V.shape[0])
+            )
+
         dx = x - self.xbar
         du = u - self.ubar
         dy = y - self.ybar
@@ -130,11 +185,11 @@ class TimeCostFunction( CostFunction ):
     """
     
     ############################
-    def __init__(self, ContinuousDynamicSystem ):
+    def __init__(self, xbar ):
         
-        CostFunction.__init__( self , ContinuousDynamicSystem )
+        super().__init__()
         
-        self.xbar = np.zeros( self.sys.n )
+        self.xbar = xbar
         
         self.ontarget_check = True
         
@@ -146,9 +201,13 @@ class TimeCostFunction( CostFunction ):
     
     
     #############################
-    def g(self, x , u , t = 0 ):
+    def g(self, x , u , y, t = 0 ):
         """ Unity """
-        
+
+        if (x.shape[0] != self.xbar.shape[0]):
+            raise ValueError("Got x with %d values, but xbar has %d values" %
+                             (x.shape[1], self.xbar.shape[0]))
+
         dJ = 1
         
         if self.ontarget_check:

@@ -153,7 +153,8 @@ class ValueIteration_2D:
                         J_next = J_interpol( x_next[0] , x_next[1] )
                         
                         # Cost-to-go of a given action
-                        Q[action] = self.cf.g( x , u ) + J_next[0,0]
+                        y = self.sys.h(x, u, 0)
+                        Q[action] = self.cf.g(x, u, y, 0) + J_next[0,0]
                         
                     else:
                         # Not allowable states or inputs/states combinations
@@ -436,7 +437,8 @@ class ValueIteration_3D( ValueIteration_2D ):
                         J_next = J_interpol( x_next )
                         
                         # Cost-to-go of a given action
-                        Q[action] = self.cf.g( x , u ) + J_next
+                        y = self.sys.h(x, u, 0)
+                        Q[action] = self.cf.g(x, u, y) + J_next
                         
                     else:
                         # Not allowable states or inputs/states combinations

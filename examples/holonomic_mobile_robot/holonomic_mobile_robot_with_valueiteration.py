@@ -18,7 +18,11 @@ sys  = vehicle.HolonomicMobileRobotwithObstacles()
 grid_sys = discretizer.GridDynamicSystem( sys , (51,51) , (3,3) ) 
 
 # Cost Function
-cf = costfunction.QuadraticCostFunction( sys )
+cf = costfunction.QuadraticCostFunction(
+    q=np.ones(sys.n),
+    r=np.ones(sys.m),
+    v=np.ones(sys.p)
+)
 
 cf.INF = 1E9
 
