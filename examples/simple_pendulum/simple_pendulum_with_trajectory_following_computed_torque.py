@@ -10,13 +10,14 @@ import numpy as np
 from pyro.dynamic  import pendulum
 from pyro.control  import nonlinear
 from pyro.planning import plan
+from pyro.analysis import Trajectory
 ###############################################################################
 
 sys  = pendulum.SinglePendulum()
 
 # Controller
 
-traj = plan.load_trajectory('pendulum_rrt.npy')
+traj = Trajectory.load('pendulum_rrt.npy')
 
 ctl  = nonlinear.ComputedTorqueController( sys , traj )
 
