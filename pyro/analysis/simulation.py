@@ -135,10 +135,12 @@ class ClosedLoopTrajectory(Trajectory):
         self.y_sol  = y
         self.r_sol = r
 
+        self._compute_size()
+
     def _compute_size(self):
         super()._compute_size()
-        if self.r_sol.shape != self.u_sol.shape:
-            raise ValueError("r and u must have same shape")
+        if self.r_sol.shape != self.y_sol.shape:
+            raise ValueError("r and y must have same shape")
 
 
 class Simulator:
@@ -240,7 +242,7 @@ class CLosedLoopSimulator(Simulator):
     ###########################################################################
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.sys = self.cds.sys
+        self.sys = self.cds.cds
         self.ctl = self.cds.ctl
 
     ###########################################################################

@@ -393,7 +393,7 @@ class Animator:
         self.lines = []
         
         # for each lines of the t=0 data point
-        for j, line_pts in enumerate(self.ani_lines_pts[0]):
+        for line_pts in self.ani_lines_pts[0]:
             if is_3d:
                 thisx = line_pts[:,0]
                 thisy = line_pts[:,1]

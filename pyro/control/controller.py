@@ -136,43 +136,43 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
     def __init__(self, ContinuousDynamicSystem , StaticController):
         """ """
         
-        self.sys = ContinuousDynamicSystem
+        self.cds = ContinuousDynamicSystem
         self.ctl = StaticController
         
         ######################################################################
         # Check dimensions match
-        if not (self.sys.m == self.ctl.m ):
+        if not (self.cds.m == self.ctl.m ):
             raise NameError('Dimension mismatch between controller and' + 
             ' dynamic system for the input signal u')
-        elif not (self.sys.p == self.ctl.p ):
+        elif not (self.cds.p == self.ctl.p ):
             raise NameError('Dimension mismatch between controller and' + 
             ' dynamic system for the output signal y')
         ######################################################################
         
         # Dimensions of global closed-loop dynamic system
-        self.n = self.sys.n
+        self.n = self.cds.n
         self.m = self.ctl.k 
-        self.p = self.sys.p
+        self.p = self.cds.p
         
         # Labels
-        self.name = 'Closed-Loop ' + self.sys.name + ' with ' + self.ctl.name
-        self.state_label  = self.sys.state_label
+        self.name = 'Closed-Loop ' + self.cds.name + ' with ' + self.ctl.name
+        self.state_label  = self.cds.state_label
         self.input_label  = self.ctl.ref_label
-        self.output_label = self.sys.output_label
+        self.output_label = self.cds.output_label
         
         # Units
-        self.state_units = self.sys.state_units
+        self.state_units = self.cds.state_units
         self.input_units = self.ctl.ref_units
-        self.output_units = self.sys.output_units
+        self.output_units = self.cds.output_units
         
         # Define the domain
-        self.x_ub = self.sys.x_ub
-        self.x_lb = self.sys.x_lb
+        self.x_ub = self.cds.x_ub
+        self.x_lb = self.cds.x_lb
         self.u_ub = self.ctl.r_ub
         self.u_lb = self.ctl.r_lb
         
         # Default State and inputs        
-        self.xbar = self.sys.xbar
+        self.xbar = self.cds.xbar
         self.ubar = self.ctl.rbar
         
     
@@ -194,10 +194,10 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         dx = np.zeros(self.n) # State derivative vector
         
         r = u # input of closed-loop global sys is ref of the controller
-        y = self.sys.h( x, self.sys.ubar, t)
+        y = self.cds.h( x, self.cds.ubar, t)
         u = self.ctl.c( y, r, t)
         
-        dx = self.sys.f( x, u, t)
+        dx = self.cds.f( x, u, t)
         
         return dx
     
@@ -219,7 +219,7 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         
         #y = np.zeros(self.p) # Output vector
         
-        y = self.sys.h( x , self.sys.ubar , t )
+        y = self.cds.h( x , self.cds.ubar , t )
         
         return y
     
@@ -245,8 +245,8 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         self.pp.plot_vector_field()
         
         # Open-Loop Behavior
-        self.pp.f     = self.sys.f
-        self.pp.ubar  = self.sys.ubar
+        self.pp.f     = self.cds.f
+        self.pp.ubar  = self.cds.ubar
         self.pp.color = 'b'
         self.pp.compute_vector_field()
         self.pp.plot_vector_field()
@@ -279,7 +279,7 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
     def show(self, q , x_axis = 0 , y_axis = 1 ):
         """ Plot figure of configuration q """
         
-        system.ContinuousDynamicSystem.show( self.sys , q , 
+        system.ContinuousDynamicSystem.show( self.cds , q , 
                                             x_axis = 0 , y_axis = 1  )
         
     
@@ -287,14 +287,14 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
     def show3(self, q ):
         """ Plot figure of configuration q """
         
-        system.ContinuousDynamicSystem.show3(self.sys, q)
+        system.ContinuousDynamicSystem.show3(self.cds, q)
     
     ###########################################################################
     def plot_animation(self, x0 , tf = 10 , n = 10001 , solver = 'ode' ):
         """ Simulate and animate system """
 
         sim = self.compute_trajectory( x0 , tf , n , solver )
-        self.sys.get_animator().animate_simulation(sim)
+        self.cds.get_animator().animate_simulation(sim)
 
 
     ###########################################################################
@@ -306,7 +306,7 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         time_factor_video < 1 --> Slow motion video        
         
         """
-        self.sys.get_animator().animate_simulation(
+        self.cds.get_animator().animate_simulation(
             self.sim,
             time_factor_video=time_factor_video,
             is_3d=is_3d,

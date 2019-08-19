@@ -103,9 +103,11 @@ class PhasePlot:
         
     ###########################################################################
     def plot_vector_field(self):
-        
-        self.ax = self.phasefig.add_subplot(111, autoscale_on=False )
-                       
+        try:
+            self.ax = self.phasefig.axes[0]
+        except IndexError:
+            self.ax = self.phasefig.add_subplot(111, autoscale_on=False )
+
         if self.streamplot:
             self.ax.streamplot( self.X, self.Y, self.v, self.w, 
                                     color      =self.color,  
@@ -218,9 +220,11 @@ class PhasePlot3( PhasePlot ):
                        
     ###########################################################################
     def plot_vector_field(self):
-        
-        self.ax = self.phasefig.add_subplot(111,projection='3d')
-        
+        try:
+            self.ax = self.phasefig.axes[0]
+        except IndexError:
+            self.ax = self.phasefig.add_subplot(111, projection='3d')
+
         self.ax.quiver( self.X, self.Y, self.Z, self.v, self.w, self.u, 
                        color=self.color,  linewidth = self.linewidth,
                        length = self.length)

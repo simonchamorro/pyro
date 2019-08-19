@@ -4,6 +4,8 @@ Created on Fri Nov 16 12:05:08 2018
 
 @author: Alexandre
 """
+
+from pathlib import Path
 ###############################################################################
 import numpy as np
 ###############################################################################
@@ -19,7 +21,9 @@ sys  = pendulum.SinglePendulum()
 
 # Controller
 
-traj = Trajectory.load('pendulum_rrt.npy')
+this_script_dir = Path(__file__).parent
+traj_file = this_script_dir.joinpath('pendulum_rrt.npy')
+traj = Trajectory.load(str(traj_file))
 
 #ctl  = nonlinear.ComputedTorqueController( sys , traj )
 ctl  = nonlinear.SlidingModeController( sys , traj )

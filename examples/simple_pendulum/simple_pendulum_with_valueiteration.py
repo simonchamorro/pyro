@@ -19,13 +19,17 @@ sys  = pendulum.SinglePendulum()
 grid_sys = discretizer.GridDynamicSystem( sys )
 
 # Cost Function
-cf = costfunction.QuadraticCostFunction( sys )
+qcf = costfunction.QuadraticCostFunction(
+    np.ones(sys.n),
+    np.ones(sys.m),
+    np.ones(sys.p)
+)
 
-cf.xbar = np.array([ -3.14 , 0 ]) # target
-cf.INF  = 10000
+qcf.xbar = np.array([ -3.14 , 0 ]) # target
+qcf.INF  = 10000
 
 # VI algo
-vi = valueiteration.ValueIteration_2D( grid_sys , cf )
+vi = valueiteration.ValueIteration_2D( grid_sys , qcf )
 
 vi.initialize()
 vi.load_data('simple_pendulum_vi')
@@ -42,11 +46,10 @@ cl_sys = controller.ClosedLoopSystem( sys , vi.ctl )
 # Simulation and animation
 x0   = [0,0]
 tf   = 10
-cl_sys.plot_trajectory( x0 , tf )
-cl_sys.sim.plot('xu')
-cl_sys.animate_simulation()
+sim = cl_sys.compute_trajectory(x0, tf)
+cl_sys.get_plotter().plot(sim, 'xu')
+cl_sys.get_animator().animate_simulation(sim)
 
 # Compute and plot cost
-cl_sys.sim.cf = cf
-cl_sys.sim.compute_cost()
-cl_sys.sim.plot('j')
+cost = qcf.eval(sim)
+cl_sys.get_plotter().plot(sim, 'j', cost=cost)
