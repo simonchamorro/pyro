@@ -56,8 +56,8 @@ def test_simple_integrator_constant():
     I.compute_trajectory(x0, tf=tf, n=npts)
 
     assert(np.allclose(t_ref, I.sim.t))
-    assert(np.allclose(x_ref, I.sim.x_sol))
-    assert(np.allclose(x_ref, I.sim.y_sol))
+    assert(np.allclose(x_ref, I.sim.x))
+    assert(np.allclose(x_ref, I.sim.y))
 
 def test_double_integrator_constant_ode(double_integ):
     # Solution params
@@ -73,8 +73,8 @@ def test_double_integrator_constant_ode(double_integ):
     I.compute_trajectory(double_integ.x0, tf=tf, n=npts, solver='ode')
 
     assert(np.allclose(t_ref, I.sim.t))
-    assert(np.allclose(ref_sol.x, I.sim.x_sol))
-    assert(np.allclose(ref_sol.y, I.sim.y_sol))
+    assert(np.allclose(ref_sol.x, I.sim.x))
+    assert(np.allclose(ref_sol.y, I.sim.y))
 
 def test_double_integrator_constant_euler(double_integ):
     # Solution params
@@ -93,5 +93,5 @@ def test_double_integrator_constant_euler(double_integ):
     atol, rtol = 1, 0.01
 
     assert(np.allclose(t_ref, I.sim.t))
-    assert(np.allclose(ref_sol.x, I.sim.x_sol, atol=atol, rtol=rtol))
-    assert(np.allclose(ref_sol.y, I.sim.y_sol, atol=atol, rtol=rtol))
+    assert(np.allclose(ref_sol.x, I.sim.x, atol=atol, rtol=rtol))
+    assert(np.allclose(ref_sol.y, I.sim.y, atol=atol, rtol=rtol))

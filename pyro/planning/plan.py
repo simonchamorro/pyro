@@ -29,10 +29,10 @@ class OpenLoopController( controller.StaticController ) :
         self.m = trajectory.m
         self.n = trajectory.n
 
-        if trajectory.y_sol is not None:
-            self.p = trajectory.y_sol.shape[1]
+        if trajectory.y is not None:
+            self.p = trajectory.y.shape[1]
         else:
-            self.p = trajectory.x_sol.shape[1]
+            self.p = trajectory.x.shape[1]
 
         controller.StaticController.__init__(self, self.k, self.m, self.p)
         

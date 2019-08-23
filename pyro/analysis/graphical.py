@@ -94,7 +94,7 @@ class TrajectoryPlotter:
         if plot=='All' or plot=='x' or plot=='xu' or plot=='xy' or plot=='xuj':
             # For all states
             for i in range( sys.n ):
-                plots[j].plot( traj.t , traj.x_sol[:,i] , 'b')
+                plots[j].plot( traj.t , traj.x[:,i] , 'b')
                 plots[j].set_ylabel(sys.state_label[i] +'\n'+
                 sys.state_units[i] , fontsize=self.fontsize )
                 plots[j].grid(True)
@@ -104,7 +104,7 @@ class TrajectoryPlotter:
         if plot == 'All' or plot == 'u' or plot == 'xu' or plot == 'xuj':
             # For all inputs
             for i in range( sys.m ):
-                plots[j].plot( traj.t , traj.u_sol[:,i] , 'r')
+                plots[j].plot( traj.t , traj.u[:,i] , 'r')
                 plots[j].set_ylabel(sys.input_label[i] + '\n' +
                 sys.input_units[i] , fontsize=self.fontsize )
                 plots[j].grid(True)
@@ -114,7 +114,7 @@ class TrajectoryPlotter:
         if plot == 'All' or plot == 'y' or plot == 'xy':
             # For all outputs
             for i in range( sys.p ):
-                plots[j].plot( traj.t , traj.y_sol[:,i] , 'k')
+                plots[j].plot( traj.t , traj.x[:,i] , 'k')
                 plots[j].set_ylabel(sys.output_label[i] + '\n' +
                 sys.output_units[i] , fontsize=self.fontsize )
                 plots[j].grid(True)
@@ -153,9 +153,9 @@ class TrajectoryPlotter:
         pp = phaseanalysis.PhasePlot( self.sys , x_axis , y_axis )
         pp.plot()
 
-        plt.plot(traj.x_sol[:,x_axis], traj.x_sol[:,y_axis], 'b-') # path
-        plt.plot([traj.x_sol[0,x_axis]], [traj.x_sol[0,y_axis]], 'o') # start
-        plt.plot([traj.x_sol[-1,x_axis]], [traj.x_sol[-1,y_axis]], 's') # end
+        plt.plot(traj.x[:,x_axis], traj.x[:,y_axis], 'b-') # path
+        plt.plot([traj.x[0,x_axis]], [traj.x[0,y_axis]], 'o') # start
+        plt.plot([traj.x[-1,x_axis]], [traj.x[-1,y_axis]], 's') # end
 
         pp.phasefig.tight_layout()
 
@@ -169,17 +169,17 @@ class TrajectoryPlotter:
 
         pp.plot()
 
-        pp.ax.plot(traj.x_sol[:,x_axis],
-                        traj.x_sol[:,y_axis],
-                        traj.x_sol[:,z_axis],
+        pp.ax.plot(traj.x[:,x_axis],
+                        traj.x[:,y_axis],
+                        traj.x[:,z_axis],
                         'b-') # path
-        pp.ax.plot([traj.x_sol[0,x_axis]],
-                        [traj.x_sol[0,y_axis]],
-                        [traj.x_sol[0,z_axis]],
+        pp.ax.plot([traj.x[0,x_axis]],
+                        [traj.x[0,y_axis]],
+                        [traj.x[0,z_axis]],
                         'o') # start
-        pp.ax.plot([traj.x_sol[-1,x_axis]],
-                        [traj.x_sol[-1,y_axis]],
-                        [traj.x_sol[-1,z_axis]],
+        pp.ax.plot([traj.x[-1,x_axis]],
+                        [traj.x[-1,y_axis]],
+                        [traj.x[-1,z_axis]],
                         's') # start # end
 
         pp.ax.set_xlim( self.sys.x_lb[ x_axis ] ,
@@ -217,9 +217,9 @@ class TrajectoryPlotter:
         pp.plot_finish()
 
         # Plot trajectory
-        plt.plot(traj.x_sol[:,x_axis], traj.x_sol[:,y_axis], 'b-') # path
-        plt.plot([traj.x_sol[0,x_axis]], [traj.x_sol[0,y_axis]], 'o') # start
-        plt.plot([traj.x_sol[-1,x_axis]], [traj.x_sol[-1,y_axis]], 's') # end
+        plt.plot(traj.x[:,x_axis], traj.x[:,y_axis], 'b-') # path
+        plt.plot([traj.x[0,x_axis]], [traj.x[0,y_axis]], 'o') # start
+        plt.plot([traj.x[-1,x_axis]], [traj.x[-1,y_axis]], 's') # end
 
         plt.tight_layout()
 
@@ -350,8 +350,8 @@ class Animator:
         # For all simulation data points
         for i in range( nsteps ):
             # Get configuration q from simulation
-            q               = self.sys.xut2q(traj.x_sol[i,:] ,
-                                             traj.u_sol[i,:] , 
+            q               = self.sys.xut2q(traj.x[i,:] ,
+                                             traj.u[i,:] , 
                                              traj.t[i] )
             
             #TODO fix dependency on sys.sim

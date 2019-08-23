@@ -5,8 +5,10 @@ Created on Fri Aug 07 11:51:55 2015
 @author: agirard
 """
 
+from collections import namedtuple
+
 import numpy as np
-import matplotlib
+
 import matplotlib.pyplot as plt
 
 from scipy.integrate import odeint
@@ -17,13 +19,16 @@ from .graphical import TrajectoryPlotter
 # Simulation Objects
 ##########################################################################
 
-class Trajectory() :
+class Trajectory(
+    namedtuple(
+        '_trajectorytuple',
+        ['x', 'u', 't', 'dx', 'y', 'r', 'J', 'dJ'],
+        defaults=[None, None, None], # r, J and dJ are optional
+    )
+):
     """Simulation data"""
 
-    _dict_keys = ('x_sol', 'u_sol', 't', 'dx_sol', 'y_sol')
-
-    ############################
-    def __init__(self, x, u, t, dx, y):
+    def __new__(cls, *args, **kwargs):
         """
         x:  array of dim = ( time-steps , sys.n )
         u:  array of dim = ( time-steps , sys.m )
@@ -31,61 +36,36 @@ class Trajectory() :
         y:  array of dim = ( time-steps , sys.p )
         """
 
-        self.x_sol  = x
-        self.u_sol  = u
-        self.t  = t
-        self.dx_sol = dx
-        self.y_sol  = y
-
+        self=super().__new__(cls, *args, **kwargs)
         self._compute_size()
-
-    ############################
-    def _to_dict(self):
-        return {k: getattr(self, k) for k in self._dict_keys}
+        return self
 
     def save(self, name = 'trajectory_solution.npy' ):
-        as_dict = self._to_dict()
-        np.savez( name , **as_dict)
-
-    ############################
-    @classmethod
-    def _from_dict(cls, data):
-        return cls(**data)
-
-    @classmethod
-    def _from_array(cls, data):
-        return cls(
-            x=data[0],
-            u=data[1],
-            t=data[2],
-            dx=data[3],
-            y=data[4]
-    )
+        np.savez( name , **self._asdict())
 
     @classmethod
     def load(cls, name):
         try:
             # try to load as new format (np.savez)
             with np.load(name) as data:
-                return cls._from_dict(data)
+                return cls(**data)
 
         except ValueError:
             # If that fails, try to load as "legacy" numpy object array
             data = np.load(name, allow_pickle=True)
-            return cls._from_array(data)
+            return cls(*data)
 
 
     ############################
     def _compute_size(self):
-
         self.time_final = self.t.max()
         self.time_steps = self.t.size
 
         self.n = self.time_steps
-        self.m = self.u_sol.shape[1]
+        self.m = self.u.shape[1]
 
         # Check consistency between signals
-        for arr in [self.x_sol, self.y_sol, self.u_sol, self.dx_sol]:
+        for arr in [self.x, self.y, self.u, self.dx, self.r, self.J, self.dJ]:
             if (arr is not None) and (arr.shape[0] != self.n):
                 raise ValueError("Result arrays must have same length along axis 0")
 
@@ -100,7 +80,7 @@ class Trajectory() :
         i = (np.abs(self.t - t)).argmin()
 
         # Find associated control input
-        u = self.u_sol[i,:]
+        u = self.u[i,:]
 
         return u
 
@@ -112,30 +92,13 @@ class Trajectory() :
         i = (np.abs(self.t - t)).argmin()
 
         # Find associated control input
-        x = self.x_sol[i,:]
-
-        return x
+        return self.x[i,:]
 
     def plot(self, params):
         TrajectoryPlotter(self.sys).plot(self, params)
 
     def phase_plane_trajectory(self, x_axis, y_axis):
         TrajectoryPlotter(self.sys).phase_plane_trajectory(self, x_axis, y_axis)
-
-class ClosedLoopTrajectory(Trajectory):
-    """Trajectory with extra signals"""
-
-    _dict_keys = ('x_sol', 'u_sol', 't', 'dx_sol', 'y_sol', 'r_sol')
-
-    def __init__(self, x, u, t, dx, y, r):
-        self.x_sol  = x
-        self.u_sol  = u
-        self.t  = t
-        self.dx_sol = dx
-        self.y_sol  = y
-        self.r_sol = r
-
-        self._compute_size()
 
 
 class Simulator:
@@ -246,12 +209,12 @@ class CLosedLoopSimulator(Simulator):
         sol = super().compute()
         r, u = self._compute_inputs(sol)
 
-        cltraj = ClosedLoopTrajectory(
-            x= sol.x_sol,
+        cltraj = Trajectory(
+            x= sol.x,
             u= u,
             t= sol.t,
-            dx=sol.dx_sol,
-            y=sol.y_sol,
+            dx=sol.dx,
+            y=sol.y,
             r=r,
         )
 
@@ -261,28 +224,16 @@ class CLosedLoopSimulator(Simulator):
     def _compute_inputs(self, sol):
         """ Compute internal control signal of the closed-loop system """
 
-        r_sol = sol.u_sol.copy() # reference is input of combined sys
+        r_sol = sol.u.copy() # reference is input of combined sys
         u_sol = np.zeros((self.n,self.sys.m))
 
         # Compute internal input signal
         for i in range(self.n):
 
             ri = r_sol[i,:]
-            yi = sol.y_sol[i,:]
+            yi = sol.y[i,:]
             ti = sol.t[i]
 
             u_sol[i,:] = self.ctl.c( yi , ri , ti )
 
         return (r_sol, u_sol)
-
-'''
-#################################################################
-##################          Main                         ########
-#################################################################
-'''
-
-
-if __name__ == "__main__":     
-    """ MAIN TEST """
-    
-    pass

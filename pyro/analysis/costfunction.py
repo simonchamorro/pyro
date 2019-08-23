@@ -77,9 +77,9 @@ class CostFunction(ABC):
 
         dJ = np.empty(traj.n)
         for i in range(traj.n):
-            x = traj.x_sol[i,:]
-            u = traj.u_sol[i,:]
-            y = traj.y_sol[i, :]
+            x = traj.x[i,:]
+            u = traj.u[i,:]
+            y = traj.y[i, :]
             t = traj.t[i]
             dJ[i] = self.g(x, u, y, t)
 

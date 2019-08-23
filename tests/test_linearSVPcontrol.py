@@ -45,14 +45,14 @@ def test_svpc_step(controlled_point_mass):
     #plt.ioff(); plt.show()
 
     # Check that we initially have an error vs the setpoint
-    assert(sim.x_sol[0, 1] - cls.ctl.rbar == x0[1])
+    assert(sim.x[0, 1] - cls.ctl.rbar == x0[1])
 
     # Check that controller output == gain*error
-    expected_control_u = -cls.ctl.gain * (sim.x_sol[:, 1] - cls.ctl.rbar)[:, np.newaxis]
-    assert(np.allclose(sim.u_sol, expected_control_u))
+    expected_control_u = -cls.ctl.gain * (sim.x[:, 1] - cls.ctl.rbar)[:, np.newaxis]
+    assert(np.allclose(sim.u, expected_control_u))
 
     # Check that we reach stable 0 speed after 2 seconds
-    assert(np.allclose(sim.x_sol[t_index:, 1], zeros))
+    assert(np.allclose(sim.x[t_index:, 1], zeros))
 
     # Check that controller output is 0 after 2 seconds
-    assert(np.allclose(sim.u_sol[t_index:], zeros))
+    assert(np.allclose(sim.u[t_index:], zeros))
