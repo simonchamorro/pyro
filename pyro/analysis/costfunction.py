@@ -11,16 +11,16 @@ from abc import ABC
 
 from collections import namedtuple
 
+from copy import copy
+
 from scipy.integrate import cumtrapz
+
+from . import Trajectory
 
 
 ##########################################################################
 # Cost functions
 ##########################################################################
-
-# Data class for holding the results of a CostFunction
-Cost = namedtuple('Cost', ['J', 'dJ'])
-
 
 class CostFunction(ABC):
     """ 
@@ -65,7 +65,7 @@ class CostFunction(ABC):
 
         Returns
         -------
-        namedtuple with the following attributes:
+        A new instance of the input trajectory, with updated `J` and `dJ` fields
 
         J : array of size ``traj.n`` (number of timesteps in trajectory)
             Cumulative value of cost integral at each time step. The total cost is
@@ -85,7 +85,11 @@ class CostFunction(ABC):
 
         J = cumtrapz(y=dJ, x=traj.t, initial=0)
 
-        return Cost(J, dJ)
+        new_traj = copy(traj)
+        new_traj.J = J
+        new_traj.dJ = dJ
+
+        return new_traj
 
 #############################################################################
      

@@ -33,8 +33,7 @@ def test_svpc_step(controlled_point_mass):
     cls = controlled_point_mass
 
     x0 = [0, 3]
-    cls.compute_trajectory(x0)
-    sim = cls.sim
+    sim = cls.compute_trajectory(x0)
 
     # Find index corresponding to t = 2 seconds
     t_index = np.where(sim.t >= 2)[0][0]

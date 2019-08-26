@@ -28,7 +28,7 @@ class TrajectoryPlotter:
         self.figsize  = (4, 3)
         self.dpi      = 300
 
-    def plot(self, traj, plot = 'x' , show = True, cost=None ):
+    def plot(self, traj, plot = 'x' , show = True):
         """
         Create a figure with trajectories for states, inputs, outputs and cost
         ----------------------------------------------------------------------
@@ -41,9 +41,9 @@ class TrajectoryPlotter:
         plot = 'j'
         """
 
-        if 'j' in plot and cost is None:
-            raise TypeError(
-                "cost argument must be provided if plotting 'j' is requested"
+        if 'j' in plot and (traj.J is None or traj.dJ is None):
+            raise ValueError(
+                "Trajectory does not contain cost data but plotting 'j' was requested"
             )
 
         # For backwards compatibility
@@ -123,12 +123,12 @@ class TrajectoryPlotter:
 
         if plot == 'All' or plot == 'j' or plot == 'xuj':
             # Cost function
-            plots[j].plot( traj.t , cost.dJ[:] , 'b')
+            plots[j].plot( traj.t , traj.dJ[:] , 'b')
             plots[j].set_ylabel('dJ', fontsize=self.fontsize )
             plots[j].grid(True)
             plots[j].tick_params( labelsize = self.fontsize )
             j = j + 1
-            plots[j].plot( traj.t , cost.J[:] , 'r')
+            plots[j].plot( traj.t , traj.J[:] , 'r')
             plots[j].set_ylabel('J', fontsize=self.fontsize )
             plots[j].grid(True)
             plots[j].tick_params( labelsize = self.fontsize )

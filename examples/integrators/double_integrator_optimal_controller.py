@@ -10,7 +10,6 @@ import numpy as np
 
 ###############################################################################
 from pyro.dynamic  import system
-from pyro.analysis import costfunction
 from pyro.control  import controller
 ###############################################################################
 

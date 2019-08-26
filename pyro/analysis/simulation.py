@@ -19,16 +19,12 @@ from .graphical import TrajectoryPlotter
 # Simulation Objects
 ##########################################################################
 
-class Trajectory(
-    namedtuple(
-        '_trajectorytuple',
-        ['x', 'u', 't', 'dx', 'y', 'r', 'J', 'dJ'],
-        defaults=[None, None, None], # r, J and dJ are optional
-    )
-):
+class Trajectory():
     """Simulation data"""
 
-    def __new__(cls, *args, **kwargs):
+    _dict_keys = ['x', 'u', 't', 'dx', 'y', 'r', 'J', 'dJ']
+
+    def __init__(self, x, u, t, dx, y, r=None, J=None, dJ=None):
         """
         x:  array of dim = ( time-steps , sys.n )
         u:  array of dim = ( time-steps , sys.m )
@@ -36,12 +32,22 @@ class Trajectory(
         y:  array of dim = ( time-steps , sys.p )
         """
 
-        self=super().__new__(cls, *args, **kwargs)
+        self.x = x
+        self.u = u
+        self.t = t
+        self.dx = dx
+        self.y = y
+        self.r = r
+        self.J = J
+        self.dJ = dJ
+
         self._compute_size()
-        return self
+
+    def _asdict(self):
+        return {k: getattr(self, k) for k in self._dict_keys}
 
     def save(self, name = 'trajectory_solution.npy' ):
-        np.savez( name , **self._asdict())
+        np.savez(name , **self._asdict())
 
     @classmethod
     def load(cls, name):
@@ -55,8 +61,6 @@ class Trajectory(
             data = np.load(name, allow_pickle=True)
             return cls(*data)
 
-
-    ############################
     def _compute_size(self):
         self.time_final = self.t.max()
         self.time_steps = self.t.size

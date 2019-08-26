@@ -25,9 +25,6 @@ si.ubar = np.array([1]) # constant input = 1
 # Phase plane
 si.plot_phase_plane(0,0) # only one state for two axis!
 
-# Simulation
-sim = si.compute_trajectory( np.array([2]) )
-
 # Cost function with unit weights
 qcf = costfunction.QuadraticCostFunction(
     np.ones(si.n),
@@ -35,6 +32,9 @@ qcf = costfunction.QuadraticCostFunction(
     np.ones(si.p)
 )
 
+# Simulation
+sim = si.compute_trajectory(np.array([2]), costfunc=qcf)
+
 # Plot output
-si.get_plotter().plot(sim, 'xuj', cost=qcf.eval(sim))
+si.get_plotter().plot(sim, 'xuj')
 si.get_plotter().phase_plane_trajectory(sim,0,0)

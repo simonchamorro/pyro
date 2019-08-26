@@ -5,12 +5,15 @@ Created on Mon Oct 22 08:40:31 2018
 @author: alxgr
 """
 
+from copy import copy
+
 import numpy as np
 
 from pyro.dynamic import system
 from pyro.analysis import phaseanalysis
 from pyro.analysis import simulation
 from pyro.analysis import graphical
+from pyro.analysis import Trajectory
 
 ###############################################################################
 # Mother Controller class
@@ -255,7 +258,7 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         
     
     ###########################################################################
-    def compute_trajectory(self , x0 , tf = 10 , n = 10001 , solver = 'ode'):
+    def compute_trajectory(self , x0, tf=10 , n=10001 , solver='ode', costfunc=None):
         """ 
         Simulation of time evolution of the system
         ------------------------------------------------
@@ -264,11 +267,37 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         
         """
 
-        self.sim = simulation.CLosedLoopSimulator( self , tf , n , solver, x0=x0 )\
-            .compute()
+        sol = simulation.Simulator(self, tf, n, solver, x0=x0).compute()
+        sol = self._compute_inputs(sol)
 
+        if costfunc is not None:
+            sol = costfunc.eval(sol)
+
+        self.sim = sol
         self.sim.sys = self
-        return self.sim
+
+        return sol
+
+    def _compute_inputs(self, sol):
+        """ Compute internal control signal of the closed-loop system """
+
+        r_sol = sol.u.copy() # reference is input of combined sys
+        u_sol = np.empty((sol.n, self.ctl.m))
+
+        # Compute internal input signal
+        for i in range(r_sol.shape[0]):
+
+            ri = r_sol[i,:]
+            yi = sol.y[i,:]
+            ti = sol.t[i]
+
+            u_sol[i,:] = self.ctl.c( yi , ri , ti )
+
+        new_sol = copy(sol)
+        new_sol.r = r_sol
+        new_sol.u = u_sol
+
+        return new_sol
 
 
     #############################################

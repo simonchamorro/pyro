@@ -271,7 +271,7 @@ class ContinuousDynamicSystem:
         
         
     #############################
-    def compute_trajectory(self , x0 , tf = 10 , n = 10001 , solver = 'ode'):
+    def compute_trajectory(self, x0, tf=10, n=10001, solver='ode', costfunc=None):
         """ 
         Simulation of time evolution of the system
         ------------------------------------------------
@@ -280,6 +280,10 @@ class ContinuousDynamicSystem:
         
         """
         self.sim = simulation.Simulator( self , tf , n , solver, x0=x0 ).compute()
+
+        if costfunc is not None:
+            self.sim = costfunc.eval(self.sim)
+
         self.sim.sys = self
         return self.sim
 

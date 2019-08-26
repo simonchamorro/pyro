@@ -46,10 +46,6 @@ cl_sys = controller.ClosedLoopSystem( sys , vi.ctl )
 # Simulation and animation
 x0   = [0,0]
 tf   = 10
-sim = cl_sys.compute_trajectory(x0, tf)
-cl_sys.get_plotter().plot(sim, 'xu')
+sim = cl_sys.compute_trajectory(x0, tf, costfunc=qcf)
+cl_sys.get_plotter().plot(sim, 'xuj')
 cl_sys.get_animator().animate_simulation(sim)
-
-# Compute and plot cost
-cost = qcf.eval(sim)
-cl_sys.get_plotter().plot(sim, 'j', cost=cost)

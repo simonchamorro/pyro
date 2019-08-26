@@ -38,13 +38,15 @@ di.get_plotter().plot(sim, 'y')
 
 # Weights for quadratic cost function
 q, r, v = np.ones(di.n), np.ones(di.m), np.ones(di.p)
-
 qcf = costfunction.QuadraticCostFunction(q, r, v)
-di.get_plotter().plot(sim, 'xuj', cost=qcf.eval(di.sim))
+
+sim_with_quad_cost = qcf.eval(sim)
+di.get_plotter().plot(sim_with_quad_cost, 'xuj')
 
 # Time cost
 tcf = costfunction.TimeCostFunction( di.xbar )
-di.get_plotter().plot(sim, 'j', cost=tcf.eval(sim))
+sim_with_time_cost = tcf.eval(sim)
+di.get_plotter().plot(sim_with_time_cost, 'j')
 
 # Phase plane trajectory
 di.get_plotter().phase_plane_trajectory( sim )

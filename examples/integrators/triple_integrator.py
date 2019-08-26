@@ -24,11 +24,14 @@ ti.ubar = np.array([1]) # constant input = 1
 ###################################
 
 # Simulation
-sim = ti.compute_trajectory( x0=np.array([2,0,0]) )
+
 qcf = costfunction.QuadraticCostFunction(
     np.ones(ti.n),
     np.ones(ti.m),
     np.ones(ti.p)
 )
-ti.get_plotter().plot(sim, 'xuj', cost=qcf.eval(sim))
+
+sim = ti.compute_trajectory(x0=np.array([2,0,0]), costfunc=qcf)
+
+ti.get_plotter().plot(sim, 'xuj')
 ti.get_plotter().phase_plane_trajectory(sim, 0, 1)
