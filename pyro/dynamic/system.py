@@ -365,19 +365,17 @@ class ContinuousDynamicSystem:
         self.ani.animate_simulation(sim, time_factor_video=1.0)
         
     ##############################
-    def animate_simulation(self, time_factor_video =  1.0 , is_3d = False, save = False , file_name = 'RobotSim' ):
+    def animate_simulation(self, sim=None, **kwargs):
         """ 
         Show Animation of the simulation 
         ----------------------------------
         time_factor_video < 1 --> Slow motion video        
         
         """
-        self.ani = self.get_animator()
-        self.ani.animate_simulation(self.sim,
-                                    time_factor_video=time_factor_video,
-                                    is_3d=is_3d,
-                                    save=save,
-                                    file_name=file_name)
+        if sim is None:
+            sim=self.sim
+
+        self.get_animator().animate_simulation(sim, **kwargs)
 
 
 '''

@@ -50,4 +50,4 @@ planner.plot_open_loop_solution()
 ###############################################################################
 
 sys.dynamic_domain = False
-sys.animate_simulation()
+sys.animate_simulation(planner.trajectory)

@@ -46,10 +46,6 @@ class TrajectoryPlotter:
                 "Trajectory does not contain cost data but plotting 'j' was requested"
             )
 
-        # For backwards compatibility
-        #TODO: Remove this
-        self.sys.sim = traj
-
         sys = self.sys
 
         # For closed-loop systems, extract the inner Dynamic system for plotting
@@ -146,10 +142,6 @@ class TrajectoryPlotter:
 
     def phase_plane_trajectory(self, traj, x_axis=0, y_axis=1):
         """ """
-        # For backwards compatibility
-        #TODO: Remove this
-        self.sys.sim = traj
-
         pp = phaseanalysis.PhasePlot( self.sys , x_axis , y_axis )
         pp.plot()
 
@@ -162,9 +154,6 @@ class TrajectoryPlotter:
     ###########################################################################
     def phase_plane_trajectory_3d(self, traj, x_axis=0, y_axis=1, z_axis=2):
         """ """
-        # For backwards compatibility
-        #TODO: Remove this
-        self.sys.sim = traj
         pp = phaseanalysis.PhasePlot3( self.sys , x_axis, y_axis, z_axis)
 
         pp.plot()
@@ -194,9 +183,6 @@ class TrajectoryPlotter:
             ###########################################################################
     def phase_plane_trajectory_closed_loop(self, traj, x_axis, y_axis):
         """ """
-        # For backwards compatibility
-        #TODO: Remove this
-        self.sys.sim = traj
         pp = phaseanalysis.PhasePlot( self.sys , x_axis , y_axis )
 
         pp.compute_grid()
