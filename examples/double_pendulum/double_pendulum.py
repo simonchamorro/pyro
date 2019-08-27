@@ -15,16 +15,13 @@ from pyro.dynamic import pendulum
 ###############################################################################
 
 
-
- 
-
 import matplotlib.pyplot as plt
-plt.ion()
 
 sys = pendulum.DoublePendulum()
 
 # Simultation
 x_start  = np.array([-0.1,0,0,0])
-sys.plot_trajectory( x_start , 10 , 10001, 'euler')
-sys.sim.phase_plane_trajectory(0,2)
-sys.animate_simulation()
+sim = sys.compute_trajectory( x_start , 10 , 10001, 'euler')
+sys.plot_trajectory(sim)
+sys.plot_phase_plane_trajectory(sim, 0, 2)
+sys.animate_simulation(sim)

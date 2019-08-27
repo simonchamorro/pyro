@@ -142,6 +142,6 @@ ctl.xd = 2
 cl_sys = ctl + sys
 
 x0 = np.array([-2,-2])
-cl_sys.plot_trajectory( x0 , 10 , 10001, 'euler')
-cl_sys.sim.plot('xu')
-cl_sys.sim.phase_plane_trajectory(0,1)
+sim = cl_sys.compute_trajectory( x0 , 10 , 10001, 'euler')
+cl_sys.plot_trajectory(sim, 'xu')
+cl_sys.plot_phase_plane_trajectory(sim, 0, 1)

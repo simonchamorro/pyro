@@ -255,6 +255,9 @@ class ContinuousDynamicSystem:
     def get_plotter(self):
         return graphical.TrajectoryPlotter(self)
 
+    def get_animator(self):
+        return graphical.Animator(self)
+
     #############################
     def plot_phase_plane(self , x_axis = 0 , y_axis = 1 ):
         """ 
@@ -284,57 +287,42 @@ class ContinuousDynamicSystem:
         if costfunc is not None:
             self.sim = costfunc.eval(self.sim)
 
-        self.sim.sys = self
         return self.sim
 
 
     #############################
-    def plot_trajectory(self , x0 , tf = 10 , n = 10001 , solver = 'ode'):
-        """ 
-        Simulation of time evolution of the system
-        ------------------------------------------------
-        x0 : initial time
-        tf : final time
-        
+    def plot_trajectory(self, sim, plot='x', **kwargs):
         """
+        Plot time evolution of a simulation of this system
+        ------------------------------------------------
 
-        sim = self.compute_trajectory( x0 , tf , n , solver )
-        self.get_plotter().plot(sim)
+        """
+        self.get_plotter().plot(sim, plot, **kwargs)
 
 
     #############################
-    def plot_phase_plane_trajectory(self , x0, tf=10, x_axis=0, y_axis=1):
-        """ 
-        Simulates the system and plot the trajectory in the Phase Plane 
-        ---------------------------------------------------------------
-        x0 : initial time
-        tf : final time
-        x_axis : index of state on x axis
-        y_axis : index of state on y axis
-        
+    def plot_phase_plane_trajectory(self, sim, x_axis=0, y_axis=1):
         """
+        Plot a trajectory in the Phase Plane
+        ---------------------------------------------------------------
 
-        sim = self.compute_trajectory( x0 , tf)
+        """
         self.get_plotter().phase_plane_trajectory(sim, x_axis , y_axis)
 
 
     #############################
-    def plot_phase_plane_trajectory_3d(self , x0, tf=10,
-                                       x_axis=0, y_axis=1, z_axis=2):
-        """ 
-        Simulates the system and plot the trajectory in the Phase Plane 
+    def plot_phase_plane_trajectory_3d(self , sim, x_axis=0, y_axis=1, z_axis=2):
+        """
+        Simulates the system and plot the trajectory in the Phase Plane
         ---------------------------------------------------------------
         x0 : initial time
         tf : final time
         x_axis : index of state on x axis
         y_axis : index of state on y axis
-        
+
         """
-        sim = self.compute_trajectory( x0 , tf)
         self.get_plotter().phase_plane_trajectory_3d(sim, x_axis , y_axis, z_axis)
 
-    def get_animator(self):
-        return graphical.Animator(self)
 
     #############################################
     def show(self, q , x_axis = 0 , y_axis = 1 ):
@@ -354,23 +342,14 @@ class ContinuousDynamicSystem:
         self.ani = graphical.Animator( self )
         
         self.ani.show3( q )
-    
-    #############################
-    def plot_animation(self, x0 , tf = 10 , n = 10001 , solver = 'ode' ):
-        """ Simulate and animate system """
-        
-        sim = self.compute_trajectory( x0 , tf , n , solver )
-        
-        self.ani = self.get_animator()
-        self.ani.animate_simulation(sim, time_factor_video=1.0)
-        
+
     ##############################
     def animate_simulation(self, sim=None, **kwargs):
-        """ 
-        Show Animation of the simulation 
+        """
+        Show Animation of the simulation
         ----------------------------------
-        time_factor_video < 1 --> Slow motion video        
-        
+        time_factor_video < 1 --> Slow motion video
+
         """
         if sim is None:
             sim=self.sim

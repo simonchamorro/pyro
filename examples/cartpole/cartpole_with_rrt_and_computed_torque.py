@@ -74,4 +74,4 @@ cl_sys = ctl + sys
 sim = cl_sys.compute_trajectory(x0=x_start)
 cl_sys.get_plotter().phase_plane_trajectory(sim)
 cl_sys.get_plotter().plot(sim, 'xu')
-cl_sys.animate_simulation(1.2,True)
+cl_sys.animate_simulation(sim, time_factor_video=1.2, is_3d=True)

@@ -23,8 +23,6 @@ kinematic_controller.rbar = np.array([1.0,1.0,1.0])
 closed_loop_robot = kinematic_controller + speed_controlled_robot
     
 x0        = np.array([0.1,0.1,0.1])
-    
-closed_loop_robot.plot_animation( x0, 5 )
-closed_loop_robot.sim.plot('xu')
-
-closed_loop_robot.animate_simulation(2,True)
+sim = closed_loop_robot.compute_trajectory(x0, tf=5)
+closed_loop_robot.get_plotter().plot(sim, 'xu')
+closed_loop_robot.animate_simulation(sim, time_factor_video=2, is_3d=True)

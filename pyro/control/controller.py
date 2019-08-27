@@ -274,7 +274,6 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
             sol = costfunc.eval(sol)
 
         self.sim = sol
-        self.sim.sys = self
 
         return sol
 
@@ -303,7 +302,13 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
     #############################################
     # Make graph function use the internal sys
     #############################################
-        
+
+    def get_plotter(self):
+        return self.cds.get_plotter()
+
+    def get_animator(self):
+        return self.cds.get_animator()
+
     ###########################################################################
     def show(self, q , x_axis = 0 , y_axis = 1 ):
         """ Plot figure of configuration q """
@@ -317,36 +322,8 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         """ Plot figure of configuration q """
         
         system.ContinuousDynamicSystem.show3(self.cds, q)
-    
-    ###########################################################################
-    def plot_animation(self, x0 , tf = 10 , n = 10001 , solver = 'ode' ):
-        """ Simulate and animate system """
-
-        sim = self.compute_trajectory( x0 , tf , n , solver )
-        self.cds.get_animator().animate_simulation(sim)
 
 
-    ###########################################################################
-    def animate_simulation(self, time_factor_video =  1.0 , is_3d = False, 
-                           save = False , file_name = 'RobotSim' ):
-        """ 
-        Show Animation of the simulation 
-        ----------------------------------
-        time_factor_video < 1 --> Slow motion video        
-        
-        """
-        self.cds.get_animator().animate_simulation(
-            self.sim,
-            time_factor_video=time_factor_video,
-            is_3d=is_3d,
-            save=save,
-            file_name=file_name
-        )
-
-
-        
-        
-    
 '''
 #################################################################
 ##################          Main                         ########

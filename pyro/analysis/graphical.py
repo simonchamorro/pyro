@@ -439,6 +439,8 @@ class Animator:
                                                 init_func=self.__ani_init__ )
         if save:
             self.ani.save( file_name + '.mp4' ) # , writer = 'mencoder' )
+
+        self.ani_fig.show()
         
     #####################################    
     def __ani_init__(self):

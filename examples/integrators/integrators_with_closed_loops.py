@@ -21,14 +21,17 @@ ctl.gain = 2
 
 # New cl-dynamic
 clsi = ctl + si
-clsi.plot_phase_plane_trajectory([10],10,0,0)
-clsi.sim.plot('xu')
+clsi_sim = clsi.compute_trajectory(x0=[10], tf=10)
+clsi.plot_phase_plane_trajectory(clsi_sim, 0, 0)
+clsi.plot_trajectory(clsi_sim, 'xu')
 
 cldi = ctl + di
-cldi.plot_phase_plane_trajectory([10,0],10,0,1)
-cldi.sim.plot('xu')
+cldi_sim = cldi.compute_trajectory(x0=[10, 0], tf=10)
+cldi.plot_phase_plane_trajectory(cldi_sim)
+cldi.plot_trajectory(cldi_sim, 'xu')
 
 clti = ctl + ti
 
-clti.plot_phase_plane_trajectory_3d([0.1,0,0],10)
-clti.sim.plot('xu')
+clti_sim = clti.compute_trajectory(x0=[0.1,0,0], tf=10)
+clti.plot_phase_plane_trajectory_3d(clti_sim)
+clti.sim.plot(clti_sim, 'xu')

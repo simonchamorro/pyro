@@ -144,6 +144,7 @@ class PhasePlot:
         self.compute_vector_field()
         self.plot_vector_field()
         self.plot_finish()
+        self.phasefig.show()
         
         
         
