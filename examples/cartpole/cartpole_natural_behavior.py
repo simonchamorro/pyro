@@ -16,6 +16,6 @@ sys  = cartpole.RotatingCartPole()
 # Simultation
 x_start = np.array([0,0.1,0,0])
 sim = sys.compute_trajectory(x0=x_start)
-sys.get_plotter().phase_plane_trajectory(sim)
-sys.get_plotter().plot(sim, 'xu')
+sys.plot_phase_plane_trajectory(sim)
+sys.plot_trajectory(sim, 'xu')
 sys.animate_simulation(sim, time_factor_video=1.0, is_3d=True)

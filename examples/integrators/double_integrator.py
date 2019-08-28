@@ -30,8 +30,8 @@ di.plot_phase_plane()
 
 # Simulation
 sim = di.compute_trajectory(x0=np.array([0,0]))
-di.get_plotter().plot(sim)
-di.get_plotter().plot(sim, 'y')
+di.plot_trajectory(sim)
+di.plot_trajectory(sim, 'y')
 
 
 # Cost computing
@@ -41,12 +41,12 @@ q, r, v = np.ones(di.n), np.ones(di.m), np.ones(di.p)
 qcf = costfunction.QuadraticCostFunction(q, r, v)
 
 sim_with_quad_cost = qcf.eval(sim)
-di.get_plotter().plot(sim_with_quad_cost, 'xuj')
+di.plot_trajectory(sim_with_quad_cost, 'xuj')
 
 # Time cost
 tcf = costfunction.TimeCostFunction( di.xbar )
 sim_with_time_cost = tcf.eval(sim)
-di.get_plotter().plot(sim_with_time_cost, 'j')
+di.plot_trajectory(sim_with_time_cost, 'j')
 
 # Phase plane trajectory
-di.get_plotter().phase_plane_trajectory( sim )
+di.plot_phase_plane_trajectory( sim )

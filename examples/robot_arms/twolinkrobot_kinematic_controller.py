@@ -25,5 +25,5 @@ closed_loop_robot = kinematic_controller + speed_controlled_robot
 x0        = np.array([-0.5,0.2])
     
 sim = closed_loop_robot.compute_trajectory( x0, 5 )
-closed_loop_robot.get_plotter().plot(sim, 'xu')
+closed_loop_robot.plot_trajectory(sim, 'xu')
 closed_loop_robot.animate_simulation(sim)

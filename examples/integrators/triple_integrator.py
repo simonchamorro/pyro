@@ -33,5 +33,5 @@ qcf = costfunction.QuadraticCostFunction(
 
 sim = ti.compute_trajectory(x0=np.array([2,0,0]), costfunc=qcf)
 
-ti.get_plotter().plot(sim, 'xuj')
-ti.get_plotter().phase_plane_trajectory(sim, 0, 1)
+ti.plot_trajectory(sim, 'xuj')
+ti.plot_phase_plane_trajectory(sim, 0, 1)

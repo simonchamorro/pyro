@@ -321,6 +321,9 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         
         system.ContinuousDynamicSystem.show3(self.cds, q)
 
+    def plot_phase_plane_trajectory_closed_loop(self, traj, x_axis=0, y_axis=1):
+        self.get_plotter().phase_plane_trajectory_closed_loop(traj, x_axis, y_axis)
+
 
 '''
 #################################################################

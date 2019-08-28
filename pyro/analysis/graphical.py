@@ -208,6 +208,7 @@ class TrajectoryPlotter:
         plt.plot([traj.x[-1,x_axis]], [traj.x[-1,y_axis]], 's') # end
 
         plt.tight_layout()
+        pp.phasefig.show()
 
 class Animator:
     """ 

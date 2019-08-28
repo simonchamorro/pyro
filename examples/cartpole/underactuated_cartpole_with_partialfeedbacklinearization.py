@@ -102,5 +102,5 @@ cl_sys = ctl + sys
 # Simultation
 x0 = np.array([0,-3.14,0,0])
 sim = cl_sys.compute_trajectory( x0 , 10 )
-cl_sys.get_plotter().plot(sim, 'xu')
+cl_sys.plot_trajectory(sim, 'xu')
 cl_sys.animate_simulation(sim, time_factor_video=1.0, is_3d=True)
