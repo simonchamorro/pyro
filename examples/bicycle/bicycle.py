@@ -19,10 +19,11 @@ def main():
     sys.ubar = np.array([0.01,15])
 
     # Plot open-loop behavior
-    sys.plot_trajectory( np.array([0,0,0]) , 10 )
+    sim = sys.compute_trajectory( np.array([0,0,0]) , 10 )
+    sys.plot_trajectory(sim)
 
     # Animate the simulation
-    sys.animate_simulation( )
+    sys.animate_simulation(sim)
 
 if __name__ == "__main__":
     main()

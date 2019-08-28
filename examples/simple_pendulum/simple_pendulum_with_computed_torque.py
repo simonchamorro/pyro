@@ -23,6 +23,7 @@ cl_sys = ctl + sys
 
 # Simultation
 x_start  = np.array([-2,0])
-cl_sys.plot_phase_plane_trajectory( x_start  )
-cl_sys.sim.plot('xu')
-cl_sys.animate_simulation()
+sim = cl_sys.compute_trajectory(x0=x_start)
+cl_sys.plot_phase_plane_trajectory(sim)
+cl_sys.plot_trajectory(sim, 'xu')
+cl_sys.animate_simulation(sim)

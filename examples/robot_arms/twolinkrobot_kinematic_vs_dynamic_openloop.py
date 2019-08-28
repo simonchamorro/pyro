@@ -17,14 +17,16 @@ torque_controlled_robot.ubar = np.array([2,0.8]) # constant inputs
 
 x0        = np.array([0,1,0,0])
 
-torque_controlled_robot.plot_animation( x0 )
-torque_controlled_robot.sim.plot('xu')
+tc_sim = torque_controlled_robot.compute_trajectory(x0)
+torque_controlled_robot.animate_simulation(tc_sim)
+torque_controlled_robot.plot_trajectory(tc_sim, 'xu')
 
 speed_controlled_robot      = manipulator.SpeedControlledManipulator( 
                                              torque_controlled_robot )
 speed_controlled_robot.ubar = np.array([2,0.8]) # constant inputs
     
 x0        = np.array([0,1])
-    
-speed_controlled_robot.plot_animation( x0 )
-speed_controlled_robot.sim.plot('xu')
+
+sc_sim = speed_controlled_robot.compute_trajectory(x0)
+speed_controlled_robot.animate_simulation(sc_sim)
+speed_controlled_robot.plot_trajectory(sc_sim, 'xu')

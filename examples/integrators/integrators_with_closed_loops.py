@@ -34,4 +34,4 @@ clti = ctl + ti
 
 clti_sim = clti.compute_trajectory(x0=[0.1,0,0], tf=10)
 clti.plot_phase_plane_trajectory_3d(clti_sim)
-clti.sim.plot(clti_sim, 'xu')
+clti.plot_trajectory(clti_sim, 'xu')

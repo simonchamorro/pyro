@@ -39,10 +39,6 @@ def test_svpc_step(controlled_point_mass):
     t_index = np.where(sim.t >= 2)[0][0]
     zeros = np.zeros(sim.t[t_index:].shape)
 
-    # Plot simulation
-    #cls.sim.plot('xu')
-    #plt.ioff(); plt.show()
-
     # Check that we initially have an error vs the setpoint
     assert(sim.x[0, 1] - cls.ctl.rbar == x0[1])
 

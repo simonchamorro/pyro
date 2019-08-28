@@ -1368,35 +1368,4 @@ class ThreeLinkManipulator3D( Manipulator ):
 
 
 if __name__ == "__main__":     
-    """ MAIN TEST """
-    
-    sys = FiveLinkPlanarManipulator()
-    dsys = SpeedControlledManipulator( sys )
-    dsys.show([0.1,0.1,0.1,0.1,0.1])
-    
-    #sys1 = OneLinkManipulator()
-    #x0 = np.array([0.1,0])
-    #sys1.plot_animation( x0 )
-    #dsys1 = SpeedControlledManipulator( sys1 )
-    
-    sys2      = TwoLinkManipulator()
-    sys2.ubar = np.array([1,1])
-    x0        = np.array([0,1,0,0])
-    
-    sys2.plot_animation( x0 )
-    sys2.sim.plot('xu')
-    sys2.sim.phase_plane_trajectory(1,3)
-    
-    dsys2      = SpeedControlledManipulator( sys2 )
-    dsys2.ubar = np.array([1,1])
-    x02        = np.array([0,1])
-    
-    dsys2.plot_animation( x02 )
-    dsys2.sim.plot('xu')
-    dsys2.sim.phase_plane_trajectory(0,1)
-    
-    robot3 = ThreeLinkManipulator3D()
-    
-    
-    
-    
+    pass

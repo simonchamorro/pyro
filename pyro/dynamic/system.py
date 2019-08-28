@@ -282,12 +282,12 @@ class ContinuousDynamicSystem:
         tf : final time
         
         """
-        self.sim = simulation.Simulator( self , tf , n , solver, x0=x0 ).compute()
+        sim = simulation.Simulator( self , tf , n , solver, x0=x0 ).compute()
 
         if costfunc is not None:
-            self.sim = costfunc.eval(self.sim)
+            sim = costfunc.eval(sim)
 
-        return self.sim
+        return sim
 
 
     #############################
@@ -351,8 +351,6 @@ class ContinuousDynamicSystem:
         time_factor_video < 1 --> Slow motion video
 
         """
-        if sim is None:
-            sim=self.sim
 
         self.get_animator().animate_simulation(sim, **kwargs)
 

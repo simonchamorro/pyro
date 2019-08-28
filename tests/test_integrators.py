@@ -53,11 +53,11 @@ def test_simple_integrator_constant():
     t_ref = np.linspace(0, tf, npts)
     x_ref = (x0 + t_ref * I.ubar).reshape((npts, 1))
 
-    I.compute_trajectory(x0, tf=tf, n=npts)
+    sim = I.compute_trajectory(x0, tf=tf, n=npts)
 
-    assert(np.allclose(t_ref, I.sim.t))
-    assert(np.allclose(x_ref, I.sim.x))
-    assert(np.allclose(x_ref, I.sim.y))
+    assert(np.allclose(t_ref, sim.t))
+    assert(np.allclose(x_ref, sim.x))
+    assert(np.allclose(x_ref, sim.y))
 
 def test_double_integrator_constant_ode(double_integ):
     # Solution params
@@ -70,11 +70,11 @@ def test_double_integrator_constant_ode(double_integ):
 
     # Solution computed by SUT
     I = double_integ.sut
-    I.compute_trajectory(double_integ.x0, tf=tf, n=npts, solver='ode')
+    sim = I.compute_trajectory(double_integ.x0, tf=tf, n=npts, solver='ode')
 
-    assert(np.allclose(t_ref, I.sim.t))
-    assert(np.allclose(ref_sol.x, I.sim.x))
-    assert(np.allclose(ref_sol.y, I.sim.y))
+    assert(np.allclose(t_ref, sim.t))
+    assert(np.allclose(ref_sol.x, sim.x))
+    assert(np.allclose(ref_sol.y, sim.y))
 
 def test_double_integrator_constant_euler(double_integ):
     # Solution params
@@ -87,11 +87,11 @@ def test_double_integrator_constant_euler(double_integ):
 
     # Solution computed by SUT
     I = double_integ.sut
-    I.compute_trajectory(double_integ.x0, tf=tf, n=npts, solver='euler')
+    sim = I.compute_trajectory(double_integ.x0, tf=tf, n=npts, solver='euler')
 
     # Euler's method has low-order convergence, so we tolerate 1% error
     atol, rtol = 1, 0.01
 
-    assert(np.allclose(t_ref, I.sim.t))
-    assert(np.allclose(ref_sol.x, I.sim.x, atol=atol, rtol=rtol))
-    assert(np.allclose(ref_sol.y, I.sim.y, atol=atol, rtol=rtol))
+    assert(np.allclose(t_ref, sim.t))
+    assert(np.allclose(ref_sol.x, sim.x, atol=atol, rtol=rtol))
+    assert(np.allclose(ref_sol.y, sim.y, atol=atol, rtol=rtol))

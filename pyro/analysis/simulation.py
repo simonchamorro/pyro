@@ -98,12 +98,6 @@ class Trajectory():
         # Find associated control input
         return self.x[i,:]
 
-    def plot(self, params):
-        TrajectoryPlotter(self.sys).plot(self, params)
-
-    def phase_plane_trajectory(self, x_axis, y_axis):
-        TrajectoryPlotter(self.sys).phase_plane_trajectory(self, x_axis, y_axis)
-
 
 class Simulator:
     """ 

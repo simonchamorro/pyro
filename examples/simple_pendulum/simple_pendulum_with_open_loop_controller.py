@@ -29,6 +29,7 @@ x_start = np.array([0.1,0])
 
 # Stop the simulation before the end of the recorded trajectory because the ODE
 # solver needs to evaluate the function at points after tf
-cl_sys.plot_trajectory(  x_start, tf=(ctl.time_final - 0.01) )
+sim = cl_sys.compute_trajectory(x_start, tf=(ctl.time_final - 0.01))
 
-cl_sys.animate_simulation()
+cl_sys.plot_trajectory(sim)
+cl_sys.animate_simulation(sim)

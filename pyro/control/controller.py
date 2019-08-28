@@ -273,8 +273,6 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         if costfunc is not None:
             sol = costfunc.eval(sol)
 
-        self.sim = sol
-
         return sol
 
     def _compute_inputs(self, sol):

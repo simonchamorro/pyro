@@ -39,5 +39,6 @@ cl_sys = ctl + sys
 
 # Simultation
 x_start  = np.array([0.1,0])
-cl_sys.plot_trajectory(x_start, 5, 10001, 'euler')
-cl_sys.animate_simulation()
+sim = cl_sys.compute_trajectory(x_start, tf=5, n=10001, solver='euler')
+cl_sys.plot_trajectory(sim)
+cl_sys.animate_simulation(sim)
