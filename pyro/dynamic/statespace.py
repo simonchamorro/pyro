@@ -5,8 +5,15 @@ from .system import ContinuousDynamicSystem
 class StateSpaceSystem(ContinuousDynamicSystem):
     """Time-invariant state space representation of dynamic system
 
+    ```
     f = A*x + B*u
     h = C*x + D*u
+    ```
+
+    Parameters
+    ----------
+    A, B, C, D : array_like
+        The matrices which define the system
 
     """
 
