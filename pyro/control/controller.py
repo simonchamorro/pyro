@@ -258,7 +258,8 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         
     
     ###########################################################################
-    def compute_trajectory(self , x0, tf=10 , n=10001 , solver='ode', costfunc=None):
+    def compute_trajectory(self,
+        x0, tf=10 , n=10001 , solver='ode', costfunc=None, u=None):
         """ 
         Simulation of time evolution of the system
         ------------------------------------------------
@@ -267,7 +268,7 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         
         """
 
-        sol = simulation.Simulator(self, tf, n, solver, x0=x0).compute()
+        sol = super().compute_trajectory(x0, tf=tf, solver=solver, u=u, costfunc=None)
         sol = self._compute_inputs(sol)
 
         if costfunc is not None:

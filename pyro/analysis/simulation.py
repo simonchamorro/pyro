@@ -100,16 +100,23 @@ class Trajectory():
 
 
 class Simulator:
-    """ 
-    Simulation Class for open-loop ContinuousDynamicalSystem 
-    --------------------------------------------------------
+    """Simulation Class for open-loop ContinuousDynamicalSystem
+
+    Parameters
+    -----------
     ContinuousDynamicSystem : Instance of ContinuousDynamicSystem
-    tf : final time
-    n  : number of points
-    solver : 'ode' or 'euler'
+    u: callable
+        Scalar function returning the input signal as a function of time
+    tf : float
+        final time for simulation
+    n  : int
+        number of time steps
+    solver : {'ode', 'euler'}
     """
     ############################
-    def __init__(self, ContinuousDynamicSystem, tf=10, n=10001, solver='ode', x0=None):
+    def __init__(
+        self, ContinuousDynamicSystem, u, tf=10, n=10001, solver='ode', x0=None):
+
         self.cds = ContinuousDynamicSystem
         self.t0 = 0
         self.tf = tf
@@ -117,6 +124,7 @@ class Simulator:
         self.dt = ( tf + 0.0 - self.t0 ) / ( n - 1 )
         self.solver = solver
         self.x0 = x0
+        self.u = u
 
         if self.x0 is None:
             self.x0 = np.zeros( self.cds.n )
@@ -129,7 +137,11 @@ class Simulator:
         t  = np.linspace( self.t0 , self.tf , self.n )
 
         if self.solver == 'ode':
-            x_sol = odeint( self.cds.fbar , self.x0 , t)
+            # Wrap CDS f() ODE by including u(t)
+            def func_u(x, t):
+                return self.cds.f(x, self.u(t), t)
+
+            x_sol = odeint(func_u , self.x0 , t)
 
             # Compute inputs-output values
             y_sol = np.zeros(( self.n , self.cds.p ))
@@ -157,9 +169,9 @@ class Simulator:
             dt = ( self.tf + 0.0 - self.t0 ) / ( self.n - 1 )
             for i in range(self.n):
 
-                xi = x_sol[i,:]
-                ui = self.cds.ubar
                 ti = t[i]
+                xi = x_sol[i,:]
+                ui = self.u(ti)
 
                 if i+1<self.n:
                     dx_sol[i] = self.cds.f( xi , ui , ti )

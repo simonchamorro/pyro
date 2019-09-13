@@ -66,7 +66,7 @@ class SimpleIntegrator( system.ContinuousDynamicSystem ):
         # Example simpleintergrator
         # x[0]: position u[0]: speed
         
-        dx[0] = u[0]
+        dx[0] = u
         
         return dx
 
