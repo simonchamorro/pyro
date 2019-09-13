@@ -205,27 +205,7 @@ class ContinuousDynamicSystem:
     ###########################################################################
     # No need to overwrite the following functions for custom dynamic systems
     ###########################################################################
-    
-    #############################
-    def fbar( self , x , t ):
-        """ 
-        Continuous time foward dynamics evaluation dx = f( x , u = ubar , t )
-        for default constant control input (open-loop)
-        
-        INPUTS
-        x  : state vector             n x 1
-        t  : time                     1 x 1
-        
-        OUPUTS
-        dx : state derivative vector  n x 1
-        
-        """
-        
-        dx = self.f( x , self.ubar , t )
-        
-        return dx
-    
-        
+
     #############################
     def x_next( self , x , u , t , dt = 0.1 , steps = 1 ):
         """ 
@@ -274,7 +254,8 @@ class ContinuousDynamicSystem:
         
         
     #############################
-    def compute_trajectory(self, x0, tf=10, n=10001, solver='ode', costfunc=None):
+    def compute_trajectory(
+        self, x0, tf=10, n=10001, solver='ode', costfunc=None, u=None):
         """ 
         Simulation of time evolution of the system
         ------------------------------------------------
@@ -282,7 +263,12 @@ class ContinuousDynamicSystem:
         tf : final time
         
         """
-        sim = simulation.Simulator( self , tf , n , solver, x0=x0 ).compute()
+
+        # Default constant input signal if none is specified
+        if u is None:
+            u = lambda _: self.ubar
+
+        sim = simulation.Simulator(self, u, tf, n, solver, x0=x0).compute()
 
         if costfunc is not None:
             sim = costfunc.eval(sim)

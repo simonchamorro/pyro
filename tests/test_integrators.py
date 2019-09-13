@@ -59,6 +59,30 @@ def test_simple_integrator_constant():
     assert(np.allclose(x_ref, sim.x))
     assert(np.allclose(x_ref, sim.y))
 
+def test_simple_integrator_ramp():
+    """Simple integrator with ramp input"""
+    I = integrator.SimpleIntegrator()
+
+    # Solution params
+    tf = 10
+    x0 = 39.4
+    npts = 100
+
+    # Ramp input
+    ramp_cst = np.pi
+    def u(t):
+        return np.asarray(t * ramp_cst)
+
+    # Reference solution
+    t_ref = np.linspace(0, tf, npts)
+    x_ref = (x0 + 0.5 * ramp_cst * t_ref**2).reshape((npts, 1))
+
+    sim = I.compute_trajectory(x0, tf=tf, n=npts, u=u)
+
+    assert(np.allclose(t_ref, sim.t))
+    assert(np.allclose(x_ref, sim.x))
+    assert(np.allclose(x_ref, sim.y))
+
 def test_double_integrator_constant_ode(double_integ):
     # Solution params
     tf = 10
