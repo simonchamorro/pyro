@@ -48,9 +48,13 @@ class StateSpaceSystem(ContinuousDynamicSystem):
             raise ValueError("Number of rows in C does not match D")
 
     def f(self, x, u, t):
+        x = np.asarray(x).reshape((self.n,))
+        u = np.asarray(u).reshape((self.m,))
         return np.dot(self.A, x) + np.dot(self.B, u)
 
     def h(self, x, u, t):
+        x = np.asarray(x).reshape((self.n,))
+        u = np.asarray(u).reshape((self.m,))
         return np.dot(self.C, x) + np.dot(self.D, u)
 
 
@@ -79,13 +83,15 @@ def _approx_jacobian(f, x0, epsilons):
     jac = np.zeros((m, n))
 
     for j in range(n):
+        # Forward evaluation
         xf = np.copy(x0)
-        xf[n] = xf[n] + epsilons[n]
+        xf[j] = xf[j] + epsilons[j]
 
+        # Backward evaluation
         xb = np.copy(x0)
-        xb[n] = xb[n] - epsilons[n]
+        xb[j] = xb[j] - epsilons[j]
 
-        jac[:, n] = (f(xf) - f(xb)) / (2 * epsilons[n])
+        jac[:, j] = ((f(xf) - f(xb)) / (2 * epsilons[j])).reshape((m,))
 
     return jac
 

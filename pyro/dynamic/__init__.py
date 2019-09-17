@@ -1,3 +1,3 @@
 
 from .system import ContinuousDynamicSystem
-from .statespace import StateSpaceSystem
+from .statespace import StateSpaceSystem, linearize

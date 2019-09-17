@@ -12,12 +12,28 @@ from pyro.dynamic import mechanical
 
 
 ###############################################################################
-        
-class SinglePendulum( mechanical.MechanicalSystem ):
-    """ 
 
+class SinglePendulum( mechanical.MechanicalSystem ):
+    """Pendulum with a point mass and inertial rod.
+
+    Attributes
+    ----------
+    l1 : float
+        Length of pendulum rod. Only used for display.
+    lc1 : float
+        Distance of point mass to pivot.
+    m1 : float
+        Mass value of point mass.
+    I1 : float
+        Moment of inertia of pendulum rod (without mass) about the pendulum pivot. The
+        total inertia of the pendulum is calculated as
+        ``I_pendulum = I1 + (m1 * lc1**2)``.
+    gravity : float
+        Constant of gravitational acceleration
+    d1: float
+        Damping force factor
     """
-    
+
     ############################
     def __init__(self):
         """ """

@@ -3,9 +3,9 @@ import numpy as np
 
 import pytest
 
-from matplotlib import pyplot as plt
+from pyro.dynamic import StateSpaceSystem, linearize
 
-from pyro.dynamic import StateSpaceSystem
+from pyro.dynamic.pendulum import SinglePendulum
 
 class SdofOscillator(StateSpaceSystem):
     """Single DOF mass-spring-damper system
@@ -26,7 +26,7 @@ class SdofOscillator(StateSpaceSystem):
         self.b = b
 
         A = np.array([[0, 1], [-k/m, -b/m]])
-        B = np.array([0, 1]).reshape((2, 1))
+        B = np.array([0, 1/m]).reshape((2, 1))
 
         C = np.identity(2)
         D = np.zeros((2, 1))
@@ -74,7 +74,6 @@ class SdofOscillator(StateSpaceSystem):
                + dx0 / wn * np.sin(wn*t) \
                + (f0 / (self.k - self.mass * w0**2)) * np.cos(w0*t)
 
-
 def test_1dof_oscillator_free():
     sys = SdofOscillator(2.0, 100.0, 10.0)
     x0 = np.array([0.2, 0])
@@ -87,6 +86,27 @@ def test_1dof_oscillator_free():
 
     assert np.allclose(sim.x[:, 0], ref)
     assert np.allclose(sim.y[:, 0], ref)
+
+def test_1dof_oscillator_forced():
+    sys = SdofOscillator(m=2.0, k=100.0, b=0.0)
+    x0 = np.array([0.2, 0])
+
+    # External force
+    w0 = 2
+    f0 = 4.5
+    def u(t):
+        t = np.asarray(t)
+        return (np.cos(w0*t) * f0).reshape((t.size, 1))
+
+    # Simulate time solution
+    sim = sys.compute_trajectory(x0, u=u, n=1000)
+
+    # Reference analytical time solution
+    ref = sys.solve_analytical_forced(x0[0], x0[1], f0, w0, sim.t)
+
+    assert np.allclose(sim.x[:, 0], ref, atol=1e-5, rtol=0)
+    assert np.allclose(sim.y[:, 0], ref, atol=1e-5, rtol=0)
+    assert np.allclose(sim.u, u(sim.t))
 
 def test_dimension_checks():
     # Valid dimensions for system with 5 states, 2 inputs and 4 outputs
@@ -120,5 +140,52 @@ def test_dimension_checks():
     with pytest.raises(ValueError):
         StateSpaceSystem(A, B, C, D[:2, :])
 
-if __name__ == "__main__":
-    test_1dof_oscillator_free()
+def test_linearize_identity():
+    """Linearization of linear system should be identical"""
+
+    # ensure repeatable random matrices
+    np.random.seed(0)
+
+    A = np.random.rand(5, 5)
+    B = np.random.rand(5, 2)
+    C = np.random.rand(4, 5)
+    D = np.random.rand(4, 2)
+
+    sys = StateSpaceSystem(A, B, C, D)
+
+    x0 = np.random.rand(5, 1)
+    u0 = np.random.rand(2, 1)
+
+    linearized = linearize(sys, x0, u0, 1e-3)
+
+    assert np.allclose(sys.A, linearized.A)
+    assert np.allclose(sys.B, linearized.B)
+    assert np.allclose(sys.C, linearized.C)
+    assert np.allclose(sys.D, linearized.D)
+
+def test_linearize_pendulum():
+    nlsys = SinglePendulum()
+    nlsys.lc1 = 0.3
+    nlsys.m1 = 1.2
+    nlsys.d1 = 0.1
+
+    x0 = np.zeros((2, 1))
+    u0 = np.zeros((1,))
+
+    # linearize with epsilon = 0.01 rad (~1 deg)
+    linsys = linearize(nlsys, x0, u0, epsilon_x=0.01)
+
+    # Simulate with 5 degree initial position and zero velocity
+    x_init = [0.087, 0]
+
+    nlsim = nlsys.compute_trajectory(x_init, tf=10)
+    linsim = linsys.compute_trajectory(x_init, tf=10)
+
+    rtol = 0.001 # .1 %
+    atol = 0.001 # approx .5 degree
+
+    assert np.allclose(nlsim.t, linsim.t)
+    assert np.allclose(nlsim.x, linsim.x, rtol, atol)
+    assert np.allclose(nlsim.dx, linsim.dx, rtol, atol)
+    assert np.allclose(nlsim.u, linsim.u)
+    assert np.allclose(nlsim.y, linsim.y, rtol, atol)
