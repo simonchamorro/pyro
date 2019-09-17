@@ -149,9 +149,9 @@ class Simulator:
             dx_sol = np.zeros((self.n,self.cds.n))
 
             for i in range(self.n):
-                xi = x_sol[i,:]
-                ui = self.cds.ubar
                 ti = t[i]
+                xi = x_sol[i,:]
+                ui = self.u(ti)
 
                 dx_sol[i,:] = self.cds.f( xi , ui , ti )
                 y_sol[i,:]  = self.cds.h( xi , ui , ti )
