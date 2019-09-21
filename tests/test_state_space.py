@@ -7,6 +7,8 @@ from pyro.dynamic import StateSpaceSystem, linearize
 
 from pyro.dynamic.pendulum import SinglePendulum
 
+from pyro.dynamic.manipulator import ThreeLinkManipulator3D
+
 class SdofOscillator(StateSpaceSystem):
     """Single DOF mass-spring-damper system
 
@@ -189,3 +191,51 @@ def test_linearize_pendulum():
     assert np.allclose(nlsim.dx, linsim.dx, rtol, atol)
     assert np.allclose(nlsim.u, linsim.u)
     assert np.allclose(nlsim.y, linsim.y, rtol, atol)
+
+def test_linearize_3dmanip():
+    class Manip3DFwdKin(ThreeLinkManipulator3D):
+        """ThreeLinkManipulator 3D with y=r (end effector location)"""
+        def __init__(self):
+            super().__init__()
+            self.p = 3
+        def h(self, x, u, t):
+            return self.forward_kinematic_effector(self.x2q(x)[0])
+
+    nlsys = Manip3DFwdKin()
+    nlsys.gravity = 0
+    nlsys.d1, nlsys.d2, nlsys.d3 = 0, 0, 0
+
+    #x0 = np.array([0.25, -1/6, 0.5, 0, 0, 0])*np.pi
+    x0 = np.array([0.25, 0, -1/3, 0, 0, 0])*np.pi
+
+    # Sinusoidal torque input produces angle oscillations of maximum
+    # amplitude around 3 degrees, so should still be close to linear.
+    def u(t):
+        omega = np.array([1, 1, 1]) * 4
+        phase = np.array([0, 0, 0])
+        amplitude = np.array([1.0, 0.0, 0.2])
+        return np.cos(omega * t + phase) * amplitude
+
+    sim = nlsys.compute_trajectory(x0, u=u, tf=5)
+    nlsys.plot_trajectory(sim, 'x')
+    #nlsys.plot_trajectory(sim, 'u')
+    nlsys.animate_simulation(sim, is_3d=True)
+
+    linsys = linearize(nlsys, x0, u0=np.zeros(3), epsilon_x=1E-3)
+    linsim = linsys.compute_trajectory(x0, u=u, tf=5)
+    #linsys.plot_trajectory(linsim, 'x')
+
+    import matplotlib.pyplot as plt
+    from test_utils import compare_signals
+    compare_signals(sim.t, sim.x, linsim.t, linsim.x)
+    #compare_signals(sim.t, sim.y, linsim.t, linsim.y)
+
+    plt.show()
+
+    assert np.allclose(sim.t, linsim.t)
+    assert np.allclose(sim.x, linsim.x, atol=1E-3, rtol=1E-2)
+    assert np.allclose(sim.y, linsim.y, atol=1E-3, rtol=1E-2)
+
+
+if __name__ == "__main__":
+    test_linearize_3dmanip()
