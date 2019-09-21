@@ -334,11 +334,11 @@ class ValueIteration_2D:
         
         
     ################################
-    def save_data(self, name = 'DP_data'):
+    def save_data(self, name='DP_data', prefix=''):
         """ Save optimal controller policy and cost to go """
-        
-        np.save( name + '_J'  , self.J                        )
-        np.save( name + '_a'  , self.action_policy.astype(int))
+
+        np.save(prefix + name + '_J', self.J)
+        np.save(prefix + name + '_a', self.action_policy.astype(int))
         
         
         
@@ -626,15 +626,15 @@ class ValueIteration_ND:
     """ Dynamic programming for 2D continous dynamic system, one continuous input u """
 
     ############################
-    def __init__(self, grid_sys, cost_function, n_dim=2):
+    def __init__(self, grid_sys, cost_function):
 
         # Dynamic system
         self.grid_sys = grid_sys  # Discretized Dynamic system class
         self.sys = grid_sys.sys  # Base Dynamic system class
 
         # initializes nb of dimensions and continuous inputs u
-        self.n_dim = n_dim
-        self.n_u = n_dim - 1
+        self.n_dim = self.sys.n
+        self.n_u = self.n_dim - 1
 
         # Controller
         self.ctl = ViController(self.sys.n, self.sys.m, self.sys.n)
@@ -739,6 +739,7 @@ class ValueIteration_ND:
 
         # Convergence check
         delta = self.J - self.Jnew
+        print(delta)
         j_max = self.Jnew.max()
         delta_max = delta.max()
         delta_min = delta.min()
