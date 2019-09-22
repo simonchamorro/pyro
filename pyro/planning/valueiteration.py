@@ -683,8 +683,6 @@ class ValueIteration_ND:
             # TODO: how to determine the shape??
             J_interpol = RegularGridInterpolator((self.grid_sys.xd[0], self.grid_sys.xd[1]), self.J)
 
-        print(self.grid_sys, self.sys)
-
         # For all state nodes
         for node in range(self.grid_sys.nodes_n):
 
@@ -731,21 +729,21 @@ class ValueIteration_ND:
             self.Jnew[i, j] = Q.min()
             self.action_policy[i, j] = Q.argmin()
 
-            # print(self.Jnew, self.action_policy)
-
             # Impossible situation ( unaceptable situation for any control actions )
             if self.Jnew[i, j] > (self.cf.INF - 1):
                 self.action_policy[i, j] = -1
 
         # Convergence check
         delta = self.J - self.Jnew
-        print(delta)
         j_max = self.Jnew.max()
         delta_max = delta.max()
         delta_min = delta.min()
         print('Max:', j_max, 'Delta max:', delta_max, 'Delta min:', delta_min)
 
         self.J = self.Jnew.copy()
+
+        # TODO: Combine deltas? Check if delta_min or max changes. Only works with the pendulum for now.
+        return delta_min
 
     ################################
     def assign_interpol_controller(self):
@@ -804,12 +802,23 @@ class ValueIteration_ND:
         return u
 
     ################################
-    def compute_steps(self, l=50, plot=False):
+    def compute_steps(self, l=50, plot=False, threshold=0.005):
         """ compute number of step """
 
-        for i in range(l):
-            print('Step:', i)
-            self.compute_step()
+        delta = 9000000
+
+        step = 0
+        print('Step:', step)
+        new_max = self.compute_step()
+        cur_threshold = abs(new_max - delta)
+        print('Current threshold', cur_threshold)
+        while cur_threshold > threshold or step < l:
+            step = step + 1
+            print('Step:', step)
+            delta = new_max
+            new_max = self.compute_step()
+            cur_threshold = abs(new_max - delta)
+            print('Current threshold', cur_threshold)
 
     ################################
     def plot_cost2go(self, maxJ=1000):
@@ -894,6 +903,9 @@ class ValueIteration_ND:
     ################################
     def save_data(self, name='DP_data', prefix=''):
         """ Save optimal controller policy and cost to go """
+
+        print('Final J', self.J)
+        print('Final policy', self.action_policy)
 
         np.save(prefix + name + '_J', self.J)
         np.save(prefix + name + '_a', self.action_policy.astype(int))

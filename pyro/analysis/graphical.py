@@ -440,6 +440,7 @@ class Animator:
         if save:
             self.ani.save( file_name + '.mp4' ) # , writer = 'mencoder' )
 
+        print('Show animaton')
         self.ani_fig.show()
         
     #####################################    

@@ -30,13 +30,13 @@ cf.INF = 1E9
 vi = valueiteration.ValueIteration_ND( grid_sys , cf )
 
 vi.initialize()
-#vi.load_data('holonomic_vi', "./holonomic_mobile_robot/")
-vi.compute_steps(10000)
+#vi.load_data('holonomic_vi')
+vi.compute_steps(50)
 vi.plot_cost2go(40000)
 vi.assign_interpol_controller()
 vi.plot_policy(0)
 vi.plot_policy(1)
-vi.save_data('holonomic_vi', "./holonomic_mobile_robot/")
+vi.save_data('holonomic_vi')
 
 # Closed loop
 cl_sys = vi.ctl + sys
