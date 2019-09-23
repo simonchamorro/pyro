@@ -634,7 +634,6 @@ class ValueIteration_ND:
 
         # initializes nb of dimensions and continuous inputs u
         self.n_dim = self.sys.n
-        self.n_u = self.n_dim - 1
 
         # Controller
         self.ctl = ViController(self.sys.n, self.sys.m, self.sys.n)

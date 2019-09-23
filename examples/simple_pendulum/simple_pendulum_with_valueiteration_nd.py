@@ -33,7 +33,7 @@ vi = valueiteration.ValueIteration_ND( grid_sys , qcf )
 
 vi.initialize()
 # vi.load_data('simple_pendulum_vi')
-vi.compute_steps()
+vi.compute_steps(l=2000)
 #vi.load_data()
 vi.assign_interpol_controller()
 vi.plot_policy(0)
@@ -48,5 +48,5 @@ x0   = [0,0]
 tf   = 10
 sim = cl_sys.compute_trajectory(x0, tf, costfunc=qcf)
 cl_sys.get_plotter().plot(sim, 'xuj')
-cl_sys.get_animator().animate_simulation(sim)
+cl_sys.get_animator().animate_simulation(sim, save=True, file_name='simple_pendulum')
 

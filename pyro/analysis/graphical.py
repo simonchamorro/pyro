@@ -438,9 +438,8 @@ class Animator:
                                                 n_frame , interval = inter, 
                                                 init_func=self.__ani_init__ )
         if save:
-            self.ani.save( file_name + '.mp4' ) # , writer = 'mencoder' )
+            self.ani.save( file_name + '.html' ) # , writer = 'mencoder' )
 
-        print('Show animaton')
         self.ani_fig.show()
         
     #####################################    
