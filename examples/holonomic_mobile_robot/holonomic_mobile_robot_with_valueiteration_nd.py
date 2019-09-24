@@ -31,7 +31,7 @@ vi = valueiteration.ValueIteration_ND( grid_sys , cf )
 
 vi.initialize()
 #vi.load_data('holonomic_vi')
-vi.compute_steps(50)
+vi.compute_steps()
 vi.plot_cost2go(40000)
 vi.assign_interpol_controller()
 vi.plot_policy(0)
