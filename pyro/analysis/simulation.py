@@ -128,6 +128,10 @@ class Simulator:
 
         if self.x0 is None:
             self.x0 = np.zeros( self.cds.n )
+        elif self.x0.size != self.cds.n:
+            raise ValueError(
+                "Number of elements in x0 must be equal to number of states of system"
+            )
 
 
     ##############################
