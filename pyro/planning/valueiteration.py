@@ -634,7 +634,6 @@ class ValueIteration_ND:
 
         # initializes nb of dimensions and continuous inputs u
         self.n_dim = self.sys.n
-        self.n_u = self.n_dim - 1
 
         # J-arrays and action policy arrays
         self.J = np.zeros(self.grid_sys.xgriddim, dtype=float)
@@ -685,13 +684,16 @@ class ValueIteration_ND:
         """ One step of value iteration """
 
         # Get interpolation of current cost space
-        if (self.n_dim == 2):
+        if self.n_dim == 2:
             J_interpol = interpol2D(self.grid_sys.xd[0], self.grid_sys.xd[1],
                                     self.J, bbox=[None, None, None, None], kx=1, ky=1)
-        else:
+        elif self.n_dim == 3:
             # call function for random shape
-            # TODO: how to determine the shape??
-            J_interpol = RegularGridInterpolator((self.grid_sys.xd[0], self.grid_sys.xd[1]), self.J)
+            J_interpol = RegularGridInterpolator((self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]),
+                                                 self.J, method='linear')
+        else:
+            points = tuple(self.grid_sys.xd[i] for i in range(self.n_dim))
+            J_interpol = RegularGridInterpolator(points, self.J, method='linear')
 
         # For all state nodes
         for node in range(self.grid_sys.nodes_n):
@@ -786,16 +788,28 @@ class ValueIteration_ND:
                     self.u_policy_grid[k][indices] = self.grid_sys.actions_input[self.action_policy[indices], k]
 
         # Compute Interpol function
-        self.x2u_interpol_functions = []
+        self.interpol_functions = []
 
         # for all inputs
         for k in range(self.sys.m):
-            self.x2u_interpol_functions.append(
-                interpol2D(self.grid_sys.xd[0],
-                           self.grid_sys.xd[1],
-                           self.u_policy_grid[k],
-                           bbox=[None, None, None, None],
-                           kx=1, ky=1, ))
+            if self.n_dim == 2:
+                self.interpol_functions.append(
+                    interpol2D(self.grid_sys.xd[0],
+                               self.grid_sys.xd[1],
+                               self.u_policy_grid[k],
+                               bbox=[None, None, None, None],
+                               kx=1, ky=1, ))
+            elif self.n_dim == 3:
+                self.interpol_functions.append(
+                    RegularGridInterpolator((self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]),
+                                            self.u_policy_grid[k],
+                                            method='linear'))
+            else:
+                points = tuple(self.grid_sys.xd[i] for i in range(self.n_dim))
+                self.interpol_functions.append(
+                    RegularGridInterpolator(points,
+                                            self.u_policy_grid[k],
+                                            method='linear'))
 
         # Asign Controller
         self.ctl.vi_law = self.vi_law
@@ -810,7 +824,12 @@ class ValueIteration_ND:
 
         # for all inputs
         for k in range(self.sys.m):
-            u[k] = self.x2u_interpol_functions[k](x[0], x[1])
+            if self.n_dim == 2:
+                u[k] = self.interpol_functions[k](x[0], x[1])
+            elif self.n_dim == 3:
+                u[k] = self.interpol_functions[k](x[0], x[1])
+            # else:
+                # TODO
 
         return u
 
