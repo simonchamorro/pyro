@@ -24,7 +24,10 @@ sys.u_lb = np.array( [-1,-1.0] )
 # Discrete world 
 grid_sys = discretizer.GridDynamicSystem( sys , (41,41,21) , (3,3) , 0.05 ) 
 # Cost Function
-cf = costfunction.QuadraticCostFunction( sys )
+cf = costfunction.QuadraticCostFunction(
+    q=np.ones(sys.n),
+    r=np.ones(sys.m),
+    v=np.ones(sys.p))
 
 cf.xbar = np.array( [1,1,0] ) # target
 cf.INF  = 1E4
@@ -37,19 +40,19 @@ cf.R    = np.array([[0.01,0],[0,0]])
 EXPERIMENTAL TEST NOT WORKING
 """
 
-vi = valueiteration.ValueIteration_3D( grid_sys , cf )
+vi = valueiteration.ValueIteration_ND( grid_sys , cf )
 
 vi.uselookuptable = True
 vi.initialize()
-vi.load_data('parking_vi')
-#vi.compute_steps(200) 
+# vi.load_data('parking_vi')
+vi.compute_steps(200)
 vi.save_data('parking_vi')
 
 vi.assign_interpol_controller()
 
-vi.plot_J_ij( 1 )
-vi.plot_policy_ij(0)
-vi.plot_policy_ij(1)
+#vi.plot_J_ij( 1 )
+#vi.plot_policy_ij(0)
+#vi.plot_policy_ij(1)
 #
 cl_sys = controller.ClosedLoopSystem( sys , vi.ctl )
 #

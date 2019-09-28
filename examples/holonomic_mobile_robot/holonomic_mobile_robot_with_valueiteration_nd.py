@@ -36,6 +36,7 @@ vi.plot_cost2go(40000)
 vi.assign_interpol_controller()
 vi.plot_policy(0)
 vi.plot_policy(1)
+vi.plot_cost2go()
 vi.save_data('holonomic_vi')
 
 # Closed loop

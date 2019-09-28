@@ -10,7 +10,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import RectBivariateSpline as interpol2D
-from scipy.interpolate import RegularGridInterpolator
+from scipy.interpolate import RegularGridInterpolator as rgi
 from scipy.interpolate import griddata
 from scipy.interpolate import LinearNDInterpolator
 
@@ -689,11 +689,14 @@ class ValueIteration_ND:
                                     self.J, bbox=[None, None, None, None], kx=1, ky=1)
         elif self.n_dim == 3:
             # call function for random shape
-            J_interpol = RegularGridInterpolator((self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]),
-                                                 self.J, method='linear')
+            print('get interpolation for 3 dims')
+            J_interpol = rgi(points=[self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]],
+                                                 values=self.J,
+                                                 method='linear')
+            # print('J_interpol', J_interpol)
         else:
             points = tuple(self.grid_sys.xd[i] for i in range(self.n_dim))
-            J_interpol = RegularGridInterpolator(points, self.J, method='linear')
+            J_interpol = rgi(points, self.J)
 
         # For all state nodes
         for node in range(self.grid_sys.nodes_n):
@@ -728,11 +731,18 @@ class ValueIteration_ND:
                 # If the current option is allowable
                 if action_isok:
 
-                    J_next = J_interpol(x_next[0], x_next[1])
+                    # print('J_interpol', J_interpol)
+                    if self.n_dim == 2:
+                        J_next = J_interpol(x_next[0], x_next[1])
+                    else:
+                        J_next = J_interpol([x_next[0], x_next[1], x_next[2]])
 
                     # Cost-to-go of a given action
                     y = self.sys.h(x, u, 0)
-                    Q[action] = self.cf.g(x, u, y, 0) + J_next[0, 0]
+                    if self.n_dim == 2:
+                        Q[action] = self.cf.g(x, u, y, 0) + J_next[0, 0]
+                    else:
+                        Q[action] = self.cf.g(x, u, y, 0) + J_next[0]
 
                 else:
                     # Not allowable states or inputs/states combinations
@@ -801,13 +811,13 @@ class ValueIteration_ND:
                                kx=1, ky=1, ))
             elif self.n_dim == 3:
                 self.interpol_functions.append(
-                    RegularGridInterpolator((self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]),
+                    rgi((self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]),
                                             self.u_policy_grid[k],
                                             method='linear'))
             else:
                 points = tuple(self.grid_sys.xd[i] for i in range(self.n_dim))
                 self.interpol_functions.append(
-                    RegularGridInterpolator(points,
+                    rgi(points,
                                             self.u_policy_grid[k],
                                             method='linear'))
 
@@ -824,12 +834,7 @@ class ValueIteration_ND:
 
         # for all inputs
         for k in range(self.sys.m):
-            if self.n_dim == 2:
-                u[k] = self.interpol_functions[k](x[0], x[1])
-            elif self.n_dim == 3:
-                u[k] = self.interpol_functions[k](x[0], x[1])
-            # else:
-                # TODO
+            u[k] = self.interpol_functions[k](x[0], x[1])
 
         return u
 
