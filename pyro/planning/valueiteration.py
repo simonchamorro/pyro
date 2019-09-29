@@ -635,6 +635,13 @@ class ValueIteration_ND:
         # initializes nb of dimensions and continuous inputs u
         self.n_dim = self.sys.n
 
+        # J-arrays and action policy arrays
+        self.J = np.zeros(self.grid_sys.xgriddim, dtype=float)
+        self.action_policy = np.zeros(self.grid_sys.xgriddim, dtype=int)
+
+        self.Jnew = self.J.copy()
+        self.Jplot = self.J.copy()
+        
         # Controller
         self.ctl = ViController(self.sys.n, self.sys.m, self.sys.n)
 
@@ -650,45 +657,51 @@ class ValueIteration_ND:
     ##############################
     def initialize(self):
         """ initialize cost-to-go and policy """
-
-        self.J = np.zeros(self.grid_sys.xgriddim, dtype=float)
-        self.action_policy = np.zeros(self.grid_sys.xgriddim, dtype=int)
-
-        self.Jnew = self.J.copy()
-        self.Jplot = self.J.copy()
-
         # Initial evaluation
 
         # For all state nodes
         for node in range(self.grid_sys.nodes_n):
             x = self.grid_sys.nodes_state[node, :]
 
+            # print('x', x)
+            # print('node index', self.grid_sys.nodes_index[node, :])
+
+            # use tuple to get dynamic list of indices
+            indices = tuple(self.grid_sys.nodes_index[node, i] for i in range(self.n_dim))
+            # print(indices)
+
             i = self.grid_sys.nodes_index[node, 0]
             j = self.grid_sys.nodes_index[node, 1]
 
+            # Final cost
+            self.J[indices] = self.cf.h(x)
+
             # Final Cost
-            self.J[i, j] = self.cf.h(x)
+            # self.J[i, j] = self.cf.h(x)
 
     ###############################
     def compute_step(self):
         """ One step of value iteration """
 
         # Get interpolation of current cost space
-        if (self.n_dim == 2):
+        if self.n_dim == 2:
             J_interpol = interpol2D(self.grid_sys.xd[0], self.grid_sys.xd[1],
                                     self.J, bbox=[None, None, None, None], kx=1, ky=1)
-        else:
+        elif self.n_dim == 3:
             # call function for random shape
-            # TODO: how to determine the shape??
-            J_interpol = RegularGridInterpolator((self.grid_sys.xd[0], self.grid_sys.xd[1]), self.J)
+            J_interpol = RegularGridInterpolator((self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]),
+                                                 self.J, method='linear')
+        else:
+            points = tuple(self.grid_sys.xd[i] for i in range(self.n_dim))
+            J_interpol = RegularGridInterpolator(points, self.J, method='linear')
 
         # For all state nodes
         for node in range(self.grid_sys.nodes_n):
 
             x = self.grid_sys.nodes_state[node, :]
 
-            i = self.grid_sys.nodes_index[node, 0]
-            j = self.grid_sys.nodes_index[node, 1]
+            # use tuple to get dynamic list of indices
+            indices = tuple(self.grid_sys.nodes_index[node, i] for i in range(self.n_dim))
 
             # One steps costs - Q values
             Q = np.zeros(self.grid_sys.actions_n)
@@ -725,12 +738,13 @@ class ValueIteration_ND:
                     # Not allowable states or inputs/states combinations
                     Q[action] = self.cf.INF
 
-            self.Jnew[i, j] = Q.min()
-            self.action_policy[i, j] = Q.argmin()
+            self.Jnew[indices] = Q.min()
+            # print('Indices Test', self.Jnew[i, j], self.Jnew[indices], [i, j], indices)
+            self.action_policy[indices] = Q.argmin()
 
             # Impossible situation ( unaceptable situation for any control actions )
-            if self.Jnew[i, j] > (self.cf.INF - 1):
-                self.action_policy[i, j] = -1
+            if self.Jnew[indices] > (self.cf.INF - 1):
+                self.action_policy[indices] = -1
 
         # Convergence check
         delta = self.J - self.Jnew
@@ -741,7 +755,7 @@ class ValueIteration_ND:
 
         self.J = self.Jnew.copy()
 
-        # TODO: Combine deltas? Check if delta_min or max changes. Only works with the pendulum for now.
+        # TODO: Combine deltas? Check if delta_min or max changes
         return delta_min
 
     ################################
@@ -758,32 +772,44 @@ class ValueIteration_ND:
         # For all state nodes
         for node in range(self.grid_sys.nodes_n):
 
-            i = self.grid_sys.nodes_index[node, 0]
-            j = self.grid_sys.nodes_index[node, 1]
+            # use tuple to get dynamic list of indices
+            indices = tuple(self.grid_sys.nodes_index[node, i] for i in range(self.n_dim))
 
             # If no action is good
-            if (self.action_policy[i, j] == -1):
+            if (self.action_policy[indices] == -1):
 
                 # for all inputs
                 for k in range(self.sys.m):
-                    self.u_policy_grid[k][i, j] = 0
+                    self.u_policy_grid[k][indices] = 0
 
             else:
                 # for all inputs
                 for k in range(self.sys.m):
-                    self.u_policy_grid[k][i, j] = self.grid_sys.actions_input[self.action_policy[i, j], k]
+                    self.u_policy_grid[k][indices] = self.grid_sys.actions_input[self.action_policy[indices], k]
 
         # Compute Interpol function
-        self.x2u_interpol_functions = []
+        self.interpol_functions = []
 
         # for all inputs
         for k in range(self.sys.m):
-            self.x2u_interpol_functions.append(
-                interpol2D(self.grid_sys.xd[0],
-                           self.grid_sys.xd[1],
-                           self.u_policy_grid[k],
-                           bbox=[None, None, None, None],
-                           kx=1, ky=1, ))
+            if self.n_dim == 2:
+                self.interpol_functions.append(
+                    interpol2D(self.grid_sys.xd[0],
+                               self.grid_sys.xd[1],
+                               self.u_policy_grid[k],
+                               bbox=[None, None, None, None],
+                               kx=1, ky=1, ))
+            elif self.n_dim == 3:
+                self.interpol_functions.append(
+                    RegularGridInterpolator((self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]),
+                                            self.u_policy_grid[k],
+                                            method='linear'))
+            else:
+                points = tuple(self.grid_sys.xd[i] for i in range(self.n_dim))
+                self.interpol_functions.append(
+                    RegularGridInterpolator(points,
+                                            self.u_policy_grid[k],
+                                            method='linear'))
 
         # Asign Controller
         self.ctl.vi_law = self.vi_law
@@ -794,29 +820,30 @@ class ValueIteration_ND:
 
         u = np.zeros(self.sys.m)
 
+        print('x', x)
+
         # for all inputs
         for k in range(self.sys.m):
-            u[k] = self.x2u_interpol_functions[k](x[0], x[1])
+            if self.n_dim == 2:
+                u[k] = self.interpol_functions[k](x[0], x[1])
+            elif self.n_dim == 3:
+                u[k] = self.interpol_functions[k](x[0], x[1])
+            # else:
+                # TODO
 
         return u
 
     ################################
-    def compute_steps(self, l=50, plot=False, threshold=0.005):
+    def compute_steps(self, l=50, plot=False, threshold=0.0):
         """ compute number of step """
-
-        delta = 9000000
-
         step = 0
         print('Step:', step)
-        new_max = self.compute_step()
-        cur_threshold = abs(new_max - delta)
+        cur_threshold = self.compute_step()
         print('Current threshold', cur_threshold)
-        while cur_threshold > threshold or step < l:
+        while abs(cur_threshold) > threshold:
             step = step + 1
             print('Step:', step)
-            delta = new_max
-            new_max = self.compute_step()
-            cur_threshold = abs(new_max - delta)
+            cur_threshold = self.compute_step()
             print('Current threshold', cur_threshold)
 
     ################################
