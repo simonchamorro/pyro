@@ -641,7 +641,7 @@ class ValueIteration_ND:
 
         self.Jnew = self.J.copy()
         self.Jplot = self.J.copy()
-
+        
         # Controller
         self.ctl = ViController(self.sys.n, self.sys.m, self.sys.n)
 
@@ -730,7 +730,6 @@ class ValueIteration_ND:
 
                 # If the current option is allowable
                 if action_isok:
-
                     # print('J_interpol', J_interpol)
                     if self.n_dim == 2:
                         J_next = J_interpol(x_next[0], x_next[1])
@@ -742,7 +741,7 @@ class ValueIteration_ND:
                     if self.n_dim == 2:
                         Q[action] = self.cf.g(x, u, y, 0) + J_next[0, 0]
                     else:
-                        Q[action] = self.cf.g(x, u, y, 0) + J_next[0]
+                        Q[action] = self.cf.g(x, u, y, 0) + J_next
 
                 else:
                     # Not allowable states or inputs/states combinations
@@ -845,7 +844,8 @@ class ValueIteration_ND:
         print('Step:', step)
         cur_threshold = self.compute_step()
         print('Current threshold', cur_threshold)
-        while abs(cur_threshold) > threshold:
+        # while abs(cur_threshold) > threshold:
+        while step < l:
             step = step + 1
             print('Step:', step)
             cur_threshold = self.compute_step()

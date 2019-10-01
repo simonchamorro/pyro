@@ -28,6 +28,7 @@ cf = costfunction.QuadraticCostFunction(
     q=np.ones(sys.n),
     r=np.ones(sys.m),
     v=np.ones(sys.p))
+)
 
 cf.xbar = np.array( [1,1,0] ) # target
 cf.INF  = 1E4
@@ -45,7 +46,7 @@ vi = valueiteration.ValueIteration_ND( grid_sys , cf )
 vi.uselookuptable = True
 vi.initialize()
 # vi.load_data('parking_vi')
-vi.compute_steps(200)
+vi.compute_steps(l=5000)
 vi.save_data('parking_vi')
 
 vi.assign_interpol_controller()
