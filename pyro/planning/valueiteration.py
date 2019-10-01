@@ -728,11 +728,17 @@ class ValueIteration_ND:
                 # If the current option is allowable
                 if action_isok:
 
-                    J_next = J_interpol(x_next[0], x_next[1])
+                    if self.n_dim == 2:
+                        J_next = J_interpol(x_next[0], x_next[1])
+                    else:
+                        J_next = J_interpol((x_next[0], x_next[1], x_next[2]))
 
                     # Cost-to-go of a given action
                     y = self.sys.h(x, u, 0)
-                    Q[action] = self.cf.g(x, u, y, 0) + J_next[0, 0]
+                    if self.n_dim == 2:
+                        Q[action] = self.cf.g(x, u, y, 0) + J_next[0, 0]
+                    else:
+                        Q[action] = self.cf.g(x, u, y, 0) + J_next
 
                 else:
                     # Not allowable states or inputs/states combinations
@@ -840,7 +846,8 @@ class ValueIteration_ND:
         print('Step:', step)
         cur_threshold = self.compute_step()
         print('Current threshold', cur_threshold)
-        while abs(cur_threshold) > threshold:
+        # while abs(cur_threshold) > threshold:
+        while step < l:
             step = step + 1
             print('Step:', step)
             cur_threshold = self.compute_step()

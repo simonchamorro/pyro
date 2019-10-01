@@ -33,7 +33,7 @@ vi = valueiteration.ValueIteration_ND( grid_sys , qcf )
 
 vi.initialize()
 # vi.load_data('simple_pendulum_vi')
-vi.compute_steps(l=2000)
+vi.compute_steps(l=5000)
 #vi.load_data()
 vi.assign_interpol_controller()
 vi.plot_policy(0)
