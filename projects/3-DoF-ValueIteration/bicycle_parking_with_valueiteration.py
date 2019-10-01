@@ -27,7 +27,7 @@ grid_sys = discretizer.GridDynamicSystem( sys , (41,41,21) , (3,3) , 0.05 )
 cf = costfunction.QuadraticCostFunction(
     q=np.ones(sys.n),
     r=np.ones(sys.m),
-    v=np.ones(sys.p))
+    v=np.ones(sys.p)
 )
 
 cf.xbar = np.array( [1,1,0] ) # target
@@ -46,7 +46,7 @@ vi = valueiteration.ValueIteration_ND( grid_sys , cf )
 vi.uselookuptable = True
 vi.initialize()
 # vi.load_data('parking_vi')
-vi.compute_steps(l=5000)
+vi.compute_steps(20)
 vi.save_data('parking_vi')
 
 vi.assign_interpol_controller()
@@ -62,5 +62,5 @@ x0   = [0.2,0.2,0]
 tf   = 5
 
 cl_sys.compute_trajectory( x0 , tf , 10001 , 'euler')
-cl_sys.sim.plot('xu')
-cl_sys.animate_simulation()
+cl_sys.get_plotter().plot('xu')
+cl_sys.get_plotter().animate_simulation()

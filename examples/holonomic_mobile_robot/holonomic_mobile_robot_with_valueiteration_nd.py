@@ -21,7 +21,7 @@ grid_sys = discretizer.GridDynamicSystem( sys , (51,51) , (3,3) )
 cf = costfunction.QuadraticCostFunction(
     q=np.ones(sys.n),
     r=np.ones(sys.m),
-    v=np.ones(sys.p)
+    v=np.zeros(sys.p)
 )
 
 cf.INF = 1E9
@@ -30,8 +30,8 @@ cf.INF = 1E9
 vi = valueiteration.ValueIteration_ND( grid_sys , cf )
 
 vi.initialize()
-vi.compute_steps(l=1000)
-vi.compute_steps()
+vi.load_data('holonomic_vi')
+vi.compute_steps(1)
 vi.plot_cost2go(40000)
 vi.assign_interpol_controller()
 vi.plot_policy(0)
@@ -46,4 +46,4 @@ cl_sys = vi.ctl + sys
 x0   = [9,0]
 sim = cl_sys.compute_trajectory(x0 , tf=20)
 cl_sys.plot_trajectory(sim, 'xu')
-cl_sys.animate_simulation(sim, save=True, file_name='holo_vi')
+cl_sys.animate_simulation(sim)

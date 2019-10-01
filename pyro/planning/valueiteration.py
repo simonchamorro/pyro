@@ -11,8 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import RectBivariateSpline as interpol2D
 from scipy.interpolate import RegularGridInterpolator as rgi
-from scipy.interpolate import griddata
-from scipy.interpolate import LinearNDInterpolator
+from scipy.interpolate import Rbf as Rbf
 
 from pyro.control import controller
 
@@ -634,13 +633,6 @@ class ValueIteration_ND:
 
         # initializes nb of dimensions and continuous inputs u
         self.n_dim = self.sys.n
-
-        # J-arrays and action policy arrays
-        self.J = np.zeros(self.grid_sys.xgriddim, dtype=float)
-        self.action_policy = np.zeros(self.grid_sys.xgriddim, dtype=int)
-
-        self.Jnew = self.J.copy()
-        self.Jplot = self.J.copy()
         
         # Controller
         self.ctl = ViController(self.sys.n, self.sys.m, self.sys.n)
@@ -659,6 +651,13 @@ class ValueIteration_ND:
         """ initialize cost-to-go and policy """
         # Initial evaluation
 
+        # J-arrays and action policy arrays
+        self.J = np.zeros(self.grid_sys.xgriddim, dtype=float)
+        self.action_policy = np.zeros(self.grid_sys.xgriddim, dtype=int)
+
+        self.Jnew = self.J.copy()
+        self.Jplot = self.J.copy()
+
         # For all state nodes
         for node in range(self.grid_sys.nodes_n):
             x = self.grid_sys.nodes_state[node, :]
@@ -670,14 +669,10 @@ class ValueIteration_ND:
             indices = tuple(self.grid_sys.nodes_index[node, i] for i in range(self.n_dim))
             # print(indices)
 
-            i = self.grid_sys.nodes_index[node, 0]
-            j = self.grid_sys.nodes_index[node, 1]
-
             # Final cost
             self.J[indices] = self.cf.h(x)
 
-            # Final Cost
-            # self.J[i, j] = self.cf.h(x)
+        print('J shape:', self.J.shape)
 
     ###############################
     def compute_step(self):
@@ -688,11 +683,12 @@ class ValueIteration_ND:
             J_interpol = interpol2D(self.grid_sys.xd[0], self.grid_sys.xd[1],
                                     self.J, bbox=[None, None, None, None], kx=1, ky=1)
         elif self.n_dim == 3:
+
+            # print('J shape on compute : ', self.J.shape)
+
             # call function for random shape
             print('get interpolation for 3 dims')
-            J_interpol = rgi(points=[self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]],
-                                                 values=self.J,
-                                                 method='linear')
+            J_interpol = rgi([self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]], self.J)
             # print('J_interpol', J_interpol)
         else:
             points = tuple(self.grid_sys.xd[i] for i in range(self.n_dim))
@@ -810,9 +806,7 @@ class ValueIteration_ND:
                                kx=1, ky=1, ))
             elif self.n_dim == 3:
                 self.interpol_functions.append(
-                    rgi((self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]),
-                                            self.u_policy_grid[k],
-                                            method='linear'))
+                    rgi([self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]], self.u_policy_grid[k]))
             else:
                 points = tuple(self.grid_sys.xd[i] for i in range(self.n_dim))
                 self.interpol_functions.append(
@@ -838,7 +832,7 @@ class ValueIteration_ND:
         return u
 
     ################################
-    def compute_steps(self, l=50, plot=False, threshold=0.0):
+    def compute_steps(self, l=50, plot=False, threshold=1.0e-25):
         """ compute number of step """
         step = 0
         print('Step:', step)
