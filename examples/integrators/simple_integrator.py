@@ -29,7 +29,7 @@ si.plot_phase_plane(0,0) # only one state for two axis!
 qcf = costfunction.QuadraticCostFunction(
     np.ones(si.n),
     np.ones(si.m),
-    np.ones(si.p)
+    np.zeros(si.p)
 )
 
 # Simulation

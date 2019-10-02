@@ -37,7 +37,7 @@ di.plot_trajectory(sim, 'y')
 # Cost computing
 
 # Weights for quadratic cost function
-q, r, v = np.ones(di.n), np.ones(di.m), np.ones(di.p)
+q, r, v = np.ones(di.n), np.ones(di.m), np.zeros(di.p)
 qcf = costfunction.QuadraticCostFunction(q, r, v)
 
 sim_with_quad_cost = qcf.eval(sim)

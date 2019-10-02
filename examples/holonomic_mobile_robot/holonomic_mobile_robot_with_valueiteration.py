@@ -21,7 +21,7 @@ grid_sys = discretizer.GridDynamicSystem( sys , (51,51) , (3,3) )
 cf = costfunction.QuadraticCostFunction(
     q=np.ones(sys.n),
     r=np.ones(sys.m),
-    v=np.ones(sys.p)
+    v=np.zeros(sys.p)
 )
 
 cf.INF = 1E9

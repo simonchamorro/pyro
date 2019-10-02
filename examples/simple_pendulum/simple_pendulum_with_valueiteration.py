@@ -20,9 +20,9 @@ grid_sys = discretizer.GridDynamicSystem( sys )
 
 # Cost Function
 qcf = costfunction.QuadraticCostFunction(
-    np.ones(sys.n),
-    np.ones(sys.m),
-    np.ones(sys.p)
+    q=np.ones(sys.n),
+    r=np.ones(sys.m),
+    v=np.zeros(sys.p)
 )
 
 qcf.xbar = np.array([ -3.14 , 0 ]) # target
