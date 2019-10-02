@@ -50,12 +50,16 @@ class StateSpaceSystem(ContinuousDynamicSystem):
     def f(self, x, u, t):
         x = np.asarray(x).reshape((self.n,))
         u = np.asarray(u).reshape((self.m,))
-        return np.dot(self.A, x) + np.dot(self.B, u)
+        result = np.dot(self.A, x) + np.dot(self.B, u)
+        assert result.size == self.n
+        return result.reshape((self.n,))
 
     def h(self, x, u, t):
         x = np.asarray(x).reshape((self.n,))
         u = np.asarray(u).reshape((self.m,))
-        return np.dot(self.C, x) + np.dot(self.D, u)
+        result = np.dot(self.C, x) + np.dot(self.D, u)
+        assert result.size == self.p
+        return result.reshape((self.p,))
 
 
 def _approx_jacobian(f, x0, epsilons):

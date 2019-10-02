@@ -177,8 +177,10 @@ def test_linearize_pendulum():
     nlsys.m1 = 1.2
     nlsys.d1 = 0.1
 
+    # Linearization point
     x0 = np.zeros((2, 1))
     u0 = np.zeros((1,))
+    y0 = nlsys.h(x0, 0, 0).reshape((2,))
 
     # linearize with epsilon = 0.01 rad (~1 deg)
     linsys = linearize(nlsys, x0, u0, epsilon_x=0.01)
@@ -189,19 +191,14 @@ def test_linearize_pendulum():
     nlsim = nlsys.compute_trajectory(x_init, tf=10)
     linsim = linsys.compute_trajectory(x_init, tf=10)
 
-    rtol = 0.001 # .1 %
-    atol = 0.001 # approx .5 degree
-
-    from test_utils import compare_signals
-    from matplotlib import pyplot
-    compare_signals(nlsim.t, nlsim.y, linsim.t, linsim.y)
-    pyplot.show()
+    rtol = 0.0
+    atol = x_init[0] * 0.02 # 2% error tolerance
 
     assert np.allclose(nlsim.t, linsim.t)
     assert np.allclose(nlsim.x, linsim.x, rtol, atol)
     assert np.allclose(nlsim.dx, linsim.dx, rtol, atol)
     assert np.allclose(nlsim.u, linsim.u)
-    assert np.allclose(nlsim.y, linsim.y, rtol, atol)
+    assert np.allclose(nlsim.y, (linsim.y + y0), rtol, atol)
 
 if __name__ == "__main__":
-    test_linearize_pendulum()
+    pass
