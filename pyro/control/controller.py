@@ -121,6 +121,7 @@ class StaticController:
         return cl_sys
     
     
+
 ###############################################################################
 # Mother "Static controller + dynamic system" class
 ###############################################################################
@@ -324,6 +325,75 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
 
     def plot_phase_plane_trajectory_closed_loop(self, traj, x_axis=0, y_axis=1):
         self.get_plotter().phase_plane_trajectory_closed_loop(traj, x_axis, y_axis)
+
+
+class StatefulController(StaticController):
+    def __add__(self, sys):
+        return StatefulCLSystem(sys, self)
+
+class StatefulCLSystem(ClosedLoopSystem):
+    """Closed loop system with stateful controller
+    """
+    def __init__(self, cds, ctl):
+        super().__init__(cds, ctl)
+
+        # Add extra states that represent system memory
+        self.n = self.cds.n + self.ctl.n
+
+    def f(self, x, u, t):
+        x_sys, x_ctl = self._split_states(x)
+
+        # Input to CL system interpreted as reference signal
+        r = u
+
+        # Eval current system output. Assume there is no feedforward term, as it
+        # would cause an algebraic loop
+        y = self.cds.h(x_sys, self.cds.ubar, t)
+
+        # input u to dynamic system evaluated by controller
+        u = self.ctl.c(x_ctl, y, r)
+
+        dx_sys = self.cds.f(x_sys, u, t)
+        dx_ctl = self.ctl.f(x_ctl, y, r)
+
+        dx = np.stack([dx_sys, dx_ctl], axis=0)
+        assert dx.shape == (self.n,)
+        return dx
+
+    def h(self, x, u, t):
+        x_sys, _ = self._split_states(x)
+        return self.cds.h(x_sys, u, t)
+
+    def compute_trajectory(self , x0, costfunc=None, **kwargs):
+        """Simulation of time evolution of the system
+
+        Parameters
+        ----------
+        x0 : array_like
+            Vector of size (`self.cds.n`) representing the initial state values for the
+            dynamic system. Initial values for the controller are calculated internally.
+        costfunc : instance of `pyro.analysis.costfunction.CostFunction`, optional
+            Optional cost function to evaluate based on the resulting trajectory
+        kwargs : see arguments to `pyro.analysis.simulation.Simulator`
+        """
+
+        x0 = np.asarray(x0)
+        if x0.shape != (self.cds.n,):
+            raise ValueError("Expected x0 of shape (%d,)" % self.cds.n)
+
+        sol = simulation.Simulator(self, x0=x0, **kwargs).compute()
+        sol = self._compute_inputs(sol)
+
+        if costfunc is not None:
+            sol = costfunc.eval(sol)
+
+        return sol
+
+    def _split_states(self, x):
+        """Separate full state vector into system and controller states"""
+        x_sys, x_ctl = x[:self.cds.n], x[self.cds.n:]
+        assert x_ctl.shape == (self.ctl.n)
+        return (x_sys, x_ctl)
 
 
 '''
