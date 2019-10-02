@@ -6,29 +6,22 @@ class StateSpaceSystem(ContinuousDynamicSystem):
     """Time-invariant state space representation of dynamic system
 
     ```
-    f(x, u, t) = A*x + B*u
-    h(x, u, t) = C*x + D*u + ye
+    f = A*x + B*u
+    h = C*x + D*u
     ```
 
     Parameters
     ----------
     A, B, C, D : array_like
         The matrices which define the system
-    ye : array_like, optional
-        Optional constant array added to the output signal ``y``
 
     """
 
-    def __init__(self, A, B, C, D, ye=None):
+    def __init__(self, A, B, C, D):
         self.A = A
         self.B = B
         self.C = C
         self.D = D
-
-        if ye is not None:
-            self.ye = ye
-        else:
-            self.ye = np.zeros((self.C.shape[0],))
 
         self._check_dimensions()
 
@@ -54,15 +47,6 @@ class StateSpaceSystem(ContinuousDynamicSystem):
         if self.C.shape[0] != self.D.shape[0]:
             raise ValueError("Number of rows in C does not match D")
 
-        if self.ye.ndim != 1:
-            if self.ye.size == self.ye.shape[0]:
-                self.ye = self.ye.reshape((self.ye.size,))
-            else:
-                raise ValueError("self.ye must be 1D array")
-
-        if self.C.shape[0] != self.ye.shape[0]:
-            raise ValueError("Number of rows in C does not match ye")
-
     def f(self, x, u, t):
         x = np.asarray(x).reshape((self.n,))
         u = np.asarray(u).reshape((self.m,))
@@ -71,7 +55,7 @@ class StateSpaceSystem(ContinuousDynamicSystem):
     def h(self, x, u, t):
         x = np.asarray(x).reshape((self.n,))
         u = np.asarray(u).reshape((self.m,))
-        return np.dot(self.C, x) + np.dot(self.D, u) + self.ye
+        return np.dot(self.C, x) + np.dot(self.D, u)
 
 
 def _approx_jacobian(f, x0, epsilons):
@@ -163,6 +147,4 @@ def linearize(sys, x0, u0, epsilon_x, epsilon_u=None):
     C = _approx_jacobian(h_x, x0, epsilon_x)
     D = _approx_jacobian(h_u, u0, epsilon_u)
 
-    ye = sys.h(x0, u0, 0)
-
-    return StateSpaceSystem(A, B, C, D, ye)
+    return StateSpaceSystem(A, B, C, D)

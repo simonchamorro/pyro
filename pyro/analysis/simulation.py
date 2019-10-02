@@ -123,7 +123,7 @@ class Simulator:
         self.n  = int(n)
         self.dt = ( tf + 0.0 - self.t0 ) / ( n - 1 )
         self.solver = solver
-        self.x0 = np.asarray(x0)
+        self.x0 = x0
         self.u = u
 
         if self.x0 is None:
