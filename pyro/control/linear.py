@@ -157,9 +157,17 @@ class PIDController(controller.StatefulController):
     def get_x_dv(self, x_ctl):
         return x_ctl[self.p:]
 
-    def get_initial_state(self, sys, x0_sys):
+    def get_initial_state(self, sys, x0_sys, r):
         """Evaluate the initial condition for the numerical solution"""
-        error = r - y
+        y = sys.h(x0_sys, sys.ubar, t=0)
+        error = r(0) - y
+
+        x0_int = np.zeros(self.p)
+        x0_deriv = error
+        x0 = np.stack([x0_int, x0_deriv], axis=0)
+
+        assert x0.shape == (self.n,)
+        return x0
 
 
 '''

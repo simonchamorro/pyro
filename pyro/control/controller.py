@@ -260,16 +260,25 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
     
     ###########################################################################
     def compute_trajectory(self,
-        x0, tf=10 , n=10001 , solver='ode', costfunc=None, u=None):
-        """ 
-        Simulation of time evolution of the system
-        ------------------------------------------------
-        x0 : initial time
-        tf : final time
-        
+        x0, tf=10 , n=10001 , solver='ode', costfunc=None, r=None):
+        """Simulation of time evolution of the system
+
+        Parameters
+        ----------
+        x0: array_like
+            Vector of initial conditions, shape (``self.n``,)
+        costfunc : instance of `pyro.analysis.costfunction.CostFunction`, optional
+            Optional cost function to evaluate based on the resulting trajectory
+        r: callable
+            Function of time (``r = f(t)``) that returns the reference signal
+            for the closed-loop system.
+
+        See arguments to `pyro.analysis.simulation.Simulator` for the description
+        of other parameters.
+
         """
 
-        sol = super().compute_trajectory(x0, tf=tf, solver=solver, u=u, costfunc=None)
+        sol = super().compute_trajectory(x0, tf=tf, solver=solver, u=r, costfunc=None)
         sol = self._compute_inputs(sol)
 
         if costfunc is not None:
@@ -364,30 +373,30 @@ class StatefulCLSystem(ClosedLoopSystem):
         x_sys, _ = self._split_states(x)
         return self.cds.h(x_sys, u, t)
 
-    def compute_trajectory(self , x0, costfunc=None, **kwargs):
+    def compute_trajectory(self , x0_sys, r=None, **kwargs):
         """Simulation of time evolution of the system
 
         Parameters
         ----------
-        x0 : array_like
+        x0_sys : array_like
             Vector of size (`self.cds.n`) representing the initial state values for the
             dynamic system. Initial values for the controller are calculated internally.
-        costfunc : instance of `pyro.analysis.costfunction.CostFunction`, optional
-            Optional cost function to evaluate based on the resulting trajectory
-        kwargs : see arguments to `pyro.analysis.simulation.Simulator`
+
+        See `ClosedLoopSystem.compute_tranjectory` for description of other paramters.
+
         """
 
-        x0 = np.asarray(x0)
-        if x0.shape != (self.cds.n,):
-            raise ValueError("Expected x0 of shape (%d,)" % self.cds.n)
+        if r is None:
+            r = lambda t: self.ctl.rbar
 
-        sol = simulation.Simulator(self, x0=x0, **kwargs).compute()
-        sol = self._compute_inputs(sol)
+        x0_sys = np.asarray(x0_sys)
+        if x0_sys.shape != (self.cds.n,):
+            raise ValueError("Expected x0_sys of shape (%d,)" % self.cds.n)
 
-        if costfunc is not None:
-            sol = costfunc.eval(sol)
+        x0_ctl = self.ctl.get_initial_state(self.cds, x0_sys, r)
+        x0 = np.stack([x0_sys, x0_ctl], axis=0)
 
-        return sol
+        return super().compute_trajectory(x0=x0, r=r, **kwargs)
 
     def _split_states(self, x):
         """Separate full state vector into system and controller states"""
