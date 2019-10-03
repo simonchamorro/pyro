@@ -278,7 +278,7 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
 
         """
 
-        sol = super().compute_trajectory(x0, tf=tf, solver=solver, u=r, costfunc=None)
+        sol = super().compute_trajectory(x0, tf=tf, solver=solver, u=r, n=n, costfunc=None)
         sol = self._compute_inputs(sol)
 
         if costfunc is not None:
@@ -337,6 +337,12 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
 
 
 class StatefulController(StaticController):
+    def c(self, xctl, y, r, t):
+        return np.zeros(self.m)
+
+    def f(self, xctl, y, r, t):
+        return np.zeros(self.n)
+
     def __add__(self, sys):
         return StatefulCLSystem(sys, self)
 
@@ -360,12 +366,12 @@ class StatefulCLSystem(ClosedLoopSystem):
         y = self.cds.h(x_sys, self.cds.ubar, t)
 
         # input u to dynamic system evaluated by controller
-        u = self.ctl.c(x_ctl, y, r)
+        u = self.ctl.c(x_ctl, y, r, t)
 
         dx_sys = self.cds.f(x_sys, u, t)
-        dx_ctl = self.ctl.f(x_ctl, y, r)
+        dx_ctl = self.ctl.f(x_ctl, y, r, t)
 
-        dx = np.stack([dx_sys, dx_ctl], axis=0)
+        dx = np.concatenate([dx_sys, dx_ctl], axis=0)
         assert dx.shape == (self.n,)
         return dx
 
@@ -382,26 +388,48 @@ class StatefulCLSystem(ClosedLoopSystem):
             Vector of size (`self.cds.n`) representing the initial state values for the
             dynamic system. Initial values for the controller are calculated internally.
 
-        See `ClosedLoopSystem.compute_tranjectory` for description of other paramters.
+        See `ClosedLoopSystem.compute_trajectory` for description of other paramters.
 
         """
 
         if r is None:
             r = lambda t: self.ctl.rbar
 
-        x0_sys = np.asarray(x0_sys)
+        x0_sys = np.asarray(x0_sys).flatten()
         if x0_sys.shape != (self.cds.n,):
             raise ValueError("Expected x0_sys of shape (%d,)" % self.cds.n)
 
         x0_ctl = self.ctl.get_initial_state(self.cds, x0_sys, r)
-        x0 = np.stack([x0_sys, x0_ctl], axis=0)
+        x0 = np.concatenate([x0_sys, x0_ctl], axis=0)
 
         return super().compute_trajectory(x0=x0, r=r, **kwargs)
+
+    def _compute_inputs(self, sol):
+        """ Compute internal control signal of the closed-loop system """
+
+        r_sol = sol.u.copy() # reference is input of combined sys
+        u_sol = np.empty((sol.n, self.ctl.m))
+
+        # Compute internal input signal
+        for i in range(r_sol.shape[0]):
+
+            ri = r_sol[i,:]
+            yi = sol.y[i,:]
+            ti = sol.t[i]
+            _, x_ctl = self._split_states(sol.x[i, :])
+
+            u_sol[i,:] = self.ctl.c(x_ctl, yi, ri, ti)
+
+        new_sol = copy(sol)
+        new_sol.r = r_sol
+        new_sol.u = u_sol
+
+        return new_sol
 
     def _split_states(self, x):
         """Separate full state vector into system and controller states"""
         x_sys, x_ctl = x[:self.cds.n], x[self.cds.n:]
-        assert x_ctl.shape == (self.ctl.n)
+        assert x_ctl.shape == (self.ctl.n,)
         return (x_sys, x_ctl)
 
 

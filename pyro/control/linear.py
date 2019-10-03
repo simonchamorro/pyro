@@ -107,23 +107,25 @@ class PIDController(controller.StatefulController):
     """
 
     def __init__(self, KP, KI, KD, dv_tau=3E-3):
-        self.KI = KI
-        self.KP = KP
-        self.KD = KD
+        super().__init__()
+        self.KI = np.asarray(KI)
+        self.KP = np.asarray(KP)
+        self.KD = np.asarray(KD)
 
         self.dv_tau = dv_tau
 
         self.m = self.KP.shape[0]
         self.p = self.KP.shape[1]
         self.n = self.p * 2
+        self.k = self.p
 
-    def f(self, x_ctl, y, r):
+    def f(self, x_ctl, y, r, t):
         """Evaluate derivative of controller state"""
 
         if x_ctl.shape != (self.n,):
-            return ValueError("Expected x_ctl with shape (%d,)" % self.n)
+            raise ValueError("Expected x_ctl with shape (%d,)" % self.n)
         if y.shape != (self.p,) or r.shape != (self.p,):
-            return ValueError("Expected r and y with shape (%d,)" % self.p)
+            raise ValueError("Expected r and y with shape (%d,)" % self.p)
 
         # Error
         e = r - y
@@ -135,11 +137,14 @@ class PIDController(controller.StatefulController):
         x_dv = self.get_x_dv(x_ctl)
         dx_dv = (e - x_dv) / self.dv_tau
 
-        dx = np.stack([dx_int, dx_dv], axis=0)
+        dx = np.concatenate([dx_int, dx_dv], axis=0)
         assert dx.shape == (self.n,)
         return dx
 
-    def c(self, x_ctl, y, r):
+    def c(self, x_ctl, y, r, t):
+        if x_ctl.shape != (self.n, ):
+            raise ValueError("expected x_ctl with shape (%d,)" % self.n)
+
         # Instantaneous error
         e = r - y
 
@@ -164,7 +169,7 @@ class PIDController(controller.StatefulController):
 
         x0_int = np.zeros(self.p)
         x0_deriv = error
-        x0 = np.stack([x0_int, x0_deriv], axis=0)
+        x0 = np.concatenate([x0_int, x0_deriv], axis=0)
 
         assert x0.shape == (self.n,)
         return x0

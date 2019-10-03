@@ -123,14 +123,17 @@ class Simulator:
         self.n  = int(n)
         self.dt = ( tf + 0.0 - self.t0 ) / ( n - 1 )
         self.solver = solver
-        self.x0 = x0
+        self.x0 = np.asarray(x0).flatten()
         self.u = u
 
         if self.x0 is None:
             self.x0 = np.zeros( self.cds.n )
 
-
     ##############################
+
+    def _u_wrapped(self, t):
+        return np.asanyarray(self.u(t)).flatten()
+
     def compute(self):
         """ Integrate trought time """
 
@@ -139,7 +142,7 @@ class Simulator:
         if self.solver == 'ode':
             # Wrap CDS f() ODE by including u(t)
             def func_u(x, t):
-                return self.cds.f(x, self.u(t), t)
+                return self.cds.f(x, self._u_wrapped(t), t)
 
             x_sol = odeint(func_u , self.x0 , t)
 
@@ -151,7 +154,7 @@ class Simulator:
             for i in range(self.n):
                 ti = t[i]
                 xi = x_sol[i,:]
-                ui = self.u(ti)
+                ui = self._u_wrapped(ti)
 
                 dx_sol[i,:] = self.cds.f( xi , ui , ti )
                 y_sol[i,:]  = self.cds.h( xi , ui , ti )
@@ -171,7 +174,7 @@ class Simulator:
 
                 ti = t[i]
                 xi = x_sol[i,:]
-                ui = self.u(ti)
+                ui = self._u_wrapped(ti)
 
                 if i+1<self.n:
                     dx_sol[i] = self.cds.f( xi , ui , ti )
