@@ -22,7 +22,7 @@ grid_sys = discretizer.GridDynamicSystem( sys )
 qcf = costfunction.QuadraticCostFunction(
     np.ones(sys.n),
     np.ones(sys.m),
-    np.ones(sys.p)
+    np.zeros(sys.p)
 )
 
 qcf.xbar = np.array([ -3.14 , 0 ]) # target
@@ -33,7 +33,7 @@ vi = valueiteration.ValueIteration_ND( grid_sys , qcf )
 
 vi.initialize()
 vi.load_data('simple_pendulum_vi')
-# vi.compute_steps()
+# vi.compute_steps(200)
 vi.assign_interpol_controller()
 vi.plot_policy(0)
 vi.plot_cost2go()

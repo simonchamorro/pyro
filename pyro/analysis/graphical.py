@@ -278,7 +278,7 @@ class Animator:
             line  = self.showax.plot( x_pts, y_pts, self.linestyle)
             self.showlines.append( line )
         
-        plt.show()
+        plt.show(block=True)
         
     
     ###########################################################################

@@ -911,6 +911,8 @@ class ValueIteration_ND:
         plt.grid(True)
         plt.tight_layout()
 
+        plt.draw()
+
         ################################
 
     def load_data(self, name='DP_data', prefix=''):
