@@ -1,7 +1,7 @@
 
 import numpy as np
 
-from scipy import integrate
+from scipy import integrate, signal
 
 from pyro.control.linear import PIDController
 
@@ -53,11 +53,15 @@ def test_sdof_prop():
 
 def test_sdof_pid():
     """Check PID controller outputs"""
+    tf = 2
+    npts = 500
+    tau = 1E-2
+
     sys = FirstOrder(1)
-    ctl = PIDController([[2]], [[1]], [[0]], dv_tau=0.001)
+    ctl = PIDController([[2]], [[1]], [[0]], dv_tau=tau)
     clsys = ctl + sys
 
-    sim = clsys.compute_trajectory(x0_sys=0, r=step(1), tf=2, n=500)
+    sim = clsys.compute_trajectory(x0_sys=0, r=step(1), tf=tf, n=npts)
     #sys.plot_trajectory(sim, 'xu')
 
     # error
@@ -72,6 +76,12 @@ def test_sdof_pid():
     assert np.allclose(sim.u[:, 0], ctl_ref, atol=0, rtol=1E-4)
 
     numder = _deriv(e, sim.t)
+    nyqfreq = npts / tf / 2
+    w0 = (1/tau/2/np.pi)  / nyqfreq
+    print(w0)
+    lowpass = signal.iirfilter(1, w0, btype='lowpass', analog=False)
+    filtered_der = signal.lfilter(*lowpass, numder)
+
     ctlder = (e - sim.x[:, 2]) / ctl.dv_tau
 
     from matplotlib import pyplot as plt
@@ -79,6 +89,7 @@ def test_sdof_pid():
     plt.plot(sim.t, e, label="error")
     plt.plot(sim.t, ctlder, '.', label="ctl filtered deriv")
     plt.plot(sim.t, numder, label="numerical error deriv")
+    plt.plot(sim.t, filtered_der, label="filtered deriv")
     plt.legend()
     plt.show()
 
