@@ -220,12 +220,12 @@ class CLosedLoopSimulator(Simulator):
 
     ###########################################################################
     def _compute_inputs(self, sol):
-        """ Compute internal control signal of the closed-loop system """
+        """ Compute internal control signal_proc of the closed-loop system """
 
         r_sol = sol.u.copy() # reference is input of combined sys
         u_sol = np.zeros((self.n,self.sys.m))
 
-        # Compute internal input signal
+        # Compute internal input signal_proc
         for i in range(self.n):
 
             ri = r_sol[i,:]

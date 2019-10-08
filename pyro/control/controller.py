@@ -23,8 +23,8 @@ class StaticController:
     """ 
     Mother class for memoryless controllers
     ---------------------------------------
-    r  : reference signal vector  k x 1
-    y  : sensor signal vector     p x 1
+    r  : reference signal_proc vector  k x 1
+    y  : sensor signal_proc vector     p x 1
     u  : control inputs vector    m x 1
     t  : time                     1 x 1
     ---------------------------------------
@@ -50,7 +50,7 @@ class StaticController:
         # Label
         self.name = 'StaticController'
         
-        # Reference signal info
+        # Reference signal_proc info
         self.ref_label = []
         self.ref_units = []
         
@@ -71,8 +71,8 @@ class StaticController:
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal vector     p x 1
-        r  : reference signal vector  k x 1
+        y  : sensor signal_proc vector     p x 1
+        r  : reference signal_proc vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS
@@ -98,7 +98,7 @@ class StaticController:
         default reference
         
         INPUTS
-        y  : sensor signal vector     p x 1
+        y  : sensor signal_proc vector     p x 1
         t  : time                     1 x 1
         
         OUPUTS
@@ -146,10 +146,10 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         # Check dimensions match
         if not (self.cds.m == self.ctl.m ):
             raise NameError('Dimension mismatch between controller and' + 
-            ' dynamic system for the input signal u')
+            ' dynamic system for the input signal_proc u')
         elif not (self.cds.p == self.ctl.p ):
             raise NameError('Dimension mismatch between controller and' + 
-            ' dynamic system for the output signal y')
+            ' dynamic system for the output signal_proc y')
         ######################################################################
         
         # Dimensions of global closed-loop dynamic system
@@ -276,12 +276,12 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         return sol
 
     def _compute_inputs(self, sol):
-        """ Compute internal control signal of the closed-loop system """
+        """ Compute internal control signal_proc of the closed-loop system """
 
         r_sol = sol.u.copy() # reference is input of combined sys
         u_sol = np.empty((sol.n, self.ctl.m))
 
-        # Compute internal input signal
+        # Compute internal input signal_proc
         for i in range(r_sol.shape[0]):
 
             ri = r_sol[i,:]

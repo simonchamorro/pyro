@@ -25,8 +25,8 @@ class ViController(controller.StaticController):
     """ 
     Simple proportionnal compensator
     ---------------------------------------
-    r  : reference signal vector  k x 1
-    y  : sensor signal vector     m x 1
+    r  : reference signal_proc vector  k x 1
+    y  : sensor signal_proc vector     m x 1
     u  : control inputs vector    p x 1
     t  : time                     1 x 1
     ---------------------------------------
@@ -881,6 +881,9 @@ class ValueIteration_ND:
         plt.colorbar()
         plt.grid(True)
         plt.tight_layout()
+
+        # plt.draw()
+        plt.show()
 
     ################################
     def plot_policy(self, i=0):
