@@ -46,4 +46,4 @@ cl_sys = vi.ctl + sys
 x0   = [9,0]
 sim = cl_sys.compute_trajectory(x0 , tf=20)
 cl_sys.plot_trajectory(sim, 'xu')
-cl_sys.animate_simulation(sim)
+cl_sys.animate_simulation(sim, save=True, file_name='holonomic')

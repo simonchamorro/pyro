@@ -47,5 +47,5 @@ x0   = [0,0]
 tf   = 10
 sim = cl_sys.compute_trajectory(x0, tf, costfunc=qcf)
 cl_sys.get_plotter().plot(sim, 'xuj')
-cl_sys.get_animator().animate_simulation(sim)
+cl_sys.get_animator().animate_simulation(sim, save=True, file_name='simple_pendulum')
 

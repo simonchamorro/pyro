@@ -46,7 +46,7 @@ vi = valueiteration.ValueIteration_ND( grid_sys , cf )
 vi.uselookuptable = True
 vi.initialize()
 vi.load_data('parking_vi')
-# vi.compute_steps(200)
+vi.compute_steps(200)
 vi.save_data('parking_vi')
 
 vi.assign_interpol_controller()
@@ -61,6 +61,6 @@ cl_sys = controller.ClosedLoopSystem( sys , vi.ctl )
 x0   = [0.2,0.2,0]
 tf   = 5
 
-cl_sys.compute_trajectory( x0 , tf , 10001 , 'euler')
-cl_sys.get_plotter().plot('xu')
-cl_sys.get_plotter().animate_simulation()
+sim = cl_sys.compute_trajectory( x0 , tf , 10001 , 'euler')
+cl_sys.get_plotter().plot(sim, 'xu')
+cl_sys.get_animator().animate_simulation(sim, save=True, file_name='bicycle')
