@@ -827,7 +827,10 @@ class ValueIteration_ND:
 
         # for all inputs
         for k in range(self.sys.m):
-            u[k] = self.interpol_functions[k](x[0], x[1])
+            if self.n_dim == 2:
+                u[k] = self.interpol_functions[k](x[0], x[1])
+            else:
+                u[k] = self.interpol_functions[k](x)
 
         return u
 
@@ -881,6 +884,9 @@ class ValueIteration_ND:
         plt.colorbar()
         plt.grid(True)
         plt.tight_layout()
+
+        plt.draw()
+        plt.show()
 
     ################################
     def plot_policy(self, i=0):
