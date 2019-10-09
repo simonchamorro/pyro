@@ -7,6 +7,8 @@ from pyro.control.linear import PIDController
 
 from pyro.dynamic.system import ContinuousDynamicSystem
 
+from pyro.dynamic.manipulator import TwoLinkManipulator
+
 class FirstOrder(ContinuousDynamicSystem):
     def __init__(self, tau):
         super().__init__(1, 1, 1)
@@ -48,7 +50,6 @@ def filtered_deriv(y, x, tau=0):
 
     # Create initial conditions so y=0 at t=0
     zi = signal.lfiltic(*lowpass, y=[0], x=dy[:1])
-    print(zi)
 
     filtered, _ = signal.lfilter(*lowpass, dy, zi=-zi)
     return filtered
@@ -64,7 +65,7 @@ def test_sdof_prop():
     ctl = PIDController([[kp]], [[0]], [[0]])
     clsys = ctl + sys
 
-    sim = clsys.compute_trajectory(x0_sys=[0], r=step(1), tf=tf, n=100)
+    sim = clsys.compute_trajectory(x0=[0], r=step(1), tf=tf, n=100)
     sys.plot_trajectory(sim, 'xu')
 
     # analytic solution
@@ -84,7 +85,7 @@ def test_sdof_pid():
     sys = FirstOrder(1)
     ctl = PIDController([[3]], [[2]], [[0.6]], dv_tau=tau)
     clsys = ctl + sys
-    sim = clsys.compute_trajectory(x0_sys=0, r=step(1), tf=tf, n=npts)
+    sim = clsys.compute_trajectory(0, r=step(1), tf=tf, n=npts)
 
     # error
     e = (sim.r - sim.y)[:, 0]
@@ -99,6 +100,48 @@ def test_sdof_pid():
     ctl_ref = (e * ctl.KP + e_int * ctl.KI + e_fd * ctl.KD).reshape((sim.n,))
 
     assert np.allclose(sim.u[:, 0], ctl_ref, atol=0, rtol=1E-2)
+
+def test_nd_pid():
+    tf = 2
+    npts = 500
+    tau = 1E-2
+
+    class DummyManipulator(TwoLinkManipulator):
+        """Manipulator with null response to inputs"""
+        def __init__(self):
+            super().__init__()
+            self.p = 2
+
+        def B(self, q):
+            return np.zeros(self.dof)
+
+        def h(self, x, u, t):
+            """Read joint positions"""
+            return x[:2]
+
+    sys = DummyManipulator()
+    ctl = PIDController(
+        KP = np.ones((2,2)),
+        KI = np.ones((2,2)),
+        KD = np.ones((2,2)),
+        dv_tau=tau
+    )
+    clsys = ctl + sys
+
+    x0 = [np.pi-0.5, np.pi/2, 0, 0]
+    sim = clsys.compute_trajectory(x0=x0, tf=tf, n=npts)
+
+    errors = sim.r - sim.y
+
+    e_int = integrate.cumtrapz(errors, sim.t, axis=0, initial=0)
+
+    e_der = np.empty(errors.shape)
+    for j in range(errors.shape[1]):
+        e_der[:, j] = filtered_deriv(errors[:, j], sim.t, tau=tau)
+
+    ctl_ref = errors.dot(ctl.KP.T) + e_int.dot(ctl.KI.T) + e_der.dot(ctl.KD.T)
+
+    assert np.allclose(sim.u, ctl_ref, atol=0.05)
 
 if __name__ == "__main__":
     pass

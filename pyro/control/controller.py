@@ -5,6 +5,8 @@ Created on Mon Oct 22 08:40:31 2018
 @author: alxgr
 """
 
+from abc import ABC, abstractmethod
+
 from copy import copy
 
 import numpy as np
@@ -19,7 +21,7 @@ from pyro.analysis import Trajectory
 # Mother Controller class
 ###############################################################################
 
-class StaticController:
+class StaticController(ABC):
     """ 
     Mother class for memoryless controllers
     ---------------------------------------
@@ -66,6 +68,7 @@ class StaticController:
         
     
     #############################
+    @abstractmethod
     def c( self , y , r , t = 0 ):
         """ 
         Feedback static computation u = c(y,r,t)
@@ -336,11 +339,49 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         self.get_plotter().phase_plane_trajectory_closed_loop(traj, x_axis, y_axis)
 
 
-class StatefulController(StaticController):
+class StatefulController(ABC):
+    """Controller with states
+
+    Parameters
+    ----------
+    n : int
+        number of controller states
+    m : int
+        number of controller outputs
+    p : int
+        number of controller inputs
+
+    """
+    def __init__(self, n, m, p):
+        self.n = n
+        self.m = m
+        self.p = p
+        self.k = p
+
+        self.name = "StatefulController"
+
+        self.ref_label = ["Ref. %d" % i for i in range(self.p)]
+        self.ref_units = [''] * self.p
+
+        # Default constant reference signal
+        self.rbar = np.zeros(self.p)
+
+        # Default bounds
+        self.r_ub = np.zeros(self.k) + 10 # upper bounds
+        self.r_lb = np.zeros(self.k) - 10 # lower bounds
+
+    @abstractmethod
     def c(self, xctl, y, r, t):
+        """Controller output function"""
         return np.zeros(self.m)
 
+    @abstractmethod
     def f(self, xctl, y, r, t):
+        """Differential equation describing the internal controller states.
+
+        In the form ```dx = f(x, y, r, t)``. This equation is numerically solved during
+        system simulation.
+        """
         return np.zeros(self.n)
 
     def __add__(self, sys):
@@ -379,7 +420,7 @@ class StatefulCLSystem(ClosedLoopSystem):
         x_sys, _ = self._split_states(x)
         return self.cds.h(x_sys, u, t)
 
-    def compute_trajectory(self , x0_sys, r=None, **kwargs):
+    def compute_trajectory(self , x0, r=None, **kwargs):
         """Simulation of time evolution of the system
 
         Parameters
@@ -395,14 +436,14 @@ class StatefulCLSystem(ClosedLoopSystem):
         if r is None:
             r = lambda t: self.ctl.rbar
 
-        x0_sys = np.asarray(x0_sys).flatten()
-        if x0_sys.shape != (self.cds.n,):
-            raise ValueError("Expected x0_sys of shape (%d,)" % self.cds.n)
+        x0 = np.asarray(x0).flatten()
+        if x0.shape != (self.cds.n,):
+            raise ValueError("Expected x0 of shape (%d,)" % self.cds.n)
 
-        x0_ctl = self.ctl.get_initial_state(self.cds, x0_sys, r)
-        x0 = np.concatenate([x0_sys, x0_ctl], axis=0)
+        x0_ctl = self.ctl.get_initial_state(self.cds, x0, r)
+        x0_full = np.concatenate([x0, x0_ctl], axis=0)
 
-        return super().compute_trajectory(x0=x0, r=r, **kwargs)
+        return super().compute_trajectory(x0=x0_full, r=r, **kwargs)
 
     def _compute_inputs(self, sol):
         """ Compute internal control signal of the closed-loop system """

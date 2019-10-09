@@ -76,7 +76,7 @@ class ProportionnalSingleVariableController( controller.StaticController ) :
     
 
 class PIDController(controller.StatefulController):
-    """General n-state PID controller
+    """General MIMO PID controller
 
     Parameters
     ----------
@@ -89,15 +89,6 @@ class PIDController(controller.StatefulController):
     dv_tau : float, optional
         Time constant of derivative filter.
 
-    Attributes
-    ----------
-    n : int
-        number of controller states
-    m : int
-        number of controller outputs
-    p : int
-        number of controller inputs
-
     Notes
     -----
     The error derivative is filtered and computed according to governing equations
@@ -107,17 +98,13 @@ class PIDController(controller.StatefulController):
     """
 
     def __init__(self, KP, KI, KD, dv_tau=3E-3):
-        super().__init__()
         self.KI = np.asarray(KI)
         self.KP = np.asarray(KP)
         self.KD = np.asarray(KD)
-
         self.dv_tau = dv_tau
+        self.name = "PID Controller"
 
-        self.m = self.KP.shape[0]
-        self.p = self.KP.shape[1]
-        self.n = self.p * 2
-        self.k = self.p
+        super().__init__(n=self.KP.shape[1]*2, m=self.KP.shape[0], p=self.KP.shape[1])
 
     def f(self, x_ctl, y, r, t):
         """Evaluate derivative of controller state"""
