@@ -23,13 +23,36 @@ def step(a, delay=0):
             return a
     return u
 
-def _deriv(y, x):
+def filtered_deriv(y, x, tau=0):
+    """Numerical derivative with optional lowpass filter.
+
+    tau is the filter time constant expressed in same units as x (eg seconds if x is
+    time).
+    """
     dy = np.empty(y.shape)
     dy[0] = (y[1] - y[0]) / (x[1] - x[0])
     for i in range(1, (dy.shape[0] - 1)):
         dy[i] = (y[i+1] - y[i-1]) / (x[i+1] - x[i-1])
     dy[-1] = (y[-1] - y[-2]) / (x[-1] - x[-2])
-    return dy
+
+    # No filter
+    if tau <= 0:
+        return dy
+
+    # sample freq
+    fs = x.shape[0] / (x[-1] - x[0])
+    nyqfreq = fs / 2
+    w0 = 1 / (tau*2*np.pi*nyqfreq)
+
+    lowpass = signal.iirfilter(1, w0, btype='lowpass', analog=False)
+
+    # Create initial conditions so y=0 at t=0
+    zi = signal.lfiltic(*lowpass, y=[0], x=dy[:1])
+    print(zi)
+
+    filtered, _ = signal.lfilter(*lowpass, dy, zi=-zi)
+    return filtered
+
 
 def test_sdof_prop():
     """Test single DOF system with proportional control"""
@@ -66,24 +89,16 @@ def test_sdof_pid():
     # error
     e = (sim.r - sim.y)[:, 0]
 
-    # Calculate integral of error
+    # integral of error
     e_int = integrate.cumtrapz(e, sim.t, initial=0)
 
-    # Calculate filtered derivative of error
-    numder = _deriv(e, sim.t) # centered numerical derivative
-    # Filter design
-    nyqfreq = npts / tf / 2
-    w0 = (1/tau/2/np.pi)  / nyqfreq
-    lowpass = signal.iirfilter(1, w0, btype='lowpass', analog=False)
-    # Apply filter to derivative values
-    filtered_der = signal.lfilter(*lowpass, numder)
-
-    # Ignore first 60 ms, derivative initial conditions are slightly off
-    ignore_start = 15
+    # filtered derivative of error
+    e_fd = filtered_deriv(e, sim.t, tau)
 
     # Check controller output
-    ctl_ref = (e * ctl.KP + e_int * ctl.KI + filtered_der * ctl.KD).reshape((sim.n,))
-    assert np.allclose(sim.u[ignore_start:, 0], ctl_ref[ignore_start:], atol=0, rtol=1E-3)
+    ctl_ref = (e * ctl.KP + e_int * ctl.KI + e_fd * ctl.KD).reshape((sim.n,))
+
+    assert np.allclose(sim.u[:, 0], ctl_ref, atol=0, rtol=1E-2)
 
 if __name__ == "__main__":
     pass
