@@ -5,7 +5,7 @@ from scipy import integrate, signal
 
 import pytest
 
-from pyro.control.linear import PIDController
+from pyro.control.linear import PIDController, ProportionalController
 
 from pyro.dynamic.system import ContinuousDynamicSystem
 
@@ -56,7 +56,6 @@ def filtered_deriv(y, x, tau=0):
     filtered, _ = signal.lfilter(*lowpass, dy, zi=-zi)
     return filtered
 
-
 def test_sdof_prop():
     """Test single DOF system with proportional control"""
     tau_p = 2
@@ -64,7 +63,7 @@ def test_sdof_prop():
     kp = 20
 
     sys = FirstOrder(tau_p)
-    ctl = PIDController([[kp]], [[0]], [[0]])
+    ctl = ProportionalController(20)
     clsys = ctl + sys
 
     sim = clsys.compute_trajectory(x0=[0], r=step(1), tf=tf, n=100)

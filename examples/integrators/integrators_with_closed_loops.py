@@ -16,8 +16,7 @@ di = integrator.DoubleIntegrator()
 ti = integrator.TripleIntegrator()
 
 # Controller 
-ctl      = linear.ProportionnalSingleVariableController()
-ctl.gain = 2
+ctl      = linear.ProportionalController(2)
 
 # New cl-dynamic
 clsi = ctl + si

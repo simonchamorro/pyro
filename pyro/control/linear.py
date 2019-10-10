@@ -7,76 +7,30 @@ Created on Mon Oct 22 11:37:48 2018
 ###############################################################################
 import numpy as np
 ###############################################################################
-from pyro.control import controller
+from . import controller
+
+from .._utils import to_2D_arr
 ###############################################################################
 
+class ProportionalController(controller.StaticController):
+    """General (SISO or MIMO) proportional controller."""
+    def __init__(self, KP):
+        self.KP = to_2D_arr(KP)
 
+        k = self.KP.shape[1]
+        m = self.KP.shape[0]
+        p = self.KP.shape[1]
+        super().__init__(k, m, p)
 
-###############################################################################
-# Simple proportionnal controller
-###############################################################################
-        
-class ProportionnalSingleVariableController( controller.StaticController ) :
-    """ 
-    Simple proportionnal compensator
-    ---------------------------------------
-    r  : reference signal vector  k x 1
-    y  : sensor signal vector     k x 1
-    u  : control inputs vector    k x 1
-    t  : time                     1 x 1
-    ---------------------------------------
-    u = c( y , r , t ) = (r - y) * gain
+        self.rbar = np.zeros((self.k,))
+        self.name = "%d X %d Proportional Contrller" % self.KP.shape
 
-    """
-    
-    ###########################################################################
-    # The two following functions needs to be implemented by child classes
-    ###########################################################################
-    
-    
-    ############################
-    def __init__(self, k = 1):
-        """ """
-        
-        # Dimensions
-        self.k = k   
-        self.m = k   
-        self.p = k
-        
-        controller.StaticController.__init__(self, self.k, self.m, self.p)
-        
-        # Label
-        self.name = 'Proportionnal Controller'
-        
-        # Gains
-        self.gain = 1
-        
-    
-    #############################
-    def c( self , y , r , t = 0 ):
-        """ 
-        Feedback static computation u = c(y,r,t)
-        
-        INPUTS
-        y  : sensor signal vector     p x 1
-        r  : reference signal vector  k x 1
-        t  : time                     1 x 1
-        
-        OUPUTS
-        u  : control inputs vector    m x 1
-        
-        """
-        
-        u = np.zeros(self.m) # State derivative vector
-        
-        e = r - y
-        u = e * self.gain
-        
-        return u
-    
+    def c(self, y, r, t=0):
+        return self.KP.dot(r - y)
+
 
 class PIDController(controller.StatefulController):
-    """General MIMO PID controller
+    """General (SISO or MIMO) PID controller
 
     Parameters
     ----------
@@ -98,19 +52,19 @@ class PIDController(controller.StatefulController):
     """
 
     def __init__(self, KP, KI=None, KD=None, dv_tau=3E-3):
-        self.KP = self._to_2D_arr(KP)
+        self.KP = to_2D_arr(KP)
 
         if KI is None:
             self.KI = np.zeros(self.KP.shape)
         else:
-            self.KI = self._to_2D_arr(KI)
+            self.KI = to_2D_arr(KI)
             if self.KI.shape != self.KP.shape:
                 raise ValueError("Shape of KI does not match KP")
 
         if KD is None:
             self.KD = np.zeros(self.KP.shape)
         else:
-            self.KD = self._to_2D_arr(KD)
+            self.KD = to_2D_arr(KD)
             if self.KD.shape != self.KP.shape:
                 raise ValueError("Shape of KD does not match KP")
 
@@ -118,21 +72,6 @@ class PIDController(controller.StatefulController):
         self.name = "PID Controller"
 
         super().__init__(n=self.KP.shape[1]*2, m=self.KP.shape[0], p=self.KP.shape[1])
-
-    @staticmethod
-    def _to_2D_arr(arr):
-        arr = np.asanyarray(arr)
-        if arr.ndim == 2:
-            return arr
-
-        if arr.ndim == 1:
-            return arr[np.newaxis]
-        elif arr.ndim == 0:
-            return arr[np.newaxis, np.newaxis]
-        else:
-            raise ValueError(
-                "Cannot expand array with %d dimensions to 2-D" % (arr.ndim)
-            )
 
     def f(self, x_ctl, y, r, t):
         """Evaluate derivative of controller state"""

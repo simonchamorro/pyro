@@ -21,7 +21,7 @@ from pyro.analysis import Trajectory
 # Mother Controller class
 ###############################################################################
 
-class StaticController(ABC):
+class StaticController():
     """ 
     Mother class for memoryless controllers
     ---------------------------------------
@@ -68,7 +68,6 @@ class StaticController(ABC):
         
     
     #############################
-    @abstractmethod
     def c( self , y , r , t = 0 ):
         """ 
         Feedback static computation u = c(y,r,t)
