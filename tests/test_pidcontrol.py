@@ -3,6 +3,8 @@ import numpy as np
 
 from scipy import integrate, signal
 
+import pytest
+
 from pyro.control.linear import PIDController
 
 from pyro.dynamic.system import ContinuousDynamicSystem
@@ -66,7 +68,6 @@ def test_sdof_prop():
     clsys = ctl + sys
 
     sim = clsys.compute_trajectory(x0=[0], r=step(1), tf=tf, n=100)
-    sys.plot_trajectory(sim, 'xu')
 
     # analytic solution
     kcl = kp / (kp + 1) # steady state asymptote value
@@ -143,5 +144,45 @@ def test_nd_pid():
 
     assert np.allclose(sim.u, ctl_ref, atol=0.05)
 
+def test_check_and_normalize():
+    # Check normalization of scalars to 2D array
+    ctl = PIDController(1, 1, 1)
+    for arr in [ctl.KP, ctl.KI, ctl.KD]:
+        assert arr.ndim == 2
+        assert arr.shape == (1, 1)
+        assert arr[0, 0] == 1
+
+    # Check normalization of 1D array to 2D array
+    vals = [1, 2, 3]
+    ctl = PIDController(vals, vals, vals)
+    for arr in [ctl.KP, ctl.KI, ctl.KD]:
+        assert arr.ndim == 2
+        assert arr.shape == (1, 3)
+        assert np.all(vals == arr)
+
+    # Check that 2D arrays should be unchanged
+    vals = np.ones((3, 4)) * 2.3
+    ctl = PIDController(vals, vals, vals)
+    for arr in [ctl.KP, ctl.KI, ctl.KD]:
+        assert arr.ndim == 2
+        assert arr.shape == vals.shape
+        assert np.all(vals == arr)
+
+    # Check default zero values for KI and KD
+    for testval in [1, [1, 2, 3], np.ones((8, 10))]:
+        ctl = PIDController(testval)
+        for arr in [ctl.KI, ctl.KD]:
+            assert arr.shape == ctl.KP.shape
+            assert np.all(arr == np.zeros(ctl.KP.shape))
+
+    with pytest.raises(ValueError):
+        ctl = PIDController(1, KI=np.ones(2))
+    with pytest.raises(ValueError):
+        ctl = PIDController(1, KD=np.ones(2))
+    with pytest.raises(ValueError):
+        ctl = PIDController(np.ones((2, 3)), KI=np.ones((3, 2)))
+    with pytest.raises(ValueError):
+        ctl = PIDController(np.ones((2, 3)), KD=np.ones((3, 2)))
+
 if __name__ == "__main__":
-    pass
+    test_check_and_normalize()

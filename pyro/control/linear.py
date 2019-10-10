@@ -97,14 +97,42 @@ class PIDController(controller.StatefulController):
 
     """
 
-    def __init__(self, KP, KI, KD, dv_tau=3E-3):
-        self.KI = np.asarray(KI)
-        self.KP = np.asarray(KP)
-        self.KD = np.asarray(KD)
+    def __init__(self, KP, KI=None, KD=None, dv_tau=3E-3):
+        self.KP = self._to_2D_arr(KP)
+
+        if KI is None:
+            self.KI = np.zeros(self.KP.shape)
+        else:
+            self.KI = self._to_2D_arr(KI)
+            if self.KI.shape != self.KP.shape:
+                raise ValueError("Shape of KI does not match KP")
+
+        if KD is None:
+            self.KD = np.zeros(self.KP.shape)
+        else:
+            self.KD = self._to_2D_arr(KD)
+            if self.KD.shape != self.KP.shape:
+                raise ValueError("Shape of KD does not match KP")
+
         self.dv_tau = dv_tau
         self.name = "PID Controller"
 
         super().__init__(n=self.KP.shape[1]*2, m=self.KP.shape[0], p=self.KP.shape[1])
+
+    @staticmethod
+    def _to_2D_arr(arr):
+        arr = np.asanyarray(arr)
+        if arr.ndim == 2:
+            return arr
+
+        if arr.ndim == 1:
+            return arr[np.newaxis]
+        elif arr.ndim == 0:
+            return arr[np.newaxis, np.newaxis]
+        else:
+            raise ValueError(
+                "Cannot expand array with %d dimensions to 2-D" % (arr.ndim)
+            )
 
     def f(self, x_ctl, y, r, t):
         """Evaluate derivative of controller state"""

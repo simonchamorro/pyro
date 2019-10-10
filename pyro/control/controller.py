@@ -396,6 +396,11 @@ class StatefulCLSystem(ClosedLoopSystem):
         # Add extra states that represent system memory
         self.n = self.cds.n + self.ctl.n
 
+        if cds.p != ctl.p:
+            raise ValueError("Controller inputs do not match system outputs")
+        if cds.m != ctl.m:
+            raise ValueError("Controller outputs do not match system inputs")
+
     def f(self, x, u, t):
         x_sys, x_ctl = self._split_states(x)
 
