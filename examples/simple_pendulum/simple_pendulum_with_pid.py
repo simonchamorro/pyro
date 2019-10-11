@@ -8,12 +8,20 @@ Created on Fri Nov 16 12:05:08 2018
 import numpy as np
 ###############################################################################
 from pyro.dynamic  import pendulum
-from pyro.control  import robotcontrollers
+from pyro.control  import robotcontrollers, linear
 from pyro.analysis import simulation
 ###############################################################################
 
-sys  = pendulum.SinglePendulum()
 
+class SinglePendulum1out(pendulum.SinglePendulum):
+    def __init__(self):
+        super().__init__()
+        self.p = 1
+
+    def h(self, x, u, t):
+        return super().h(x, u, t)[0][np.newaxis]
+
+sys  = SinglePendulum1out()
 dof = 1
 
 kp = 2 # 2,4
@@ -21,6 +29,7 @@ kd = 1 # 1
 ki = 1
 
 ctl  = robotcontrollers.JointPID( dof, kp , ki, kd)
+ctl = linear.PIDController(kp, ki, kd)
 
 # Set Point
 q_target = np.array([3.14])
