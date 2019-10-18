@@ -27,6 +27,10 @@ class ContinuousDynamicSystem:
     dx = f( x , u , t )
     y  = h( x , u , t )
     
+    optionnal: 
+    u = t2u( t ) : time-dependent input signal
+    
+    
     """
     ###########################################################################
     # The two following functions needs to be implemented by child classes
@@ -128,6 +132,27 @@ class ContinuousDynamicSystem:
         
         return y
     
+    #############################
+    def t2u( self , t ):
+        """ 
+        Reference signal fonction u = t2u(t)
+        
+        INPUTS
+        t  : time                     1 x 1
+        
+        OUTPUTS
+        u  : control inputs vector    m x 1
+        
+        Defaul is a constant signal equal to self.ubar, can overload the
+        with a more complexe reference signal time-function 
+        
+        """
+        
+        #Default is a constant signal
+        u = self.ubar
+        
+        return u
+    
         
     ###########################################################################
     # Basic domain checks, ovewload if something more complex is needed
@@ -205,6 +230,27 @@ class ContinuousDynamicSystem:
     ###########################################################################
     # No need to overwrite the following functions for custom dynamic systems
     ###########################################################################
+    
+    #############################
+    def fsim( self, x , t ):
+        """ 
+        Continuous time foward dynamics evaluation dx = f(x,t), inlcuding the
+        internal reference input signal computation
+        
+        INPUTS
+        x  : state vector             n x 1
+        t  : time                     1 x 1
+        
+        OUPUTS
+        dx : state derivative vector  n x 1
+        
+        """
+        
+        u  = self.t2u( t )
+        dx = self.f( x, u, t)
+        
+        return dx
+    
 
     #############################
     def x_next( self , x , u , t , dt = 0.1 , steps = 1 ):
