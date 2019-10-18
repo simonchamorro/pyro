@@ -15,3 +15,13 @@ output/
 
 # OS Files #
 .DS_Store
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/pyro.iml
+.idea/vcs.xml
+.pytest_cache/v/cache/lastfailed
+.pytest_cache/v/cache/nodeids
+.idea/other.xml
+*.html
+*.png

@@ -10,7 +10,7 @@ import numpy as np
 ###############################################################################
 from pyro.analysis import Trajectory
 from pyro.control  import controller
-from pyro.signal   import timefiltering
+from pyro.signal_proc   import timefiltering
 
 
 

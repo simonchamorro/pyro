@@ -17,8 +17,8 @@ class kinematicInputs( controller.StaticController ) :
     """ 
     Simple proportionnal compensator
     ---------------------------------------
-    r  : reference signal vector  k x 1
-    y  : sensor signal vector     k x 1
+    r  : reference signal_proc vector  k x 1
+    y  : sensor signal_proc vector     k x 1
     u  : control inputs vector    k x 1
     t  : time                     1 x 1
     ---------------------------------------
@@ -55,8 +55,8 @@ class kinematicInputs( controller.StaticController ) :
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal vector     p x 1
-        r  : reference signal vector  k x 1
+        y  : sensor signal_proc vector     p x 1
+        r  : reference signal_proc vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS
@@ -95,8 +95,8 @@ class dynLongVelInputs( controller.StaticController ) :
     """ 
     Simple proportionnal compensator
     ---------------------------------------
-    r  : reference signal vector  k x 1
-    y  : sensor signal vector     k x 1
+    r  : reference signal_proc vector  k x 1
+    y  : sensor signal_proc vector     k x 1
     u  : control inputs vector    k x 1
     t  : time                     1 x 1
     ---------------------------------------
@@ -133,8 +133,8 @@ class dynLongVelInputs( controller.StaticController ) :
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal vector     p x 1
-        r  : reference signal vector  k x 1
+        y  : sensor signal_proc vector     p x 1
+        r  : reference signal_proc vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS
@@ -171,8 +171,8 @@ class dynLongForcesInputs( controller.StaticController ) :
     """ 
     Simple proportionnal compensator
     ---------------------------------------
-    r  : reference signal vector  k x 1
-    y  : sensor signal vector     k x 1
+    r  : reference signal_proc vector  k x 1
+    y  : sensor signal_proc vector     k x 1
     u  : control inputs vector    k x 1
     t  : time                     1 x 1
     ---------------------------------------
@@ -209,8 +209,8 @@ class dynLongForcesInputs( controller.StaticController ) :
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal vector     p x 1
-        r  : reference signal vector  k x 1
+        y  : sensor signal_proc vector     p x 1
+        r  : reference signal_proc vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS
@@ -241,8 +241,8 @@ class fullDynTorqueInputs( controller.StaticController ) :
     """ 
     Simple proportionnal compensator
     ---------------------------------------
-    r  : reference signal vector  k x 1
-    y  : sensor signal vector     k x 1
+    r  : reference signal_proc vector  k x 1
+    y  : sensor signal_proc vector     k x 1
     u  : control inputs vector    k x 1
     t  : time                     1 x 1
     ---------------------------------------
@@ -281,8 +281,8 @@ class fullDynTorqueInputs( controller.StaticController ) :
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal vector     p x 1
-        r  : reference signal vector  k x 1
+        y  : sensor signal_proc vector     p x 1
+        r  : reference signal_proc vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS

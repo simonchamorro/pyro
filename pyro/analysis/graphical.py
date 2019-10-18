@@ -278,7 +278,8 @@ class Animator:
             y_pts = pts[:, y_axis ]
             line  = self.showax.plot( x_pts, y_pts, self.linestyle)
             self.showlines.append( line )
-        
+
+        plt.draw()
         plt.show()
         
     
@@ -439,7 +440,7 @@ class Animator:
                                                 n_frame , interval = inter, 
                                                 init_func=self.__ani_init__ )
         if save:
-            self.ani.save( file_name + '.mp4' ) # , writer = 'mencoder' )
+            self.ani.save( file_name + '.html' ) # , writer = 'mencoder' )
 
         self.ani_fig.show()
         

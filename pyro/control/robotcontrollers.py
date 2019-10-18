@@ -56,8 +56,8 @@ class JointPID( RobotController ) :
     Linear controller for mechanical system with full state feedback (y=x)
     Independent PID for each DOF
     ---------------------------------------
-    r  : reference signal vector  dof x 1
-    y  : sensor signal vector     n   x 1
+    r  : reference signal_proc vector  dof x 1
+    y  : sensor signal_proc vector     n   x 1
     u  : control inputs vector    dof x 1
     t  : time                     1   x 1
     ---------------------------------------
@@ -91,8 +91,8 @@ class JointPID( RobotController ) :
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal vector     p x 1
-        r  : reference signal vector  k x 1
+        y  : sensor signal_proc vector     p x 1
+        r  : reference signal_proc vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS
@@ -132,8 +132,8 @@ class EndEffectorPID( RobotController ) :
     """ 
     PID in effector coordinates, using the Jacobian of the system
     ---------------------------------------
-    r  : reference signal vector  e   x 1
-    y  : sensor signal vector     n   x 1
+    r  : reference signal_proc vector  e   x 1
+    y  : sensor signal_proc vector     n   x 1
     u  : control inputs vector    dof x 1
     t  : time                     1   x 1
     ---------------------------------------
@@ -172,8 +172,8 @@ class EndEffectorPID( RobotController ) :
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal vector     p x 1
-        r  : reference signal vector  k x 1
+        y  : sensor signal_proc vector     p x 1
+        r  : reference signal_proc vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS
@@ -220,8 +220,8 @@ class EndEffectorKinematicController( RobotController ) :
     """ 
     Kinematic effector coordinates controller using the Jacobian of the system
     ---------------------------------------
-    r  : reference signal vector  e   x 1
-    y  : sensor signal vector     dof x 1
+    r  : reference signal_proc vector  e   x 1
+    y  : sensor signal_proc vector     dof x 1
     u  : control inputs vector    dof x 1
     t  : time                     1   x 1
     ---------------------------------------
@@ -259,8 +259,8 @@ class EndEffectorKinematicController( RobotController ) :
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal vector     p x 1
-        r  : reference signal vector  k x 1
+        y  : sensor signal_proc vector     p x 1
+        r  : reference signal_proc vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS
