@@ -169,7 +169,7 @@ class TrajectoryPlotter:
         pp.ax.plot([traj.x[-1,x_axis]],
                         [traj.x[-1,y_axis]],
                         [traj.x[-1,z_axis]],
-                        's') # start # end
+                        's') # end
 
         pp.ax.set_xlim( self.sys.x_lb[ x_axis ] ,
                              self.sys.x_ub[ x_axis ])
@@ -209,6 +209,9 @@ class TrajectoryPlotter:
 
         plt.tight_layout()
         pp.phasefig.show()
+        
+        
+        
 
 class Animator:
     """ 

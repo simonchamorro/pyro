@@ -42,6 +42,10 @@ class ContinuousDynamicSystem:
         The __init__ method of the Mother class can be used to fill-in default
         labels, units, bounds, and base values.
         """
+        
+        #############################
+        # Parameters
+        #############################
 
         # Dimensions
         self.n = n   
@@ -79,6 +83,18 @@ class ContinuousDynamicSystem:
         # Default state and inputs values    
         self.xbar = np.zeros(self.n)
         self.ubar = np.zeros(self.m)
+        
+        ################################
+        # Variables
+        ################################
+        
+        # Initial value for simulations
+        self.x0   = np.zeros(self.n) 
+        
+        # Last simulations memory
+        # Only for easy acces in interactive mode
+        # Do not use in method or scripts
+        self.sim = None   
         
     
     #############################
