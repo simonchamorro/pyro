@@ -79,8 +79,8 @@ class Trajectory():
 
         if t > self.time_final:
             raise ValueError("Got time t greater than final time")
-
-            # Find time index
+        
+        # Find time index
         i = (np.abs(self.t - t)).argmin()
 
         # Find associated control input
@@ -117,17 +117,22 @@ class Simulator:
     def __init__(
         self, ContinuousDynamicSystem, u, tf=10, n=10001, solver='ode', x0=None):
 
-        self.cds = ContinuousDynamicSystem
-        self.t0 = 0
-        self.tf = tf
-        self.n  = int(n)
-        self.dt = ( tf + 0.0 - self.t0 ) / ( n - 1 )
+        self.cds    = ContinuousDynamicSystem
+        self.t0     = 0
+        self.tf     = tf
+        self.n      = int(n)
+        self.dt     = ( tf + 0.0 - self.t0 ) / ( n - 1 )
         self.solver = solver
-        self.x0 = np.asarray(x0).flatten()
-        self.u = u
-
+        self.x0     = np.asarray(x0).flatten()
+        self.u      = u
+        
+        # Initial condition state-vector
         if self.x0 is None:
             self.x0 = np.zeros( self.cds.n )
+        elif self.x0.size != self.cds.n:
+            raise ValueError(
+                "Number of elements in x0 must be equal to number of states of system"
+            )
 
     ##############################
 
