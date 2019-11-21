@@ -6,8 +6,7 @@ A toolbox for robot dynamic simulation, analysis, control and planning
 ## Installing
 
 To install the package, use: 
-```python
-
+```bash
 pip install git+https://github.com/SherbyRobotics/pyro
 ```
 
