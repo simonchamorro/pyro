@@ -1,8 +1,9 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Nov 16 12:01:07 2018
+Created on Fri Oct 25 12:16:59 2019
 
-@author: Alexandre
+@author: alex
 """
 
 ###############################################################################
@@ -12,7 +13,7 @@ from pyro.dynamic  import vehicle
 ###############################################################################
 
 # Vehicule dynamical system
-sys = vehicle.KinematicBicyleModel()
+sys = vehicle.KinematicCarModel()
 
 # Set default wheel velocity and steering angle
 sys.ubar = np.array([2,0.1])
