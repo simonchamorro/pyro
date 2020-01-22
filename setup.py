@@ -13,7 +13,13 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/SherbyRobotics/pyro",
-    packages=['pyro'],
+    packages=setuptools.find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
+    python_requires='>=3.4'
+    install_requires=[
+        'numpy>=1.10',
+        'matplotlib>3.0',
+        'scipy>=1.2'
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
