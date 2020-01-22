@@ -36,8 +36,8 @@ class PhasePlot:
         # System
         self.cds  = ContinuousDynamicSystem
         self.f    = self.cds.f      # dynamic function
-        self.xbar = self.cds.xbar   # default state
-        self.ubar = self.cds.ubar   # default input
+        self.xbar = np.copy( self.cds.xbar )  # default state
+        self.ubar = np.copy( self.cds.ubar ) # default input
         self.t    = 0               # default time
         
         # Grid
@@ -81,7 +81,7 @@ class PhasePlot:
             for j in range(self.y_axis_n):
                 
                 # Actual states
-                x  = self.xbar    # default value for all states
+                x  = np.copy( self.xbar )   # default value for all states
                 x[ self.x_axis ] = self.X[i, j]
                 x[ self.y_axis ] = self.Y[i, j]
                 
@@ -103,6 +103,7 @@ class PhasePlot:
         
     ###########################################################################
     def plot_vector_field(self):
+        
         try:
             self.ax = self.phasefig.axes[0]
         except IndexError:
@@ -206,7 +207,7 @@ class PhasePlot3( PhasePlot ):
                 for k in range(self.z_axis_n):
                 
                     # Actual states
-                    x  = self.xbar    # default value for all states
+                    x  = np.copy( self.xbar )    # default value for all states
                     x[ self.x_axis ] = self.X[i, j, k]
                     x[ self.y_axis ] = self.Y[i, j, k]
                     x[ self.z_axis ] = self.Z[i, j, k]

@@ -21,9 +21,9 @@ class KinematicBicyleModel( system.ContinuousDynamicSystem ):
     """ 
     Equations of Motion
     -------------------------
-    dx   = V cos ( phi )
-    dy   = V sin ( phi )
-    dphi = V/l tan ( beta )
+    dx / dt     = V cos ( theta )
+    dy / dt     = V sin ( theta )
+    dtheta / dt = V / l tan ( delta )
     """
     
     ############################
@@ -40,9 +40,9 @@ class KinematicBicyleModel( system.ContinuousDynamicSystem ):
         
         # Labels
         self.name = 'Kinematic Bicyle Model'
-        self.state_label = ['x','y','phi']
-        self.input_label = ['v', 'beta']
-        self.output_label = ['x','y','phi']
+        self.state_label = ['x','y','theta']
+        self.input_label = ['v', 'delta']
+        self.output_label = ['x','y','theta']
         
         # Units
         self.state_units = ['[m]','[m]','[rad]']
@@ -435,9 +435,9 @@ class KinematicCarModel( KinematicBicyleModel ):
     
     Equations of Motion
     -------------------------
-    dx   = V cos ( phi )
-    dy   = V sin ( phi )
-    dphi = V/l tan ( beta )
+    dx / dt     = V cos ( theta )
+    dy / dt     = V sin ( theta )
+    dtheta / dt = V / l tan ( delta )
     
     """
     
