@@ -2,6 +2,8 @@
 ###################
 *.py[cod]
 *.egg-info/
+*.egg
+*.pyc
 __pycache__/
 
 # Output fig or video, etc #
