@@ -14,27 +14,32 @@ from pyro.analysis import costfunction
 # Simple integrator
 ###################################
 
-si = integrator.SimpleIntegrator()
+# Simple integrator
+sys      = integrator.SimpleIntegrator()
 
-si.ubar = np.array([1]) # constant input = 1
+# Default input signal
+sys.ubar = np.array([1]) 
 
 ###################################
 # Analysis
 ###################################
 
-# Phase plane
-si.plot_phase_plane(0,0) # only one state for two axis!
+# Phase plane behavior
+sys.plot_phase_plane(0,0) # only one state for two axis!
 
 # Cost function with unit weights
 qcf = costfunction.QuadraticCostFunction(
-    np.ones(si.n),
-    np.ones(si.m),
-    np.zeros(si.p)
+    np.zeros(sys.n),
+    np.ones(sys.m),
+    np.zeros(sys.p)
 )
 
 # Simulation
-sim = si.compute_trajectory(np.array([2]), costfunc=qcf)
+sys.x0 = np.array([2])
+
+aaa =sys.compute_trajectory(10,1001,'ode')
+sys.traj = qcf.eval( sys.traj )
 
 # Plot output
-si.plot_trajectory(sim, 'xuj')
-si.plot_phase_plane_trajectory(sim,0,0)
+sys.plot_trajectory('xuj')
+sys.plot_phase_plane_trajectory(0,0)

@@ -55,7 +55,8 @@ class CostFunction(ABC):
         """ step cost function """
         
         raise NotImplementedError
-
+    
+    #############################
     def eval(self, traj):
         """Compute cost of simulation
 
@@ -67,16 +68,16 @@ class CostFunction(ABC):
         -------
         A new instance of the input trajectory, with updated `J` and `dJ` fields
 
-        J : array of size ``traj.n`` (number of timesteps in trajectory)
+        J : array of size ``traj.time_steps`` (number of timesteps in trajectory)
             Cumulative value of cost integral at each time step. The total cost is
             therefore ``J[-1]``.
 
-        dJ : array of size ``traj.n`` (number of timesteps in trajectory)
+        dJ : array of size ``traj.time_steps`` (number of timesteps in trajectory)
             Value of cost function evaluated at each point of the tracjectory.
         """
 
-        dJ = np.empty(traj.n)
-        for i in range(traj.n):
+        dJ = np.empty(traj.time_steps)
+        for i in range(traj.time_steps):
             x = traj.x[i,:]
             u = traj.u[i,:]
             y = traj.y[i, :]

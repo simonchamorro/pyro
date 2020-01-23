@@ -67,6 +67,8 @@ class Trajectory():
 
         self.n = self.x.shape[1]
         self.m = self.u.shape[1]
+        
+        self.ubar = np.zeros( self.m )
 
         # Check consistency between signals
         for arr in [self.x, self.y, self.u, self.dx, self.r, self.J, self.dJ]:
@@ -79,13 +81,14 @@ class Trajectory():
         """ get u from time """
 
         if t > self.time_final:
-            raise ValueError("Got time t greater than final time")
+            u = self.ubar
         
-        # Find time index
-        i = (np.abs(self.t - t)).argmin()
-
-        # Find associated control input
-        u = self.u[i,:]
+        else:
+            # Find time index
+            i = (np.abs(self.t - t)).argmin()
+    
+            # Find associated control input
+            u = self.u[i,:]
 
         return u
 

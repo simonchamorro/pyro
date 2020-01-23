@@ -91,10 +91,13 @@ class ContinuousDynamicSystem:
         # Initial value for simulations
         self.x0   = np.zeros(self.n) 
         
-        # Last simulations memory
+        # Last simulation memory
         # Only for easy acces in interactive mode
-        # Do not use in method or scripts
-        self.sim = None   
+        # Do not use in method
+        self.sim  = None   
+        self.ani  = None
+        self.traj = None
+        self.pp   = None
         
     
     #############################
@@ -201,7 +204,7 @@ class ContinuousDynamicSystem:
         
     #############################
     def xut2q( self, x , u , t ):
-        """ Compute configuration variables """
+        """ Compute configuration variables ( q vector ) """
         
         # default is q = x
         
@@ -317,7 +320,7 @@ class ContinuousDynamicSystem:
         
     #############################
     def compute_trajectory(
-        self, x0, tf=10, n=10001, solver='ode', costfunc=None, u=None):
+        self, tf=10, n=10001, solver='ode', costfunc=None):
         """ 
         Simulation of time evolution of the system
         ------------------------------------------------
@@ -326,40 +329,51 @@ class ContinuousDynamicSystem:
         
         """
 
-        # Default constant input signal if none is specified
-        if u is None:
-            u = lambda _: self.ubar
-
-        sim = simulation.Simulator(self, u, tf, n, solver, x0=x0).compute()
+        sim = simulation.Simulator(self, tf, n, solver)
+        
+        traj = sim.compute()
 
         if costfunc is not None:
-            sim = costfunc.eval(sim)
+            traj = costfunc.eval( traj )
+        
+        # Object memory
+        self.traj = traj
 
-        return sim
+        return traj
 
 
     #############################
-    def plot_trajectory(self, sim, plot='x', **kwargs):
+    def plot_trajectory(self, plot='x', **kwargs):
         """
         Plot time evolution of a simulation of this system
         ------------------------------------------------
 
         """
-        self.get_plotter().plot(sim, plot, **kwargs)
+        
+        # Check is trajectory is already computed
+        if self.traj == None:
+            self.compute_trajectory()
+        
+        self.get_plotter().plot( self.traj, plot, **kwargs)
 
 
     #############################
-    def plot_phase_plane_trajectory(self, sim, x_axis=0, y_axis=1):
+    def plot_phase_plane_trajectory(self, x_axis=0, y_axis=1):
         """
         Plot a trajectory in the Phase Plane
         ---------------------------------------------------------------
 
         """
-        self.get_plotter().phase_plane_trajectory(sim, x_axis , y_axis)
+        
+        # Check is trajectory is already computed
+        if self.traj == None:
+            self.compute_trajectory()
+            
+        self.get_plotter().phase_plane_trajectory( self.traj, x_axis , y_axis)
 
 
     #############################
-    def plot_phase_plane_trajectory_3d(self , sim, x_axis=0, y_axis=1, z_axis=2):
+    def plot_phase_plane_trajectory_3d(self ,  x_axis=0, y_axis=1, z_axis=2):
         """
         Simulates the system and plot the trajectory in the Phase Plane
         ---------------------------------------------------------------
@@ -369,7 +383,12 @@ class ContinuousDynamicSystem:
         y_axis : index of state on y axis
 
         """
-        self.get_plotter().phase_plane_trajectory_3d(sim, x_axis , y_axis, z_axis)
+        
+        # Check is trajectory is already computed
+        if self.traj == None:
+            self.compute_trajectory()
+            
+        self.get_plotter().phase_plane_trajectory_3d( self.traj, x_axis , y_axis, z_axis)
 
 
     #############################################
@@ -392,15 +411,19 @@ class ContinuousDynamicSystem:
         self.ani.show3( q )
 
     ##############################
-    def animate_simulation(self, sim=None, **kwargs):
+    def animate_simulation(self, **kwargs):
         """
         Show Animation of the simulation
         ----------------------------------
         time_factor_video < 1 --> Slow motion video
 
         """
+        
+        # Check is trajectory is already computed
+        if self.traj == None:
+            self.compute_trajectory()
 
-        self.get_animator().animate_simulation(sim, **kwargs)
+        self.get_animator().animate_simulation( self.traj, **kwargs)
 
 
 '''
