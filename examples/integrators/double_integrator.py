@@ -16,9 +16,9 @@ from pyro.analysis import costfunction
 # Simple integrator
 ###################################
 
-di = integrator.DoubleIntegrator()
+sys = integrator.DoubleIntegrator()
 
-di.ubar = np.array([1]) # constant input = 1
+sys.ubar = np.array([1]) # constant input = 1
 
 
 ###################################
@@ -26,27 +26,26 @@ di.ubar = np.array([1]) # constant input = 1
 ###################################
     
 # Phase plane behavior test
-di.plot_phase_plane()
+sys.plot_phase_plane()
 
 # Simulation
-sim = di.compute_trajectory(x0=np.array([0,0]))
-di.plot_trajectory(sim)
-di.plot_trajectory(sim, 'y')
+sys.x0 = np.array([0,0])
 
+traj = sys.compute_trajectory( tf = 10 )
+
+sys.plot_trajectory()
+sys.plot_trajectory('y')
+sys.plot_phase_plane_trajectory()
 
 # Cost computing
 
-# Weights for quadratic cost function
-q, r, v = np.ones(di.n), np.ones(di.m), np.zeros(di.p)
-qcf = costfunction.QuadraticCostFunction(q, r, v)
+qcf = costfunction.QuadraticCostFunction(2, 1, 1)
+tcf = costfunction.TimeCostFunction( np.array([0,0]) )
 
-sim_with_quad_cost = qcf.eval(sim)
-di.plot_trajectory(sim_with_quad_cost, 'xuj')
+traj_with_qcf = qcf.eval( traj )
+traj_with_tcf = tcf.eval( traj )
 
-# Time cost
-tcf = costfunction.TimeCostFunction( di.xbar )
-sim_with_time_cost = tcf.eval(sim)
-di.plot_trajectory(sim_with_time_cost, 'j')
+plotter = sys.get_plotter()
 
-# Phase plane trajectory
-di.plot_phase_plane_trajectory( sim )
+plotter.plot( traj_with_qcf , 'xuj' )
+plotter.plot( traj_with_tcf , 'xuj' )

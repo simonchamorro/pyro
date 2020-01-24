@@ -19,9 +19,11 @@ sys  = pendulum.SinglePendulum()
 
 # Controller
 
-this_script_dir = Path(__file__).parent
-traj_file = this_script_dir.joinpath('pendulum_rrt.npy')
-traj = Trajectory.load(str(traj_file))
+#this_script_dir = Path(__file__).parent
+#traj_file = this_script_dir.joinpath('pendulum_rrt.npy')
+#traj = Trajectory.load(str(traj_file))
+
+traj = Trajectory.load('pendulum_rrt.npy')
 
 ctl  = nonlinear.ComputedTorqueController( sys , traj )
 
@@ -32,8 +34,8 @@ ctl.rbar = np.array([-3.14])
 cl_sys = ctl + sys
 
 # Simultation
-x_start  = np.array([0.1,0])
-sim = cl_sys.compute_trajectory(x0=x_start)
-cl_sys.plot_phase_plane_trajectory(sim)
-cl_sys.plot_trajectory(sim, 'xu')
-cl_sys.animate_simulation(sim)
+cl_sys.x0  = np.array([0.1,0])
+cl_sys.compute_trajectory()
+cl_sys.plot_phase_plane_trajectory()
+cl_sys.plot_trajectory('xu')
+cl_sys.animate_simulation()

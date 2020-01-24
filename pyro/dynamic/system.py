@@ -84,6 +84,9 @@ class ContinuousDynamicSystem:
         self.xbar = np.zeros(self.n)
         self.ubar = np.zeros(self.m)
         
+        # Cost function for evaluation
+        self.cost_function = None
+        
         ################################
         # Variables
         ################################
@@ -91,14 +94,9 @@ class ContinuousDynamicSystem:
         # Initial value for simulations
         self.x0   = np.zeros(self.n) 
         
-        # Last simulation memory
-        # Only for easy acces in interactive mode
-        # Do not use in method
-        self.sim  = None   
-        self.ani  = None
+        # Result of last simulation
         self.traj = None
-        self.pp   = None
-        
+
     
     #############################
     def f( self , x , u , t ):
@@ -320,26 +318,19 @@ class ContinuousDynamicSystem:
         
     #############################
     def compute_trajectory(
-        self, tf=10, n=10001, solver='ode', costfunc=None):
+        self, tf=10, n=10001, solver='ode'):
         """ 
         Simulation of time evolution of the system
         ------------------------------------------------
-        x0 : initial time
         tf : final time
-        
+        n  : time steps
         """
 
         sim = simulation.Simulator(self, tf, n, solver)
-        
-        traj = sim.compute()
 
-        if costfunc is not None:
-            traj = costfunc.eval( traj )
-        
-        # Object memory
-        self.traj = traj
+        self.traj = sim.compute()
 
-        return traj
+        return self.traj
 
 
     #############################
@@ -350,7 +341,7 @@ class ContinuousDynamicSystem:
 
         """
         
-        # Check is trajectory is already computed
+        # Check if trajectory is already computed
         if self.traj == None:
             self.compute_trajectory()
         
@@ -373,7 +364,7 @@ class ContinuousDynamicSystem:
 
 
     #############################
-    def plot_phase_plane_trajectory_3d(self ,  x_axis=0, y_axis=1, z_axis=2):
+    def plot_phase_plane_trajectory_3d(self , x_axis=0, y_axis=1, z_axis=2):
         """
         Simulates the system and plot the trajectory in the Phase Plane
         ---------------------------------------------------------------

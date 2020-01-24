@@ -88,6 +88,31 @@ class StaticController():
         
         return u
     
+    #########################################################################
+    # Default methods that can be overloaded in child classes
+    #########################################################################
+    
+    #############################
+    def t2r( self , t ):
+        """ 
+        Reference signal fonction u = t2u(t)
+        
+        INPUTS
+        t  : time                     1 x 1
+        
+        OUTPUTS
+        r  : controller reference vector    m x 1
+        
+        Defaul is a constant signal equal to self.rbar, can overload the
+        with a more complexe reference signal time-function 
+        
+        """
+        
+        #Default is a constant signal
+        r = self.rbar
+        
+        return r
+    
     
     #########################################################################
     # No need to overwrite the following functions for child classes
@@ -112,6 +137,7 @@ class StaticController():
         
         return u
     
+    
     #############################
     def __add__(self, sys):
         """ 
@@ -133,7 +159,7 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
     Dynamic system connected with a static controller
     ---------------------------------------------
     NOTE: 
-    Ignore any feedthough to avoid creating algebraic loop
+    Ignore any feedthough to avoid creating algebraic loops
     This is only valid if the output function h is not a fonction of u
     New equations assume y = h(x,u,t) -- > y = h(x,t)
 
@@ -149,10 +175,10 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         # Check dimensions match
         if not (self.cds.m == self.ctl.m ):
             raise NameError('Dimension mismatch between controller and' + 
-            ' dynamic system for the input signal_proc u')
+            ' dynamic system for the input signal u')
         elif not (self.cds.p == self.ctl.p ):
             raise NameError('Dimension mismatch between controller and' + 
-            ' dynamic system for the output signal_proc y')
+            ' dynamic system for the output signal y')
         ######################################################################
         
         # Dimensions of global closed-loop dynamic system
@@ -180,6 +206,19 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         # Default State and inputs        
         self.xbar = self.cds.xbar
         self.ubar = self.ctl.rbar
+        
+        # Cost function for evaluation
+        self.cost_function = self.cds.cost_function
+        
+        ################################
+        # Variables
+        ################################
+        
+        # Initial value for simulations
+        self.x0   = self.cds.x0
+        
+        # Result of last simulation
+        self.traj = None
         
     
     ###########################################################################
@@ -230,6 +269,27 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         return y
     
     ###########################################################################
+    def t2u( self , t ):
+        """ 
+        Reference signal fonction u = t2u(t)
+        
+        INPUTS
+        t  : time                     1 x 1
+        
+        OUTPUTS
+        u  : control inputs vector    m x 1
+        
+        Defaul is a constant signal equal to self.ubar, can overload the
+        with a more complexe reference signal time-function 
+        
+        """
+        
+        # Input of closed-loop global sys is ref of the controller
+        u = self.ctl.t2r(t)
+        
+        return u
+    
+    ###########################################################################
     def plot_phase_plane_closed_loop(self , x_axis = 0 , y_axis = 1 ):
         """ 
         Plot Phase Plane vector field of the system
@@ -260,54 +320,21 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         self.pp.plot_finish()
         
     
-    ###########################################################################
-    def compute_trajectory(self,
-        x0, tf=10 , n=10001 , solver='ode', costfunc=None, r=None):
-        """Simulation of time evolution of the system
-
-        Parameters
-        ----------
-        x0: array_like
-            Vector of initial conditions, shape (``self.n``,)
-        costfunc : instance of `pyro.analysis.costfunction.CostFunction`, optional
-            Optional cost function to evaluate based on the resulting trajectory
-        r: callable
-            Function of time (``r = f(t)``) that returns the reference signal
-            for the closed-loop system.
-
-        See arguments to `pyro.analysis.simulation.Simulator` for the description
-        of other parameters.
-
+    #############################
+    def compute_trajectory(
+        self, tf=10, n=10001, solver='ode', costfunc=None ):
+        """ 
+        Simulation of time evolution of the system
+        ------------------------------------------------
+        tf : final time
+        n  : time steps
         """
 
-        sol = super().compute_trajectory(x0, tf=tf, solver=solver, u=r, n=n, costfunc=None)
-        sol = self._compute_inputs(sol)
+        sim = simulation.CLosedLoopSimulator(self, tf, n, solver)
+        
+        self.traj = sim.compute()
 
-        if costfunc is not None:
-            sol = costfunc.eval(sol)
-
-        return sol
-
-    def _compute_inputs(self, sol):
-        """ Compute internal control signal_proc of the closed-loop system """
-
-        r_sol = sol.u.copy() # reference is input of combined sys
-        u_sol = np.empty((sol.n, self.ctl.m))
-
-        # Compute internal input signal_proc
-        for i in range(r_sol.shape[0]):
-
-            ri = r_sol[i,:]
-            yi = sol.y[i,:]
-            ti = sol.t[i]
-
-            u_sol[i,:] = self.ctl.c( yi , ri , ti )
-
-        new_sol = copy(sol)
-        new_sol.r = r_sol
-        new_sol.u = u_sol
-
-        return new_sol
+        return self.traj
 
 
     #############################################
@@ -338,6 +365,12 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         self.get_plotter().phase_plane_trajectory_closed_loop(traj, x_axis, y_axis)
 
 
+
+
+
+
+
+###############################################################################
 class StatefulController(ABC):
     """Controller with states
 

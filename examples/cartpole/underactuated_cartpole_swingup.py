@@ -130,7 +130,7 @@ ctl = CartPoleController( sys )
 cl_sys = ctl + sys
 
 # Simultation
-x0 = np.array([0,-3,0,-1])
-sim = cl_sys.compute_trajectory(x0, 10, 10001, 'euler')
-cl_sys.plot_trajectory(sim, 'xu')
-cl_sys.animate_simulation(sim, time_factor_video=1.0, is_3d=True)
+cl_sys.x0 = np.array([0,-3,0,-1])
+cl_sys.compute_trajectory(10, 10001, 'euler')
+cl_sys.plot_trajectory('xu')
+cl_sys.animate_simulation(time_factor_video=1.0, is_3d=True)

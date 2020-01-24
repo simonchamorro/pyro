@@ -14,8 +14,8 @@ from pyro.dynamic  import cartpole
 sys  = cartpole.RotatingCartPole()
 
 # Simultation
-x_start = np.array([0,0.1,0,0])
-sim = sys.compute_trajectory(x0=x_start)
-sys.plot_phase_plane_trajectory(sim)
-sys.plot_trajectory(sim, 'xu')
-sys.animate_simulation(sim, time_factor_video=1.0, is_3d=True)
+sys.x0 = np.array([0,0.1,0,0])
+sys.compute_trajectory()
+sys.plot_phase_plane_trajectory()
+sys.plot_trajectory('xu')
+sys.animate_simulation(time_factor_video=1.0, is_3d=True)

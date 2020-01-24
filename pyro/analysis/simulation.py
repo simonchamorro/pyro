@@ -9,10 +9,9 @@ import numpy as np
 
 from scipy.integrate import odeint
 
-from .graphical import TrajectoryPlotter
 
 ##########################################################################
-# Simulation Objects
+# Trajectory 
 ##########################################################################
 
 class Trajectory():
@@ -80,15 +79,14 @@ class Trajectory():
     def t2u(self, t ):
         """ get u from time """
 
-        if t > self.time_final:
-            u = self.ubar
+        # Find time index
+        i = (np.abs(self.t - t)).argmin()
+
+        # Find associated control input
+        u = self.u[i,:]
         
-        else:
-            # Find time index
-            i = (np.abs(self.t - t)).argmin()
-    
-            # Find associated control input
-            u = self.u[i,:]
+        #if t > self.time_final:
+        #    u = self.ubar
 
         return u
 
@@ -102,6 +100,10 @@ class Trajectory():
         # Find associated control input
         return self.x[i,:]
 
+
+##########################################################################
+# Simulator
+##########################################################################
 
 class Simulator:
     """Simulation Class for open-loop ContinuousDynamicalSystem
@@ -125,14 +127,13 @@ class Simulator:
         self.dt     = ( tf + 0.0 - self.t0 ) / ( n - 1 )
         self.solver = solver
         self.x0     = self.cds.x0
+        self.cf     = self.cds.cost_function 
         
         # Check Initial condition state-vector
         if self.x0.size != self.cds.n:
             raise ValueError(
                 "Number of elements in x0 must be equal to number of states"
             )
-            
-        self.traj = None
 
     ##############################
     def compute(self):
@@ -189,13 +190,15 @@ class Simulator:
           y = y_sol
         )
         
-        self.traj = traj
+        # Compute Cost function
+        if self.cf is not None :
+            traj = self.cf.eval( traj )
         
         return traj
 
 
 ###############################################################################
-# Closed Loop Simulation
+# Closed Loop Simulator
 ###############################################################################
     
 class CLosedLoopSimulator(Simulator):
@@ -214,40 +217,47 @@ class CLosedLoopSimulator(Simulator):
     ###########################################################################
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
         self.sys = self.cds.cds
         self.ctl = self.cds.ctl
 
     ###########################################################################
     def compute(self):
 
-        sol = super().compute()
-        r, u = self._compute_inputs(sol)
+        traj = super().compute()
+        r, u = self._compute_inputs( traj )
 
-        cltraj = Trajectory(
-            x  = sol.x,
+        cl_traj = Trajectory(
+            x  = traj.x,
             u  = u,
-            t  = sol.t,
-            dx = sol.dx,
-            y  = sol.y,
+            t  = traj.t,
+            dx = traj.dx,
+            y  = traj.y,
             r  = r
         )
+        
+        # Compute Cost function
+        if self.cf is not None :
+            traj = self.cf.eval( traj )
 
-        return cltraj
+        return cl_traj
 
     ###########################################################################
-    def _compute_inputs(self, sol):
+    def _compute_inputs(self, traj ):
         """ Compute internal control signal_proc of the closed-loop system """
 
-        r_sol = sol.u.copy() # reference is input of combined sys
-        u_sol = np.zeros((self.n,self.sys.m))
+        r = traj.u.copy() # reference is input of combined sys
+        u = np.zeros((self.n,self.sys.m))
 
         # Compute internal input signal_proc
         for i in range(self.n):
 
-            ri = r_sol[i,:]
-            yi = sol.y[i,:]
-            ti = sol.t[i]
+            ri = r[i,:]
+            yi = traj.y[i,:]
+            ti = traj.t[i]
 
-            u_sol[i,:] = self.ctl.c( yi , ri , ti )
+            ui = self.ctl.c( yi , ri , ti )
+            
+            u[i,:] = ui
 
-        return (r_sol, u_sol)
+        return (r,u)

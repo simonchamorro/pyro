@@ -9,13 +9,10 @@ import numpy as np
 
 from abc import ABC
 
-from collections import namedtuple
-
 from copy import copy
 
 from scipy.integrate import cumtrapz
 
-from . import Trajectory
 
 
 ##########################################################################
@@ -58,7 +55,8 @@ class CostFunction(ABC):
     
     #############################
     def eval(self, traj):
-        """Compute cost of simulation
+        """ 
+        Compute cost of a trajectory and add J values in traj object
 
         Parameters
         ----------
@@ -77,6 +75,7 @@ class CostFunction(ABC):
         """
 
         dJ = np.empty(traj.time_steps)
+        
         for i in range(traj.time_steps):
             x = traj.x[i,:]
             u = traj.u[i,:]
@@ -110,21 +109,21 @@ class QuadraticCostFunction( CostFunction ):
     """
     
     ############################
-    def __init__(self, q, r, v):
+    def __init__(self, n, m, p):
         super().__init__()
 
-        self.n = q.shape[0]
-        self.m = r.shape[0]
-        self.p = v.shape[0]
+        self.n = n
+        self.m = m
+        self.p = p
 
         self.xbar = np.zeros(self.n)
         self.ubar = np.zeros(self.m)
         self.ybar = np.zeros(self.p)
 
         # Quadratic cost weights
-        self.Q = np.diag( q )
-        self.R = np.diag( r )
-        self.V = np.diag( v )
+        self.Q = np.diag( np.ones(n) )
+        self.R = np.diag( np.ones(m) )
+        self.V = np.zeros((p,p))
 
         self.ontarget_check = True
 

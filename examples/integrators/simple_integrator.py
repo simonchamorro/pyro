@@ -28,17 +28,12 @@ sys.ubar = np.array([1])
 sys.plot_phase_plane(0,0) # only one state for two axis!
 
 # Cost function with unit weights
-qcf = costfunction.QuadraticCostFunction(
-    np.zeros(sys.n),
-    np.ones(sys.m),
-    np.zeros(sys.p)
-)
+sys.cost_function = costfunction.QuadraticCostFunction(1,1,1)
+
+sys.cost_function.Q[0,0] = 0.1
 
 # Simulation
 sys.x0 = np.array([2])
-
-aaa =sys.compute_trajectory(10,1001,'ode')
-sys.traj = qcf.eval( sys.traj )
 
 # Plot output
 sys.plot_trajectory('xuj')
