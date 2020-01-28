@@ -5,8 +5,6 @@ Created on Mon Oct 22 08:40:31 2018
 @author: alxgr
 """
 
-from abc import ABC, abstractmethod
-
 from copy import copy
 
 import numpy as np
@@ -371,7 +369,7 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
 
 
 ###############################################################################
-class StatefulController(ABC):
+class StatefulController():
     """Controller with states
 
     Parameters
@@ -402,12 +400,12 @@ class StatefulController(ABC):
         self.r_ub = np.zeros(self.k) + 10 # upper bounds
         self.r_lb = np.zeros(self.k) - 10 # lower bounds
 
-    @abstractmethod
+    #@abstractmethod
     def c(self, xctl, y, r, t):
         """Controller output function"""
         return np.zeros(self.m)
 
-    @abstractmethod
+    #@abstractmethod
     def f(self, xctl, y, r, t):
         """Differential equation describing the internal controller states.
 
@@ -418,6 +416,8 @@ class StatefulController(ABC):
 
     def __add__(self, sys):
         return StatefulCLSystem(sys, self)
+        
+        
 
 class StatefulCLSystem(ClosedLoopSystem):
     """Closed loop system with stateful controller

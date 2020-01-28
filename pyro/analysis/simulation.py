@@ -192,7 +192,7 @@ class Simulator:
         
         # Compute Cost function
         if self.cf is not None :
-            traj = self.cf.eval( traj )
+            traj = self.cf.trajectory_evaluation( traj )
         
         return traj
 
@@ -207,7 +207,7 @@ class CLosedLoopSimulator(Simulator):
     --------------------------------------------------------
     CLSystem  : Instance of ClosedLoopSystem
     tf : final time
-    n  : number if point
+    n  : number of point
     solver : 'ode' or 'euler'
     --------------------------------------------------------
     Use this class instead of Simulation() in order to access
@@ -215,8 +215,8 @@ class CLosedLoopSimulator(Simulator):
     """
     
     ###########################################################################
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, ContinuousDynamicSystem, tf=10, n=10001, solver='ode'):
+        Simulator.__init__(self, ContinuousDynamicSystem, tf, n, solver)
         
         self.sys = self.cds.cds
         self.ctl = self.cds.ctl
@@ -224,7 +224,7 @@ class CLosedLoopSimulator(Simulator):
     ###########################################################################
     def compute(self):
 
-        traj = super().compute()
+        traj = Simulator.compute(self)
         r, u = self._compute_inputs( traj )
 
         cl_traj = Trajectory(
@@ -238,7 +238,7 @@ class CLosedLoopSimulator(Simulator):
         
         # Compute Cost function
         if self.cf is not None :
-            traj = self.cf.eval( traj )
+            traj = self.cf.trajectory_evaluation( traj )
 
         return cl_traj
 
