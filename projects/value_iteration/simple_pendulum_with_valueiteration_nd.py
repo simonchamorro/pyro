@@ -43,9 +43,9 @@ vi.plot_cost2go()
 cl_sys = controller.ClosedLoopSystem( sys , vi.ctl )
 
 # Simulation and animation
-x0   = [0,0]
+cl_sys.x0   = np.array([0,0])
 tf   = 10
-sim = cl_sys.compute_trajectory(x0, tf, costfunc=qcf)
-cl_sys.get_plotter().plot(sim, 'xuj')
-cl_sys.get_animator().animate_simulation(sim, save=False, file_name='simple_pendulum')
+cl_sys.compute_trajectory(tf)
+cl_sys.get_plotter().plot('xu')
+cl_sys.animate_simulation()
 

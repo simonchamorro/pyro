@@ -51,23 +51,24 @@ vi.uselookuptable = True
 vi.initialize()
 
 #if load_data:
-vi.load_data('car_vi_racecar_proto_scale_8')
+vi.load_data('car_vi')
 # vi.compute_steps(100, plot=True, maxJ=100)
 #if save_data:
 # vi.save_data('car_vi_racecar_proto_scale_8')
 
 vi.assign_interpol_controller()
 
-vi.plot_cost2go(maxJ=100)
+#vi.plot_cost2go(maxJ=100)
 vi.plot_policy(0)
 vi.plot_policy(1)
 
 cl_sys = controller.ClosedLoopSystem( sys , vi.ctl )
 #
 ## Simulation and animation
-x0   = [0, 0, 0]
-tf   = 5
+x0   = np.array([0, 0, 0])
+tf   = 20
 
-sim = cl_sys.compute_trajectory(x0, tf, 10001, 'euler')
-cl_sys.get_plotter().plot(sim, 'xu')
-cl_sys.get_animator().animate_simulation(sim, save=True, file_name='car')
+cl_sys.x0 = x0
+cl_sys.compute_trajectory(tf, 10001, 'euler')
+cl_sys.plot_trajectory('xu')
+cl_sys.animate_simulation()
