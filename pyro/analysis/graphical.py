@@ -110,7 +110,7 @@ class TrajectoryPlotter:
         if plot == 'All' or plot == 'y' or plot == 'xy':
             # For all outputs
             for i in range( sys.p ):
-                plots[j].plot( traj.t , traj.y[:,i] , 'k')
+                plots[j].plot( traj.t , traj.x[:,i] , 'k')
                 plots[j].set_ylabel(sys.output_label[i] + '\n' +
                 sys.output_units[i] , fontsize=self.fontsize )
                 plots[j].grid(True)
@@ -135,7 +135,9 @@ class TrajectoryPlotter:
         simfig.tight_layout()
 
         if show:
-            simfig.show()
+            simfig.canvas.draw()
+            plt.draw()
+            plt.pause(5)
 
         self.fig   = simfig
         self.plots = plots
@@ -169,7 +171,7 @@ class TrajectoryPlotter:
         pp.ax.plot([traj.x[-1,x_axis]],
                         [traj.x[-1,y_axis]],
                         [traj.x[-1,z_axis]],
-                        's') # end
+                        's') # start # end
 
         pp.ax.set_xlim( self.sys.x_lb[ x_axis ] ,
                              self.sys.x_ub[ x_axis ])
@@ -208,10 +210,6 @@ class TrajectoryPlotter:
         plt.plot([traj.x[-1,x_axis]], [traj.x[-1,y_axis]], 's') # end
 
         plt.tight_layout()
-        pp.phasefig.show()
-        
-        
-        
 
 class Animator:
     """ 
@@ -282,9 +280,7 @@ class Animator:
             line  = self.showax.plot( x_pts, y_pts, self.linestyle)
             self.showlines.append( line )
 
-        plt.draw()
         plt.show()
-        
     
     ###########################################################################
     def show3(self, q ):
@@ -443,10 +439,12 @@ class Animator:
                                                 n_frame , interval = inter, 
                                                 init_func=self.__ani_init__ )
         if save:
-            self.ani.save( file_name + '.html' ) # , writer = 'mencoder' )
+            self.ani.save( file_name + '.gif', writer='imagemagick', fps=30)
 
-        self.ani_fig.show()
-        
+        # self.ani_fig.show()
+        plt.ioff()
+        plt.show(block=True)
+
     #####################################    
     def __ani_init__(self):
         for line in self.lines:
