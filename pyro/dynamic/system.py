@@ -10,6 +10,7 @@ import numpy as np
 from pyro.analysis import simulation
 from pyro.analysis import phaseanalysis
 from pyro.analysis import graphical
+from pyro.analysis import costfunction
        
 '''
 ###############################################################################
@@ -83,9 +84,7 @@ class ContinuousDynamicSystem:
         # Default state and inputs values    
         self.xbar = np.zeros(self.n)
         self.ubar = np.zeros(self.m)
-        
-        # Cost function for evaluation
-        self.cost_function = None
+        self.ybar = np.zeros(self.p)
         
         ################################
         # Variables
@@ -96,6 +95,10 @@ class ContinuousDynamicSystem:
         
         # Result of last simulation
         self.traj = None
+        
+        # Cost function for evaluation
+        # default is a quadratic cost function with diag Q and R matrices
+        self.cost_function = costfunction.QuadraticCostFunction.from_sys(self)
 
     
     #############################
@@ -117,9 +120,8 @@ class ContinuousDynamicSystem:
         
         ################################################
         # Place holder: put the equations of motion here
-        ################################################
-        
         raise NotImplementedError
+        ################################################
         
         return dx
     
@@ -165,7 +167,7 @@ class ContinuousDynamicSystem:
         
         """
         
-        #Default is a constant signal
+        # Default is a constant signal
         u = self.ubar
         
         return u
@@ -294,12 +296,18 @@ class ContinuousDynamicSystem:
     ###########################################################################
     # Quick Analysis Shorcuts
     ###########################################################################
-
+    
+    #############################
     def get_plotter(self):
+        
         return graphical.TrajectoryPlotter(self)
-
+    
+    
+    #############################
     def get_animator(self):
+        
         return graphical.Animator(self)
+    
 
     #############################
     def plot_phase_plane(self , x_axis = 0 , y_axis = 1 ):
@@ -311,9 +319,9 @@ class ContinuousDynamicSystem:
         
         """
 
-        self.pp = phaseanalysis.PhasePlot( self , x_axis , y_axis )
+        pp = phaseanalysis.PhasePlot( self , x_axis , y_axis )
         
-        self.pp.plot()
+        pp.plot()
         
         
     #############################
@@ -379,27 +387,28 @@ class ContinuousDynamicSystem:
         if self.traj == None:
             self.compute_trajectory()
             
-        self.get_plotter().phase_plane_trajectory_3d( self.traj, x_axis , y_axis, z_axis)
+        self.get_plotter().phase_plane_trajectory_3d( 
+                self.traj, x_axis , y_axis, z_axis)
 
 
     #############################################
     def show(self, q , x_axis = 0 , y_axis = 1 ):
         """ Plot figure of configuration q """
         
-        self.ani = graphical.Animator( self )
-        self.ani.x_axis  = x_axis
-        self.ani.y_axis  = y_axis
+        ani = graphical.Animator( self )
+        ani.x_axis  = x_axis
+        ani.y_axis  = y_axis
         
-        self.ani.show( q )
+        ani.show( q )
         
     
     #############################################
     def show3(self, q ):
         """ Plot figure of configuration q """
         
-        self.ani = graphical.Animator( self )
+        ani = graphical.Animator( self )
         
-        self.ani.show3( q )
+        ani.show3( q )
 
     ##############################
     def animate_simulation(self, **kwargs):

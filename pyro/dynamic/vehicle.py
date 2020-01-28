@@ -1262,7 +1262,8 @@ if __name__ == "__main__":
     sys = KinematicCarModelwithObstacles()
     
     sys.ubar = np.array([2,-0.5])
-    sys.plot_trajectory( np.array([0,0,0]) , 10 )
+    sys.x0   = np.array([0,0,0])
+    sys.plot_trajectory()
     
-    sys.animate_simulation( 1 )
+    sys.animate_simulation()
         
