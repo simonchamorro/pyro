@@ -42,9 +42,9 @@ vi = valueiteration.ValueIteration_ND( grid_sys , cf )
 
 vi.uselookuptable = True
 vi.initialize()
-vi.load_data('parking_vi')
+vi.load_data('bicycle_parking_vi')
 #vi.compute_steps(100, maxJ=args.maxJ, plot=has_dynamic_plot)
-#vi.save_data('parking_vi')
+#vi.save_data('bicycle_parking_vi')
 
 vi.assign_interpol_controller()
 

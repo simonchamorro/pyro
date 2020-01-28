@@ -46,6 +46,6 @@ cl_sys = controller.ClosedLoopSystem( sys , vi.ctl )
 cl_sys.x0   = np.array([0,0])
 tf   = 10
 cl_sys.compute_trajectory(tf)
-cl_sys.get_plotter().plot('xu')
+cl_sys.plot_trajectory('xu')
 cl_sys.animate_simulation()
 

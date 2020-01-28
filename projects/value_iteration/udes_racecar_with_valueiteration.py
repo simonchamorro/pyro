@@ -7,7 +7,6 @@ Created on Tue Nov 13 11:05:07 2018
 
 ###############################################################################
 import numpy as np
-import argparse
 ###############################################################################
 from pyro.dynamic  import vehicle
 from pyro.planning import discretizer
@@ -51,10 +50,10 @@ vi.uselookuptable = True
 vi.initialize()
 
 #if load_data:
-vi.load_data('car_vi_racecar_proto_scale_9')
+vi.load_data('udes_racecar')
 # vi.compute_steps(50, plot=True, maxJ=100)
 #if save_data:
-# vi.save_data('car_vi_racecar_proto_scale_9')
+# vi.save_data('udes_racecar')
 
 vi.assign_interpol_controller()
 
@@ -65,9 +64,9 @@ vi.plot_policy(1)
 cl_sys = controller.ClosedLoopSystem( sys , vi.ctl )
 #
 ## Simulation and animation
-x0   = [0, 0, 0]
+cl_sys.x0   = np.array([0, 0, 0])
 tf   = 5
 
-sim = cl_sys.compute_trajectory(x0, tf, 10001, 'euler')
-cl_sys.get_plotter().plot(sim, 'xu')
-cl_sys.get_animator().animate_simulation(sim, save=True, file_name='car_proto_scale_2')
+cl_sys.compute_trajectory(tf, 10001, 'euler')
+cl_sys.plot_trajectory('xu')
+cl_sys.animate_simulation()
