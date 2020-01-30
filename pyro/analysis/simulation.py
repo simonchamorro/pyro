@@ -192,7 +192,7 @@ class Simulator:
         
         # Compute Cost function
         if self.cf is not None :
-            traj = self.cf.eval( traj )
+            traj = self.cf.trajectory_evaluation( traj )
         
         return traj
 

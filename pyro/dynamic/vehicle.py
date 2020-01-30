@@ -99,6 +99,7 @@ class KinematicBicyleModel( system.ContinuousDynamicSystem ):
         
         return q
     
+    
     ###########################################################################
     def forward_kinematic_domain(self, q ):
         """ 
@@ -122,6 +123,7 @@ class KinematicBicyleModel( system.ContinuousDynamicSystem ):
             
                 
         return domain
+    
     
     ###########################################################################
     def forward_kinematic_lines(self, q ):
@@ -185,12 +187,13 @@ class KinematicBicyleModel( system.ContinuousDynamicSystem ):
     
 
 ##############################################################################
-#
+# 
 ##############################################################################
         
 class HolonomicMobileRobot( system.ContinuousDynamicSystem ):
     """ 
-    
+    Holonomic 2D point-robot
+    -----------------------------------
     dx   = u[0]
     dy   = u[1]
     
@@ -252,7 +255,6 @@ class HolonomicMobileRobot( system.ContinuousDynamicSystem ):
     # For graphical output
     ###########################################################################
     
-    
     #############################
     def xut2q( self, x , u , t ):
         """ compute config q """
@@ -260,6 +262,7 @@ class HolonomicMobileRobot( system.ContinuousDynamicSystem ):
         q = x # kinematic model : state = config space
         
         return q
+    
     
     ###########################################################################
     def forward_kinematic_domain(self, q ):
@@ -273,6 +276,7 @@ class HolonomicMobileRobot( system.ContinuousDynamicSystem ):
             
                 
         return domain
+    
     
     ###########################################################################
     def forward_kinematic_lines(self, q ):
@@ -308,7 +312,8 @@ class HolonomicMobileRobot( system.ContinuousDynamicSystem ):
         lines_pts.append( pts )
                 
         return lines_pts
-
+        
+        
 
 ##############################################################################
 #
@@ -316,7 +321,8 @@ class HolonomicMobileRobot( system.ContinuousDynamicSystem ):
 
 class HolonomicMobileRobotwithObstacles( HolonomicMobileRobot ):
     """
-
+    Holonomic 2D point robot with obstacles with allowable domain
+    -------------------------------------------------------------
     dx   = u[0]
     dy   = u[1]
 
@@ -430,7 +436,8 @@ class HolonomicMobileRobotwithObstacles( HolonomicMobileRobot ):
 
 class Holonomic3DMobileRobot(system.ContinuousDynamicSystem):
     """
-
+    Holonomic 3D point-robot
+    -----------------------------------
     dx   = u[0]
     dy   = u[1]
 
@@ -442,7 +449,7 @@ class Holonomic3DMobileRobot(system.ContinuousDynamicSystem):
 
         # Dimensions
         self.n = 3
-        self.m = 2
+        self.m = 3
         self.p = 3
 
         # initialize standard params
@@ -484,6 +491,7 @@ class Holonomic3DMobileRobot(system.ContinuousDynamicSystem):
 
         dx[0] = u[0]
         dx[1] = u[1]
+        dx[2] = u[2]
 
         return dx
 
@@ -535,12 +543,16 @@ class Holonomic3DMobileRobot(system.ContinuousDynamicSystem):
 
         pts[0, 0] = q[0] + d
         pts[0, 1] = q[1] + d
+        pts[0, 2] = q[2]
         pts[1, 0] = q[0] + d
         pts[1, 1] = q[1] - d
+        pts[1, 2] = q[2]
         pts[2, 0] = q[0] - d
         pts[2, 1] = q[1] - d
+        pts[2, 2] = q[2]
         pts[3, 0] = q[0] - d
         pts[3, 1] = q[1] + d
+        pts[3, 2] = q[2]
 
         lines_pts.append(pts)
 
@@ -552,7 +564,8 @@ class Holonomic3DMobileRobot(system.ContinuousDynamicSystem):
 
 class Holonomic3DMobileRobotwithObstacles(Holonomic3DMobileRobot):
     """
-
+    Holonomic 3D point-robot with non-allowable states
+    -----------------------------------
     dx   = u[0]
     dy   = u[1]
 
@@ -572,9 +585,9 @@ class Holonomic3DMobileRobotwithObstacles(Holonomic3DMobileRobot):
         self.x_lb = np.array([-10,-10, -10])
 
         self.obstacles = [
-                [ (2,2),(4,10)],
-                [ (6,-8),(8,8)],
-                [ (-8,-8),(-1,8)]
+                [ ( 2, 2,-1),( 4,10,1)],
+                [ ( 6,-8,-1),( 8,8,1)],
+                [ (-8,-8,-1),(-1,8,1)]
                 ]
 
     #############################
@@ -590,8 +603,10 @@ class Holonomic3DMobileRobotwithObstacles(Holonomic3DMobileRobot):
         for obs in self.obstacles:
             on_obs = (( x[0] > obs[0][0]) and
                       ( x[1] > obs[0][1]) and
+                      ( x[2] > obs[0][2]) and
                       ( x[0] < obs[1][0]) and
-                      ( x[1] < obs[1][1]) )
+                      ( x[1] < obs[1][1]) and
+                      ( x[2] < obs[1][2]) )
 
             ans = ans or on_obs
 
@@ -620,14 +635,19 @@ class Holonomic3DMobileRobotwithObstacles(Holonomic3DMobileRobot):
 
         d = 0.2
 
-        pts[0,0] = q[0]+d
-        pts[0,1] = q[1]+d
-        pts[1,0] = q[0]+d
-        pts[1,1] = q[1]-d
-        pts[2,0] = q[0]-d
-        pts[2,1] = q[1]-d
-        pts[3,0] = q[0]-d
-        pts[3,1] = q[1]+d
+        pts[0, 0] = q[0] + d
+        pts[0, 1] = q[1] + d
+        pts[0, 2] = q[2]
+        pts[1, 0] = q[0] + d
+        pts[1, 1] = q[1] - d
+        pts[1, 2] = q[2]
+        pts[2, 0] = q[0] - d
+        pts[2, 1] = q[1] - d
+        pts[2, 2] = q[2]
+        pts[3, 0] = q[0] - d
+        pts[3, 1] = q[1] + d
+        pts[3, 2] = q[2]
+
 
         lines_pts.append( pts )
 
@@ -638,21 +658,28 @@ class Holonomic3DMobileRobotwithObstacles(Holonomic3DMobileRobot):
         for obs in self.obstacles:
 
             pts = np.zeros((5,3))
+            
+            #TODO: need to update plot to draw cubes
 
             pts[0,0] = obs[0][0]
             pts[0,1] = obs[0][1]
+            pts[0,2] = obs[0][2]
 
             pts[1,0] = obs[0][0]
             pts[1,1] = obs[1][1]
+            pts[1,2] = obs[0][2]
 
             pts[2,0] = obs[1][0]
             pts[2,1] = obs[1][1]
+            pts[2,2] = obs[0][2]
 
             pts[3,0] = obs[1][0]
             pts[3,1] = obs[0][1]
+            pts[3,2] = obs[0][2]
 
             pts[4,0] = obs[0][0]
             pts[4,1] = obs[0][1]
+            pts[4,2] = obs[0][2]
 
             lines_pts.append( pts )
 
@@ -667,7 +694,9 @@ class Holonomic3DMobileRobotwithObstacles(Holonomic3DMobileRobot):
 class KinematicCarModel( KinematicBicyleModel ):
     """ 
     
-    Bicycle model with car graphical output
+    Bicycle model of real sized car
+    ------------------------------------------------------------------------
+    length = 5 meters
     
     Equations of Motion
     -------------------------
@@ -680,8 +709,6 @@ class KinematicCarModel( KinematicBicyleModel ):
     ############################
     def __init__(self):
         """ """
-
-        # TODO: make car with 1/10th scale
         
         # initialize standard params
         KinematicBicyleModel.__init__(self,)
@@ -872,13 +899,24 @@ class KinematicCarModel( KinematicBicyleModel ):
         y2 = y+d2*np.sin(angle2)
             
         return x1,y1,x2,y2
+
+
     
-    
- ##############################################################################       
+##############################################################################       
 class KinematicCarModelwithObstacles( KinematicCarModel ):
     """ 
+    Bicycle model of real sized car with non-allowable states
+    ------------------------------------------------------------------------
+    length = 5 meters
+    
+    Equations of Motion
+    -------------------------
+    dx   = V cos ( phi )
+    dy   = V sin ( phi )
+    dphi = V/l tan ( beta )
     
     """
+    
     
     ############################
     def __init__(self):
@@ -887,7 +925,7 @@ class KinematicCarModelwithObstacles( KinematicCarModel ):
         KinematicCarModel.__init__(self)
         
         # Labels
-        self.name = 'Kinematic Bicyle Model with Obstacles'
+        self.name = 'Kinematic Car Model with Obstacles'
 
         self.obstacles = [
                 [ (-10, -1),(-5, 1)],
@@ -960,19 +998,13 @@ class KinematicCarModelwithObstacles( KinematicCarModel ):
     ##############################################################################
 
 
-#
+
 ##############################################################################
 
-class KinematicProtoCarModel(KinematicBicyleModel):
+class UdeSRacecar( KinematicCarModelwithObstacles ):
     """
 
-    Bicycle model with car graphical output
-
-    Equations of Motion
-    -------------------------
-    dx   = V cos ( phi )
-    dy   = V sin ( phi )
-    dphi = V/l tan ( beta )
+    Bicycle model of a car with the parameter of UdeS-Racecar prototypes
 
     """
 
@@ -981,271 +1013,28 @@ class KinematicProtoCarModel(KinematicBicyleModel):
         """ """
 
         # initialize standard params
-        KinematicBicyleModel.__init__(self, )
+        KinematicCarModelwithObstacles.__init__(self, )
 
         # Model param
-        self.width = 1.7 * 0.1
-        self.a = 1.7 * 0.1
-        self.b = 1.7 * 0.1
+        self.width = 0.17
+        self.a = 0.17
+        self.b = 0.17
         self.lenght = self.a + self.b
-        self.lenght_tire = 0.40 * 0.1
-        self.width_tire = 0.15 * 0.1
+        self.lenght_tire = 0.04
+        self.width_tire = 0.015
 
         # Graphic output parameters
         self.dynamic_domain = True
         self.dynamic_range = self.lenght * 2
-
-    ###########################################################################
-    # For graphical output
-    ###########################################################################
-
-    ###########################################################################
-    def forward_kinematic_lines(self, q):
-        """
-        Compute points p = [x;y;z] positions given config q
-        ----------------------------------------------------
-        - points of interest for ploting
-
-        Outpus:
-        lines_pts = [] : a list of array (n_pts x 3) for each lines
-
-        """
-
-        lines_pts = []  # list of array (n_pts x 3) for each lines
-
-        ###########################
-        # Top line
-        ###########################
-
-        pts = np.zeros((2, 10))
-
-        pts[0, 0] = -10000
-        pts[0, 1] = self.width * 2.25
-        pts[1, 0] = 10000
-        pts[1, 1] = self.width * 2.25
-
-        lines_pts.append(pts)
-
-        ###########################
-        # middle line
-        ###########################
-
-        pts = np.zeros((2, 10))
-
-        pts[0, 0] = -10000
-        pts[0, 1] = self.width * 0.75
-        pts[1, 0] = 10000
-        pts[1, 1] = self.width * 0.75
-
-        lines_pts.append(pts)
-
-        ###########################
-        # bottom line
-        ###########################
-
-        pts = np.zeros((2, 10))
-
-        pts[0, 0] = -10000
-        pts[0, 1] = - self.width * 0.75
-        pts[1, 0] = 10000
-        pts[1, 1] = - self.width * 0.75
-
-        lines_pts.append(pts)
-
-        ###########################
-        # Car
-        ###########################
-
-        """
-        Here is how the car is drawn:
-
-        |---------lenght--------|
-        |-----a------|
-        *                       *   -
-            *               *       |
-          d2    *   CG  *    d3     |
-                    *              width
-          d1    *       *    d4     |
-           *                *       |
-        *                       *   -
-        """
-        # Distance of the four corners of the car from the mass center
-        d1 = np.sqrt(self.a ** 2 + (self.width / 2) ** 2)
-        d3 = np.sqrt((self.lenght - self.a) ** 2 + (self.width / 2) ** 2)
-
-        # Angles of the four lines of the car
-        theta1 = np.pi + np.arctan(self.width / 2 / self.a) + q[2]
-        theta2 = np.pi - np.arctan(self.width / 2 / self.a) + q[2]
-        theta3 = np.arctan(self.width / 2 / (self.lenght - self.a)) + q[2]
-        theta4 = 2 * np.pi - np.arctan(self.width / 2 / (self.lenght - self.a)) + q[2]
-
-        # Build first line of the car
-        pts = np.zeros((2, 10))
-        pts[0, 0], pts[0, 1], pts[1, 0], pts[1, 1] = self.draw_line(d1, d1, theta1, theta2, q[0], q[1])
-        lines_pts.append(pts)
-
-        # Build second line of the car
-        pts = np.zeros((2, 10))
-        pts[0, 0], pts[0, 1], pts[1, 0], pts[1, 1] = self.draw_line(d3, d3, theta3, theta4, q[0], q[1])
-        px3 = pts[0, 0]  # Points used to center the wheels
-        py3 = pts[0, 1]
-        px4 = pts[1, 0]
-        py4 = pts[1, 1]
-        lines_pts.append(pts)
-
-        # Build third line of the car
-        pts = np.zeros((2, 10))
-        pts[0, 0], pts[0, 1], pts[1, 0], pts[1, 1] = self.draw_line(d1, d3, theta2, theta3, q[0], q[1])
-        lines_pts.append(pts)
-
-        # Build third fourth of the car
-        pts = np.zeros((2, 10))
-        pts[0, 0], pts[0, 1], pts[1, 0], pts[1, 1] = self.draw_line(d1, d3, theta1, theta4, q[0], q[1])
-        lines_pts.append(pts)
-
-        ###########################
-        # Wheels
-        ###########################
-
-        # Distance of the four corners of a tire from the center
-        d = np.sqrt((self.lenght_tire / 2) ** 2 + (self.width_tire / 2) ** 2)
-
-        # Angles of the four lines of a tire
-        steer1 = np.pi + np.arctan(self.width / 2 / self.a) + q[3] + q[2]
-        steer2 = np.pi - np.arctan(self.width / 2 / self.a) + q[3] + q[2]
-        steer3 = np.arctan(self.width / 2 / (self.lenght - self.a)) + q[3] + q[2]
-        steer4 = 2 * np.pi - np.arctan(self.width / 2 / (self.lenght - self.a)) + q[3] + q[2]
-
-        # Build first line of the left tire
-        pts = np.zeros((2, 10))
-        pts[0, 0], pts[0, 1], pts[1, 0], pts[1, 1] = self.draw_line(d, d, steer1, steer2, px3, py3)
-        lines_pts.append(pts)
-
-        # Build second line of the left tire
-        pts = np.zeros((2, 10))
-        pts[0, 0], pts[0, 1], pts[1, 0], pts[1, 1] = self.draw_line(d, d, steer3, steer4, px3, py3)
-        lines_pts.append(pts)
-
-        # Build third line of the left tire
-        pts = np.zeros((2, 10))
-        pts[0, 0], pts[0, 1], pts[1, 0], pts[1, 1] = self.draw_line(d, d, steer2, steer3, px3, py3)
-        lines_pts.append(pts)
-
-        # Build fourth line of the left tire
-        pts = np.zeros((2, 10))
-        pts[0, 0], pts[0, 1], pts[1, 0], pts[1, 1] = self.draw_line(d, d, steer1, steer4, px3, py3)
-        lines_pts.append(pts)
-
-        # Build first line of the right tire
-        pts = np.zeros((2, 10))
-        pts[0, 0], pts[0, 1], pts[1, 0], pts[1, 1] = self.draw_line(d, d, steer1, steer2, px4, py4)
-        lines_pts.append(pts)
-
-        # Build second line of the right tire
-        pts = np.zeros((2, 10))
-        pts[0, 0], pts[0, 1], pts[1, 0], pts[1, 1] = self.draw_line(d, d, steer3, steer4, px4, py4)
-        lines_pts.append(pts)
-
-        # Build third line of the right tire
-        pts = np.zeros((2, 10))
-        pts[0, 0], pts[0, 1], pts[1, 0], pts[1, 1] = self.draw_line(d, d, steer2, steer3, px4, py4)
-        lines_pts.append(pts)
-
-        # Build first line of the right tire
-        pts = np.zeros((2, 10))
-        pts[0, 0], pts[0, 1], pts[1, 0], pts[1, 1] = self.draw_line(d, d, steer1, steer4, px4, py4)
-        lines_pts.append(pts)
-
-        return lines_pts
-
-    ##########################################################################
-    def draw_line(self, d1, d2, angle1, angle2, x, y):
-        x1 = x + d1 * np.cos(angle1)
-        y1 = y + d1 * np.sin(angle1)
-        x2 = x + d2 * np.cos(angle2)
-        y2 = y + d2 * np.sin(angle2)
-
-        return x1, y1, x2, y2
-
-
-##############################################################################
-class KinematicProtoCarModelwithObstacles(KinematicProtoCarModel):
-    """
-
-    """
-
-    ############################
-    def __init__(self):
-        """ """
-        # initialize standard params
-        KinematicProtoCarModel.__init__(self)
-
+        
         # Labels
-        self.name = 'Kinematic Bicyle Model with Obstacles'
+        self.name = 'Kinematic Bicyle Model of UdeS-Racecar'
 
         self.obstacles = [
-            [(-10 * 0.1, -1 * 0.1), (-5 * 0.1, 1 * 0.1)],
-            [(-4 * 0.1, 2 * 0.1), (1 * 0.1, 4 * 0.1)],
-            [(12 * 0.1, -1 * 0.1), (17 * 0.1, 1 * 0.1)]
+            [(  -1, -0.1), (-0.5, 0.1)],
+            [(-0.4,  0.2), ( 0.1, 0.4)],
+            [( 1.2, -0.1), ( 1.7, 0.1)]
         ]
-
-    #############################
-    def isavalidstate(self, x):
-        """ check if x is in the state domain """
-        ans = False
-        for i in range(self.n):
-            ans = ans or (x[i] < self.x_lb[i])
-            ans = ans or (x[i] > self.x_ub[i])
-
-        for obs in self.obstacles:
-            on_obs = ((x[0] + self.lenght * 0.5 > obs[0][0]) and
-                      (x[1] + self.width * 0.5 > obs[0][1]) and
-                      (x[0] - self.lenght * 0.5 < obs[1][0]) and
-                      (x[1] - self.width * 0.5 < obs[1][1]))
-
-            ans = ans or on_obs
-
-        return not (ans)
-
-    ###########################################################################
-    def forward_kinematic_lines(self, q):
-        """
-        Compute points p = [x;y;z] positions given config q
-        ----------------------------------------------------
-        - points of interest for ploting
-
-        Outpus:
-        lines_pts = [] : a list of array (n_pts x 3) for each lines
-
-        """
-
-        lines_pts = KinematicCarModel.forward_kinematic_lines(self, q)
-
-        ###########################
-        # obstacles
-        ###########################
-
-        for obs in self.obstacles:
-            pts = np.zeros((5, 3))
-
-            pts[0, 0] = obs[0][0]
-            pts[0, 1] = obs[0][1]
-
-            pts[1, 0] = obs[0][0]
-            pts[1, 1] = obs[1][1]
-
-            pts[2, 0] = obs[1][0]
-            pts[2, 1] = obs[1][1]
-
-            pts[3, 0] = obs[1][0]
-            pts[3, 1] = obs[0][1]
-
-            pts[4, 0] = obs[0][0]
-            pts[4, 1] = obs[0][1]
-
-            lines_pts.append(pts)
-
-        return lines_pts
 
 '''
 #################################################################
@@ -1257,13 +1046,25 @@ class KinematicProtoCarModelwithObstacles(KinematicProtoCarModel):
 if __name__ == "__main__":     
     """ MAIN TEST """
     
-    #sys = KinematicBicyleModel()
-    #sys = KinematicCarModel()
+    sys = KinematicBicyleModel()
+    
+    #sys.ubar = np.array([2,-0.5])
+    #sys.plot_trajectory()
+    #sys.animate_simulation()
+    
     sys = KinematicCarModelwithObstacles()
     
-    sys.ubar = np.array([2,-0.5])
-    sys.x0   = np.array([0,0,0])
-    sys.plot_trajectory()
+    #sys.ubar = np.array([2,-0.5])
+    #sys.plot_trajectory()
+    #sys.animate_simulation()
     
+    sys = UdeSRacecar()
+    
+    sys.ubar = np.array([2,-0.5])
+    sys.plot_trajectory()
     sys.animate_simulation()
+    
+    sys = HolonomicMobileRobotwithObstacles()
+    
+    
         

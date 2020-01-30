@@ -92,6 +92,7 @@ class MechanicalSystem( system.ContinuousDynamicSystem ):
         
         return H
     
+    
     ###########################################################################
     def C(self, q , dq ):
         """ 
@@ -108,6 +109,7 @@ class MechanicalSystem( system.ContinuousDynamicSystem ):
         
         return C
     
+    
     ###########################################################################
     def B(self, q ):
         """ 
@@ -118,6 +120,7 @@ class MechanicalSystem( system.ContinuousDynamicSystem ):
         
         return B
     
+    
     ###########################################################################
     def g(self, q ):
         """ 
@@ -127,6 +130,7 @@ class MechanicalSystem( system.ContinuousDynamicSystem ):
         g = np.zeros( self.dof ) # Default is zero vector
         
         return g
+    
         
     ###########################################################################
     def d(self, q , dq ):
@@ -164,6 +168,7 @@ class MechanicalSystem( system.ContinuousDynamicSystem ):
         
         return x
     
+    
     #############################
     def xut2q( self, x , u , t ):
         """ compute configuration variables """
@@ -184,6 +189,7 @@ class MechanicalSystem( system.ContinuousDynamicSystem ):
         forces = np.dot( H , ddq ) + np.dot( C , dq ) + g + d
         
         return forces
+    
     
     ##############################
     def actuator_forces(self, q  , dq  , ddq , t = 0 ):
@@ -265,14 +271,14 @@ class MechanicalSystem( system.ContinuousDynamicSystem ):
 if __name__ == "__main__":     
     """ MAIN TEST """
     
-    m = MechanicalSystem( 2 )
-    m.ubar = np.array([1,2])
-    x0     = np.array([0,0,0,0])
+    sys = MechanicalSystem( 2 )
     
-    m.plot_trajectory( x0 )
+    sys.show(  q = np.array([ 1.0, 2.0]) )
+    sys.show3( q = np.array([-0.5, 1.5]) )
     
-    m.show( np.array([1,2]))
-    #m.show3( np.array([-0.5,1.5]))
+    sys.ubar = np.array([1,2])
+    sys.x0   = np.array([0,0,0,0])
     
-    m.animate_simulation()
+    sys.plot_trajectory()
+    sys.animate_simulation()
         
