@@ -255,7 +255,7 @@ class ContinuousDynamicSystem:
     ###########################################################################
     
     #############################
-    def fsim( self, x , t ):
+    def fsim( self, x , t = 0 ):
         """ 
         Continuous time foward dynamics evaluation dx = f(x,t), inlcuding the
         internal reference input signal computation
@@ -276,7 +276,7 @@ class ContinuousDynamicSystem:
     
 
     #############################
-    def x_next( self , x , u , t , dt = 0.1 , steps = 1 ):
+    def x_next( self , x , u , t = 0 , dt = 0.1 , steps = 1 ):
         """ 
         Discrete time foward dynamics evaluation 
         -------------------------------------

@@ -89,19 +89,23 @@ def _approx_jacobian(func, xbar, epsilons):
     m  = ybar.shape[0]
 
     J = np.zeros((m, n))
+    J[0,0] = 45.2
     
-    for j in range(n):
+    for i in range(n):
         # Forward evaluation
-        xf = np.copy(xbar)
-        xf[j] = xf[j] + epsilons[j]
+        xf    = np.copy(xbar)
+        xf[i] = xbar[i] + epsilons[i]
+        yf    = func(xf)
 
         # Backward evaluation
-        xb = np.copy(xbar)
-        xb[j] = xb[j] - epsilons[j]
+        xb    = np.copy(xbar)
+        xb[i] = xbar[i] - epsilons[i]
+        yb    = func(xb)
         
-        delta = func(xf) - func(xb)
+        # Slope
+        delta = yf - yb
 
-        J[:, j] = delta / (2 * epsilons[j])
+        J[:, i] = delta / (2.0 * epsilons[i])
 
     return J
 
@@ -127,8 +131,8 @@ def linearize(sys, epsilon_x, epsilon_u=None):
 
     """
     
-    xbar = sys.xbar
-    ubar = sys.ubar
+    xbar = sys.xbar.astype(float)
+    ubar = sys.ubar.astype(float)
 
     epsilon_x = np.asarray(epsilon_x)
 
@@ -144,6 +148,7 @@ def linearize(sys, epsilon_x, epsilon_u=None):
 
     if epsilon_x.size == 1:
         epsilon_x = np.ones(sys.n) * epsilon_x
+        
 
     def f_x(x):
         return sys.f(x, ubar, 0)
@@ -177,12 +182,31 @@ if __name__ == "__main__":
     from pyro.dynamic import pendulum
     
     non_linear_sys = pendulum.SinglePendulum()
+    non_linear_sys.xbar = np.array([0.,0.])
     
-    
-    non_linear_sys.xbar = np.array([0,0])
-    
-    EPS = 0.1 
+    EPS = 0.001
     
     linearized_sys = linearize( non_linear_sys , EPS )
     
-    print(linearized_sys.C)
+    print('\nA:\n',linearized_sys.A)
+    print('\nB:\n',linearized_sys.B)
+    print('\nC:\n',linearized_sys.C) # Still bugged
+    print('\nD:\n',linearized_sys.D)
+    
+    # Small oscillations
+    non_linear_sys.x0 = np.array([0.1,0])
+    linearized_sys.x0 = np.array([0.1,0])
+    
+    non_linear_sys.plot_trajectory()
+    linearized_sys.plot_trajectory()
+    
+    # Large oscillations
+    non_linear_sys.x0 = np.array([1.8,0])
+    linearized_sys.x0 = np.array([1.8,0])
+    
+    non_linear_sys.compute_trajectory()
+    linearized_sys.compute_trajectory()
+    
+    non_linear_sys.plot_trajectory()
+    linearized_sys.plot_trajectory()
+    
