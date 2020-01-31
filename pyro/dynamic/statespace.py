@@ -1,14 +1,14 @@
 import numpy as np
 
-from .system import ContinuousDynamicSystem
+from pyro.dynamic import ContinuousDynamicSystem
 
+
+###############################################################################
 class StateSpaceSystem(ContinuousDynamicSystem):
     """Time-invariant state space representation of dynamic system
 
-    ```
-    f = A*x + B*u
-    h = C*x + D*u
-    ```
+    f = A x + B u
+    h = C x + D u
 
     Parameters
     ----------
@@ -16,7 +16,7 @@ class StateSpaceSystem(ContinuousDynamicSystem):
         The matrices which define the system
 
     """
-
+    ############################################
     def __init__(self, A, B, C, D):
         self.A = A
         self.B = B
@@ -28,9 +28,10 @@ class StateSpaceSystem(ContinuousDynamicSystem):
         n = A.shape[1]
         m = B.shape[1]
         p = C.shape[0]
-
-        super().__init__(n, m, p)
-
+        
+        ContinuousDynamicSystem.__init__(self, n, m, p)
+        
+    ############################################
     def _check_dimensions(self):
         if self.A.shape[0] != self.A.shape[1]:
             raise ValueError("A must be square")
@@ -46,31 +47,33 @@ class StateSpaceSystem(ContinuousDynamicSystem):
 
         if self.C.shape[0] != self.D.shape[0]:
             raise ValueError("Number of rows in C does not match D")
-
+    
+    #############################################
     def f(self, x, u, t):
-        x = np.asarray(x).reshape((self.n,))
-        u = np.asarray(u).reshape((self.m,))
-        result = np.dot(self.A, x) + np.dot(self.B, u)
-        assert result.size == self.n
-        return result.reshape((self.n,))
 
+        dx = np.dot(self.A, x) + np.dot(self.B, u)
+
+        return dx
+    
+    #############################################
     def h(self, x, u, t):
-        x = np.asarray(x).reshape((self.n,))
-        u = np.asarray(u).reshape((self.m,))
-        result = np.dot(self.C, x) + np.dot(self.D, u)
-        assert result.size == self.p
-        return result.reshape((self.p,))
+        
+        y = np.dot(self.C, x) + np.dot(self.D, u)
+        
+        return y
+    
+    
 
-
-def _approx_jacobian(f, x0, epsilons):
-    """Numerically approximate the jacobian of a function
+################################################################
+def _approx_jacobian(func, xbar, epsilons):
+    """ Numerically approximate the jacobian of a function
 
     Parameters
     ----------
-    f : callable
+    func : callable
         Function for which to approximate the jacobian. Must accept an array of
         dimension ``n`` and return an array of dimension ``m``.
-    x0 : array_like (dimension ``n``)
+    xbar : array_like (dimension ``n``)
         Input around which the jacobian will be evaluated.
     epsilons : array_like (dimension ``n``)
         Step size to use for each input when approximating the jacobian
@@ -81,25 +84,30 @@ def _approx_jacobian(f, x0, epsilons):
         Jacobian matrix with dimensions m x n
     """
 
-    n = x0.shape[0]
-    m = f(x0).shape[0]
+    n  = xbar.shape[0]
+    ybar = func(xbar)
+    m  = ybar.shape[0]
 
-    jac = np.zeros((m, n))
-
+    J = np.zeros((m, n))
+    
     for j in range(n):
         # Forward evaluation
-        xf = np.copy(x0)
+        xf = np.copy(xbar)
         xf[j] = xf[j] + epsilons[j]
 
         # Backward evaluation
-        xb = np.copy(x0)
+        xb = np.copy(xbar)
         xb[j] = xb[j] - epsilons[j]
+        
+        delta = func(xf) - func(xb)
 
-        jac[:, j] = ((f(xf) - f(xb)) / (2 * epsilons[j])).reshape((m,))
+        J[:, j] = delta / (2 * epsilons[j])
 
-    return jac
+    return J
 
-def linearize(sys, x0, u0, epsilon_x, epsilon_u=None):
+
+#################################################################
+def linearize(sys, epsilon_x, epsilon_u=None):
     """Generate linear state-space model by linearizing any system.
 
     The system to be linearized is assumed to be time-invariant.
@@ -108,7 +116,7 @@ def linearize(sys, x0, u0, epsilon_x, epsilon_u=None):
     ----------
     sys : `pyro.dynamic.ContinuousDynamicSystem`
         The system to linearize
-    x0 : array_like
+    xbar : array_like
         State array arround which the system will be linearized
     epsilon : float
         Step size to use for numerical gradient approximation
@@ -118,6 +126,9 @@ def linearize(sys, x0, u0, epsilon_x, epsilon_u=None):
     instance of `StateSpaceSystem`
 
     """
+    
+    xbar = sys.xbar
+    ubar = sys.ubar
 
     epsilon_x = np.asarray(epsilon_x)
 
@@ -135,20 +146,43 @@ def linearize(sys, x0, u0, epsilon_x, epsilon_u=None):
         epsilon_x = np.ones(sys.n) * epsilon_x
 
     def f_x(x):
-        return sys.f(x, u0, 0)
+        return sys.f(x, ubar, 0)
 
     def f_u(u):
-        return sys.f(x0, u, 0)
+        return sys.f(xbar, u, 0)
 
     def h_x(x):
-        return sys.h(x, u0, 0)
+        return sys.h(x, ubar, 0)
 
     def h_u(u):
-        return sys.h(x0, u, 0)
+        return sys.h(xbar, u, 0)
 
-    A = _approx_jacobian(f_x, x0, epsilon_x)
-    B = _approx_jacobian(f_u, u0, epsilon_u)
-    C = _approx_jacobian(h_x, x0, epsilon_x)
-    D = _approx_jacobian(h_u, u0, epsilon_u)
+    A = _approx_jacobian(f_x, xbar, epsilon_x)
+    B = _approx_jacobian(f_u, ubar, epsilon_u)
+    C = _approx_jacobian(h_x, xbar, epsilon_x)
+    D = _approx_jacobian(h_u, ubar, epsilon_u)
 
     return StateSpaceSystem(A, B, C, D)
+
+
+'''
+#################################################################
+##################          Main                         ########
+#################################################################
+'''
+
+
+if __name__ == "__main__":     
+    """ MAIN TEST """
+    from pyro.dynamic import pendulum
+    
+    non_linear_sys = pendulum.SinglePendulum()
+    
+    
+    non_linear_sys.xbar = np.array([0,0])
+    
+    EPS = 0.1 
+    
+    linearized_sys = linearize( non_linear_sys , EPS )
+    
+    print(linearized_sys.C)

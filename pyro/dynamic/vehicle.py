@@ -995,7 +995,7 @@ class KinematicCarModelwithObstacles( KinematicCarModel ):
                 
         return lines_pts
 
-    ##############################################################################
+    ###########################################################################
 
 
 
@@ -1048,23 +1048,27 @@ if __name__ == "__main__":
     
     sys = KinematicBicyleModel()
     
-    #sys.ubar = np.array([2,-0.5])
-    #sys.plot_trajectory()
+    sys.ubar = np.array([2,-0.5])
+    sys.plot_trajectory()
     #sys.animate_simulation()
     
     sys = KinematicCarModelwithObstacles()
     
-    #sys.ubar = np.array([2,-0.5])
-    #sys.plot_trajectory()
+    sys.ubar = np.array([2,-0.5])
+    sys.plot_trajectory()
     #sys.animate_simulation()
     
     sys = UdeSRacecar()
     
     sys.ubar = np.array([2,-0.5])
     sys.plot_trajectory()
-    sys.animate_simulation()
+    #sys.animate_simulation()
     
     sys = HolonomicMobileRobotwithObstacles()
+    
+    sys.ubar = np.array([1,1])
+    sys.plot_trajectory()
+    sys.animate_simulation()
     
     
         
