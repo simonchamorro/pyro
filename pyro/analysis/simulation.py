@@ -15,7 +15,7 @@ from scipy.integrate import odeint
 ##########################################################################
 
 class Trajectory():
-    """Simulation data"""
+    """ Simulation data """
 
     _dict_keys = ['x', 'u', 't', 'dx', 'y', 'r', 'J', 'dJ']
 
@@ -40,11 +40,14 @@ class Trajectory():
         
     ############################
     def _asdict(self):
+        
         return {k: getattr(self, k) for k in self._dict_keys}
     
     ############################
-    def save(self, name = 'trajectory_solution.npy' ):
+    def save(self, name = 'trajectory.npy' ):
+        
         np.savez(name , **self._asdict())
+        
     
     ############################
     @classmethod
@@ -59,8 +62,10 @@ class Trajectory():
             data = np.load(name, allow_pickle=True)
             return cls(*data)
         
+        
     ############################
     def _compute_size(self):
+        
         self.time_final = self.t.max()
         self.time_steps = self.t.size
 
@@ -89,6 +94,7 @@ class Trajectory():
         #    u = self.ubar
 
         return u
+    
 
     ############################
     def t2x(self, t ):
@@ -97,8 +103,9 @@ class Trajectory():
         # Find time index
         i = (np.abs(self.t - t)).argmin()
 
-        # Find associated control input
+        # Find associated state
         return self.x[i,:]
+    
 
 
 ##########################################################################
@@ -134,6 +141,7 @@ class Simulator:
             raise ValueError(
                 "Number of elements in x0 must be equal to number of states"
             )
+            
 
     ##############################
     def compute(self):
@@ -197,6 +205,7 @@ class Simulator:
         return traj
 
 
+
 ###############################################################################
 # Closed Loop Simulator
 ###############################################################################
@@ -215,16 +224,21 @@ class CLosedLoopSimulator(Simulator):
     """
     
     ###########################################################################
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, ContinuousDynamicSystem, tf=10,
+                 n=10001, solver='ode'):
         
-        self.sys = self.cds.cds
-        self.ctl = self.cds.ctl
+        
+        Simulator.__init__(self, ContinuousDynamicSystem, tf, n , solver)
+        
+        
+        self.plant      = self.cds.plant
+        self.controller = self.cds.controller
+        
 
     ###########################################################################
     def compute(self):
 
-        traj = super().compute()
+        traj = Simulator.compute( self )
         r, u = self._compute_inputs( traj )
 
         cl_traj = Trajectory(
@@ -238,7 +252,7 @@ class CLosedLoopSimulator(Simulator):
         
         # Compute Cost function
         if self.cf is not None :
-            traj = self.cf.eval( traj )
+            cl_traj = self.cf.trajectory_evaluation( cl_traj )
 
         return cl_traj
 
@@ -247,7 +261,7 @@ class CLosedLoopSimulator(Simulator):
         """ Compute internal control signal_proc of the closed-loop system """
 
         r = traj.u.copy() # reference is input of combined sys
-        u = np.zeros((self.n,self.sys.m))
+        u = np.zeros((self.n,self.plant.m))
 
         # Compute internal input signal_proc
         for i in range(self.n):
@@ -256,7 +270,7 @@ class CLosedLoopSimulator(Simulator):
             yi = traj.y[i,:]
             ti = traj.t[i]
 
-            ui = self.ctl.c( yi , ri , ti )
+            ui = self.controller.c( yi , ri , ti )
             
             u[i,:] = ui
 
