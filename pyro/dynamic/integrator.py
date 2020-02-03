@@ -261,10 +261,9 @@ if __name__ == "__main__":
     si.plot_phase_plane(0,0) # only one state for two axis!
     
     # Simulation
-    si.plot_trajectory( np.array([2]) )
-    si.sim.compute_cost()
-    si.sim.plot('xuj')
-    si.sim.phase_plane_trajectory(0,0)
+    si.x0 = np.array([2])
+    si.plot_trajectory('xuj')
+    si.plot_phase_plane_trajectory(0,0)
     
     ###################################
     # Double integrator
@@ -277,21 +276,17 @@ if __name__ == "__main__":
     di.plot_phase_plane()
     
     # Simulation
-    x0 = np.array([0,0])
-    di.plot_trajectory( x0 )
-    di.sim.plot('y')
-    
-    # Cost computing
-    di.sim.compute_cost()
-    di.sim.plot('xuj')
+    di.x0 = np.array([0,0])
+    di.plot_trajectory('xuj')
+    di.plot_trajectory('y')
     
     # Time cost
-    di.sim.cf = costfunction.TimeCostFunction( di )
-    di.sim.compute_cost()
-    di.sim.plot('j')
+    cost_function =  costfunction.TimeCostFunction( di.xbar )
+    di.traj       =  cost_function.trajectory_evaluation( di.traj )
+    di.plot_trajectory('xuj')
     
     # Phase plane trajectory
-    di.plot_phase_plane_trajectory( x0 )
+    di.plot_phase_plane_trajectory()
 
     ###################################
     # Simple integrator
@@ -303,7 +298,6 @@ if __name__ == "__main__":
     ti.ubar = np.array([1])
     
     # Simulation
-    ti.plot_trajectory( np.array([2,0,0]) )
-    ti.sim.compute_cost()
-    ti.sim.plot('xu')
-    ti.sim.phase_plane_trajectory(0,1)
+    ti.x0 = np.array([2,0,0]) 
+    ti.plot_trajectory()
+    ti.plot_phase_plane_trajectory_3d()

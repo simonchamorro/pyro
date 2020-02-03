@@ -36,4 +36,4 @@ clti = ctl + ti
 
 clti.x0 = np.array([0.1,0,0])
 clti.plot_trajectory('xu')
-clti.plot_phase_plane_trajectory_3d
+clti.plot_phase_plane_trajectory_3d()

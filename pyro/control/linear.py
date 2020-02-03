@@ -89,7 +89,7 @@ class ProportionalController(controller.StaticController):
         k = self.KP.shape[1]
         m = self.KP.shape[0]
         p = self.KP.shape[1]
-        super().__init__(k, m, p)
+        controller.StaticController.__init__(self, k, m, p)
 
         self.rbar = np.zeros((self.k,))
         self.name = "%d X %d Proportional Contrller" % self.KP.shape

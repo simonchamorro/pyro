@@ -17,6 +17,7 @@ from pyro.analysis import costfunction
 '''
 
 
+###############################################################################
 class ContinuousDynamicSystem:
     """ 
     Mother class for continuous dynamical systems
@@ -162,7 +163,7 @@ class ContinuousDynamicSystem:
         OUTPUTS
         u  : control inputs vector    m x 1
         
-        Defaul is a constant signal equal to self.ubar, can overload the
+        Defaul is a constant signal equal to self.ubar, can be overloaded
         with a more complexe reference signal time-function 
         
         """
@@ -210,15 +211,17 @@ class ContinuousDynamicSystem:
         
         return x
     
+    
     ###########################################################################
     def forward_kinematic_domain(self, q ):
-        """ 
-        """
+        """ Set the domain range for ploting, can be static or dynamic """
+        
         l = 10
         
-        domain  = [ (-l,l) , (-l,l) , (-l,l) ]#  
+        domain  = [ (-l,l) , (-l,l) , (-l,l) ]  
                 
         return domain
+    
     
     ###########################################################################
     def forward_kinematic_lines(self, q ):
@@ -239,19 +242,20 @@ class ContinuousDynamicSystem:
         ###########################
             
         # simple place holder
-        for i in range(self.n):
+        for q_i in q:
             pts      = np.zeros(( 1 , 3 ))     # array of 1 pts for the line
-            pts[0,0] = q[i]                    # x cord of point 0 = q
+            pts[0,0] = q_i                     # x cord of point 0 = q
             lines_pts.append( pts )            # list of all arrays of pts
                 
         return lines_pts
+    
     
     ###########################################################################
     # No need to overwrite the following functions for custom dynamic systems
     ###########################################################################
     
     #############################
-    def fsim( self, x , t ):
+    def fsim( self, x , t = 0 ):
         """ 
         Continuous time foward dynamics evaluation dx = f(x,t), inlcuding the
         internal reference input signal computation
@@ -272,7 +276,7 @@ class ContinuousDynamicSystem:
     
 
     #############################
-    def x_next( self , x , u , t , dt = 0.1 , steps = 1 ):
+    def x_next( self , x , u , t = 0 , dt = 0.1 , steps = 1 ):
         """ 
         Discrete time foward dynamics evaluation 
         -------------------------------------
@@ -299,12 +303,14 @@ class ContinuousDynamicSystem:
     
     #############################
     def get_plotter(self):
+        """ Return a Plotter object with param based on sys instance """
         
         return graphical.TrajectoryPlotter(self)
     
     
     #############################
     def get_animator(self):
+        """ Return an Animator object with param based on sys instance """
         
         return graphical.Animator(self)
     
@@ -336,7 +342,7 @@ class ContinuousDynamicSystem:
 
         sim = simulation.Simulator(self, tf, n, solver)
 
-        self.traj = sim.compute()
+        self.traj = sim.compute() # save the result in the instance
 
         return self.traj
 
@@ -346,6 +352,7 @@ class ContinuousDynamicSystem:
         """
         Plot time evolution of a simulation of this system
         ------------------------------------------------
+        note: will call compute_trajectory if no simulation data is present
 
         """
         
@@ -361,7 +368,8 @@ class ContinuousDynamicSystem:
         """
         Plot a trajectory in the Phase Plane
         ---------------------------------------------------------------
-
+        note: will call compute_trajectory if no simulation data is present
+        
         """
         
         # Check is trajectory is already computed
@@ -374,12 +382,9 @@ class ContinuousDynamicSystem:
     #############################
     def plot_phase_plane_trajectory_3d(self , x_axis=0, y_axis=1, z_axis=2):
         """
-        Simulates the system and plot the trajectory in the Phase Plane
+        Plot the trajectory in the Phase Plane
         ---------------------------------------------------------------
-        x0 : initial time
-        tf : final time
-        x_axis : index of state on x axis
-        y_axis : index of state on y axis
+        note: will call compute_trajectory if no simulation data is present
 
         """
         
@@ -409,6 +414,7 @@ class ContinuousDynamicSystem:
         ani = graphical.Animator( self )
         
         ani.show3( q )
+        
 
     ##############################
     def animate_simulation(self, **kwargs):
@@ -416,6 +422,7 @@ class ContinuousDynamicSystem:
         Show Animation of the simulation
         ----------------------------------
         time_factor_video < 1 --> Slow motion video
+        note: will call compute_trajectory if no simulation data is present
 
         """
         
