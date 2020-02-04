@@ -200,7 +200,7 @@ class ContinuousDynamicSystem:
     
     
     ###########################################################################
-    # Place holder graphical output, ovewload with specific graph output
+    # Place holder graphical output, overload with specific graph output
     ###########################################################################
         
     #############################

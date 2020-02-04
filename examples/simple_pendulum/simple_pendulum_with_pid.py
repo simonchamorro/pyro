@@ -21,7 +21,7 @@ class SinglePendulum1out(pendulum.SinglePendulum):
     def h(self, x, u, t):
         return super().h(x, u, t)[0][np.newaxis]
 
-sys  = SinglePendulum1out()
+sys = SinglePendulum1out()
 dof = 1
 
 kp = 2 # 2,4
@@ -38,10 +38,12 @@ ctl.rbar = q_target
 # New cl-dynamic
 cl_sys = ctl + sys
 
-# Simultation
-x_start  = np.array([0,0])
+cl_sys.cost_function = None
 
-sim = cl_sys.compute_trajectory(x_start, tf=20, n=20001, solver='euler')
-cl_sys.plot_phase_plane_trajectory(sim, 0, 1)
-cl_sys.plot_trajectory(sim, 'xu')
-cl_sys.get_animator().animate_simulation(sim)
+# Simultation
+cl_sys.x0[0] = 0.1
+
+cl_sys.compute_trajectory(tf=20, n=20001, solver='euler')
+cl_sys.plot_phase_plane_trajectory()
+cl_sys.plot_trajectory('xu')
+cl_sys.animate_simulation()

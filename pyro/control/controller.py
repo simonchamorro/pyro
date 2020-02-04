@@ -40,7 +40,6 @@ class StaticController():
     ############################
     def __init__(self, k=1, m=1, p=1):
         """ """
-        # System parameters to be implemented
         
         # Dimensions
         self.k = k   
@@ -48,9 +47,9 @@ class StaticController():
         self.p = p
         
         # Label
-        self.name = 'StaticController'
+        self.name = 'Static Controller'
         
-        # Reference signal_proc info
+        # Reference signal info
         self.ref_label = []
         self.ref_units = []
         
@@ -68,15 +67,15 @@ class StaticController():
     #############################
     def c( self , y , r , t = 0 ):
         """ 
-        Feedback static computation u = c(y,r,t)
+        Feedback static computation u = c( y, r, t)
         
         INPUTS
-        y  : sensor signal_proc vector     p x 1
-        r  : reference signal_proc vector  k x 1
-        t  : time                     1 x 1
+        y  : sensor signal vector          p x 1
+        r  : reference signal vector       k x 1
+        t  : time                          1 x 1
         
         OUPUTS
-        u  : control inputs vector    m x 1
+        u  : control inputs vector         m x 1
         
         """
         
@@ -146,7 +145,8 @@ class StaticController():
         
         return cl_sys
     
-    
+
+
 
 ###############################################################################
 # Mother "Static controller + dynamic system" class
@@ -303,8 +303,8 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         Plot Phase Plane vector field of the system
         ------------------------------------------------
         
-        x_axis : index of state on x axis
-        y_axis : index of state on y axis
+        blue arrows for the open-loop behavior
+        red arrows  for the closed-loop behavior
         
         """
 
@@ -370,136 +370,266 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
     def show3(self, q ):
         """ Plot figure of configuration q """
         
-        system.ContinuousDynamicSystem.show3(self.plant, q)
+        system.ContinuousDynamicSystem.show3( self.plant, q )
         
         
     ###########################################################################
-    def plot_phase_plane_trajectory_closed_loop(self, traj, x_axis=0, y_axis=1):
-        self.get_plotter().phase_plane_trajectory_closed_loop(traj, x_axis, y_axis)
-
+    def plot_phase_plane_trajectory_closed_loop(self, x_axis=0, y_axis=1):
+        """ 
+        Plot Phase Plane vector field of the system and the trajectory
+        ------------------------------------------------
+        
+        blue arrows for the open-loop behavior
+        red arrows  for the closed-loop behavior
+        
+        
+        """
+        
+        plotter = self.get_plotter()
+        plotter.phase_plane_trajectory_closed_loop( self.traj, x_axis, y_axis)
 
 
 
 ###############################################################################
-class StatefulController():
+class DynamicController( StaticController ):
     """
     
-    Controller with internal states (memory)
+    Mother class for controller with internal states and dynamics (memory)
     
     ex: integral action of a PID
 
-    Parameters
-    ----------
-    n : int
-        number of controller states
-    m : int
-        number of controller outputs
-    p : int
-        number of controller inputs
-
+    ----------------------------------------
+    z  : controller internal states    l x 1
+    r  : reference signal vector       k x 1
+    y  : sensor signal vector          p x 1
+    u  : control inputs vector         m x 1
+    t  : time                          1 x 1
+    -----------------------------------------
+    
+    Control law
+    u  = c( z, y, r , t )
+    
+    Internal dynamic
+    dz / dt  = b( z, y , r, t )
+    
     """
-    def __init__(self, n, m, p):
-        self.n = n
+    
+    #############################
+    def __init__(self, k, l, m, p):
+        
+        self.l = l
         self.m = m
         self.p = p
-        self.k = p
+        self.k = k
 
-        self.name = "StatefulController"
-
-        self.ref_label = ["Ref. %d" % i for i in range(self.p)]
-        self.ref_units = [''] * self.p
-
-        # Default constant reference signal
-        self.rbar = np.zeros(self.p)
-
-        # Default bounds
+        self.name = "Dynamic Controller"
+        
+        ############################
+        # Reference signal info
+        self.ref_label = []
+        self.ref_units = []
+        
+        for i in range(k):
+            self.ref_label.append('Ref. '+str(i))
+            self.ref_units.append('')
+        
         self.r_ub = np.zeros(self.k) + 10 # upper bounds
         self.r_lb = np.zeros(self.k) - 10 # lower bounds
+        
+        # default constant reference
+        self.rbar = np.zeros(self.k)
+        
+        ###########################
+        # Internal states info
+        self.internal_state_label = []
+        self.internal_state_units = []
+        
+        for i in range(l):
+            self.internal_state_label.append('Internal state ' +str(i))
+            self.internal_state_units.append('')
+        
+        self.z_ub = np.zeros(self.l) + 10 # upper bounds
+        self.z_lb = np.zeros(self.l) - 10 # lower bounds
+        
+        # default constant reference
+        self.zbar = np.zeros(self.l)
+        
 
-    #@abstractmethod
-    def c(self, xctl, y, r, t):
-        """Controller output function"""
-        return np.zeros(self.m)
-
-    #@abstractmethod
-    def f(self, xctl, y, r, t):
-        """Differential equation describing the internal controller states.
-
-        In the form ```dx = f(x, y, r, t)``. This equation is numerically solved during
-        system simulation.
+    #############################
+    def c(self, z, y, r, t):
+        """ 
+        CONTROL LAW
+        u = c( z, y, r, t)
+        
+        INPUTS
+        z  : internal states               l x 1
+        y  : sensor signal vector          p x 1
+        r  : reference signal vector       k x 1
+        t  : time                          1 x 1
+        
+        OUPUTS
+        u  : control inputs vector         m x 1
+        
         """
-        return np.zeros(self.n)
+        
+        u = np.zeros( self.m ) 
+        
+        return u
 
+    
+    #############################
+    def b(self, z, y, r, t):
+        """ 
+        INTERNAL CONTROLLER DYNAMIC
+        dz/dt = b( z, y, r, t)
+        
+        INPUTS
+        z  : internal states               l x 1
+        y  : sensor signal vector          p x 1
+        r  : reference signal vector       k x 1
+        t  : time                          1 x 1
+        
+        OUPUTS
+        d z / dt  : time derivative of internal states        l x 1
+        """
+        
+        dz = np.zeros( self.l )
+        
+        return dz
+    
+    
+    #############################
+    def cbar( self , y , t = 0 ):
+        """ 
+        Feedback static computation u = c( z = zbar, y, r = rbar, t) for
+        default reference and internal states
+        
+        INPUTS
+        y  : sensor signal vector     p x 1
+        t  : time                     1 x 1
+        
+        OUPUTS
+        u  : control inputs vector    m x 1
+        
+        """
+        
+        u = self.c( self.zbar, y , self.rbar , t )
+        
+        return u
+        
+    
+    #############################
     def __add__(self, sys):
-        return StatefulCLSystem(sys, self)
         
+        return DynamicClosedLoopSystem( sys, self)
         
-
 
 ##############################################################################
-class StatefulCLSystem(ClosedLoopSystem):
-    """Closed loop system with stateful controller
+class DynamicClosedLoopSystem( ClosedLoopSystem ):
     """
-    def __init__(self, cds, ctl):
-        super().__init__(cds, ctl)
+    Closed loop system with Dynamic controller
+    --------------------------------------------
+    
+    Global closed-loop system with physical plant states and virtual
+    controller internal states
+    
+    x_global = [ x_plant ; z_controller ]
+    
+    """
+    
+    #######################################
+    def __init__(self, plant, controller):
+        
+        # Check dimensions
+        if plant.p != controller.p:
+            raise ValueError("Controller inputs do not match system outputs")
+        if plant.m != controller.m:
+            raise ValueError("Controller outputs do not match system inputs")
+        
+        ClosedLoopSystem.__init__( self, plant, controller)
 
         # Add extra states that represent system memory
-        self.n = self.plant.n + self.controller.n
-
-        if cds.p != ctl.p:
-            raise ValueError("Controller inputs do not match system outputs")
-        if cds.m != ctl.m:
-            raise ValueError("Controller outputs do not match system inputs")
-
+        self.n = self.plant.n + self.controller.l
+        
+        self.state_label = ( self.plant.state_label +
+                             self.controller.internal_state_label )
+        self.state_units = ( self.plant.state_units +
+                             self.controller.internal_state_units )
+        
+        self.x_ub = np.concatenate([ self.plant.x_ub,
+                                     self.controller.z_ub
+                                    ], axis=0)
+        self.x_lb = np.concatenate([ self.plant.x_lb,
+                                     self.controller.z_lb
+                                    ], axis=0)
+        self.xbar = np.concatenate([ self.plant.xbar,
+                                     self.controller.zbar
+                                    ], axis=0)
+        self.x0   = np.concatenate([ self.plant.x0,
+                                     np.zeros( self.controller.l )
+                                    ], axis=0)
+        
+            
+    ######################################
     def f(self, x, u, t):
-        x_sys, x_ctl = self._split_states(x)
+        """ 
+        Continuous time foward dynamics evaluation dx = f(x,u,t)
+        
+        INPUTS
+        x  : state vector             n x 1
+        u  : control inputs vector    m x 1
+        t  : time                     1 x 1
+        
+        OUPUTS
+        dx : state derivative vector  n x 1
+        
+        """
+        
+        x, z = self._split_states( x )
 
-        # Input to CL system interpreted as reference signal
+        # Input to global system interpreted as reference signal
         r = u
 
-        # Eval current system output. Assume there is no feedforward term, as it
-        # would cause an algebraic loop
-        y = self.plant.h(x_sys, self.plant.ubar, t)
+        # Eval current system output. Assume there is no feedforward term,
+        # as it would cause an algebraic loop
+        y = self.plant.h( x, self.plant.ubar, t)
 
         # input u to dynamic system evaluated by controller
-        u = self.controller.c(x_ctl, y, r, t)
+        u = self.controller.c( z, y, r, t)
+        
+        # Time derivative of states
+        dx = self.plant.f( x, u, t)
+        dz = self.controller.b( z, y, r, t)
 
-        dx_sys = self.plant.f(x_sys, u, t)
-        dx_ctl = self.controller.f(x_ctl, y, r, t)
-
-        dx = np.concatenate([dx_sys, dx_ctl], axis=0)
+        dx = np.concatenate([ dx, dz], axis=0)
         assert dx.shape == (self.n,)
+        
         return dx
-
+    
+    
+    ##########################################
     def h(self, x, u, t):
-        x_sys, _ = self._split_states(x)
-        return self.plant.h(x_sys, u, t)
-
-    def compute_trajectory(self , x0, r=None, **kwargs):
-        """Simulation of time evolution of the system
-
-        Parameters
-        ----------
-        x0_sys : array_like
-            Vector of size (`self.plant.n`) representing the initial state values for the
-            dynamic system. Initial values for the controller are calculated internally.
-
-        See `ClosedLoopSystem.compute_trajectory` for description of other paramters.
-
+        """ 
+        Output fonction y = h(x,u,t)
+        
+        INPUTS
+        x  : state vector             n x 1
+        u  : control inputs vector    m x 1
+        t  : time                     1 x 1
+        
+        OUTPUTS
+        y  : output derivative vector o x 1
+        
         """
-
-        if r is None:
-            r = lambda t: self.controller.rbar
-
-        x0 = np.asarray(x0).flatten()
-        if x0.shape != (self.plant.n,):
-            raise ValueError("Expected x0 of shape (%d,)" % self.plant.n)
-
-        x0_ctl = self.controller.get_initial_state(self.plant, x0, r)
-        x0_full = np.concatenate([x0, x0_ctl], axis=0)
-
-        return super().compute_trajectory(x0=x0_full, r=r, **kwargs)
-
+        
+        x, z = self._split_states(x)
+        
+        y    = self.plant.h(x, u, t)
+        
+        return y
+    
+    
+    #############################################
     def _compute_inputs(self, sol):
         """ Compute internal control signal of the closed-loop system """
 
@@ -521,12 +651,36 @@ class StatefulCLSystem(ClosedLoopSystem):
         new_sol.u = u_sol
 
         return new_sol
-
+    
+    
+    #######################################
     def _split_states(self, x):
-        """Separate full state vector into system and controller states"""
+        """
+        Separate full state vector into system and controller states
+        
+        """
+        
         x_sys, x_ctl = x[:self.plant.n], x[self.plant.n:]
-        assert x_ctl.shape == (self.controller.n,)
+        assert x_ctl.shape == (self.controller.l,)
+        
         return (x_sys, x_ctl)
+    
+    
+    #############################
+    def compute_trajectory(
+        self, tf=10, n=10001, solver='ode'):
+        """ 
+        Simulation of time evolution of the system
+        ------------------------------------------------
+        tf : final time
+        n  : time steps
+        """
+        
+        sim = simulation.DynamicCLosedLoopSimulator( self, tf, n, solver)
+        
+        self.traj = sim.compute()
+
+        return self.traj
 
 
 '''

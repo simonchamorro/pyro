@@ -189,7 +189,8 @@ class Simulator:
 
                 y_sol[i,:] = self.cds.h( xi , ui , ti )
                 u_sol[i,:] = ui
-
+                
+        #########################
         traj = Trajectory(
           x = x_sol,
           u = u_sol,
@@ -197,6 +198,7 @@ class Simulator:
           dx= dx_sol,
           y = y_sol
         )
+        #########################
         
         # Compute Cost function
         if self.cf is not None :
@@ -222,21 +224,13 @@ class CLosedLoopSimulator(Simulator):
     Use this class instead of Simulation() in order to access
     internal control inputs
     """
-    
-    ###########################################################################
-    def __init__(self, ContinuousDynamicSystem, tf=10, n=10001, solver='ode'):
-        
-        Simulator.__init__(self, ContinuousDynamicSystem, tf, n , solver)
-        
-        self.plant      = self.cds.plant
-        self.controller = self.cds.controller
-        
 
     ###########################################################################
     def compute(self):
         
         traj = Simulator.compute(self)
-        r, u = self._compute_inputs( traj )
+        
+        u = self._compute_control_inputs( traj )
 
         cl_traj = Trajectory(
             x  = traj.x,
@@ -244,7 +238,7 @@ class CLosedLoopSimulator(Simulator):
             t  = traj.t,
             dx = traj.dx,
             y  = traj.y,
-            r  = r
+            r  = traj.u.copy() # reference is input of global sys
         )
         
         # Compute Cost function
@@ -256,11 +250,11 @@ class CLosedLoopSimulator(Simulator):
         
 
     ###########################################################################
-    def _compute_inputs(self, traj ):
-        """ Compute internal control signal_proc of the closed-loop system """
+    def _compute_control_inputs(self, traj ):
+        """ Compute internal control inputs of the closed-loop system """
 
         r = traj.u.copy() # reference is input of combined sys
-        u = np.zeros((self.n,self.plant.m))
+        u = np.zeros((self.n,self.cds.plant.m))
 
         # Compute internal input signal_proc
         for i in range(self.n):
@@ -273,4 +267,38 @@ class CLosedLoopSimulator(Simulator):
             
             u[i,:] = ui
 
-        return (r,u)
+        return u
+    
+    
+###############################################################################
+# Dynamic Closed Loop Simulator
+###############################################################################
+    
+class DynamicCLosedLoopSimulator( CLosedLoopSimulator ):
+    """ 
+    Specific simulator for extracting internal control signal
+    """
+
+    ###########################################################################
+    def _compute_control_inputs(self, traj ):
+        """ Compute internal control inputs of the closed-loop system """
+
+        r = traj.u.copy() # reference is input of combined sys
+        u = np.zeros((self.n,self.cds.plant.m))
+
+        # Compute internal input signal_proc
+        for i in range(self.n):
+
+            ri = r[i,:]
+            yi = traj.y[i,:]
+            xi = traj.x[i,:]
+            ti = traj.t[i]
+            
+            # extract internal controller states
+            xi,zi = self.cds._split_states( xi ) 
+
+            ui = self.cds.controller.c( zi, yi , ri , ti )
+            
+            u[i,:] = ui
+
+        return u
