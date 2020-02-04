@@ -583,7 +583,7 @@ class DynamicClosedLoopSystem( ClosedLoopSystem ):
         
         # Cost function for evaluation
         # default is a quadratic cost function with diag Q and R matrices
-        self.cost_function = costfunction.QuadraticCostFunction.from_sys(self)
+        self.cost_function = None #costfunction.QuadraticCostFunction.from_sys(self)
         
             
     ######################################
