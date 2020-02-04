@@ -9,7 +9,6 @@ import numpy as np
 ###############################################################################
 from pyro.dynamic  import pendulum
 from pyro.control  import robotcontrollers, linear
-from pyro.analysis import simulation
 ###############################################################################
 
 
@@ -28,7 +27,7 @@ kp = 2 # 2,4
 kd = 1 # 1
 ki = 1
 
-ctl  = robotcontrollers.JointPID( dof, kp , ki, kd)
+ctl = robotcontrollers.JointPID( dof, kp , ki, kd)
 ctl = linear.PIDController(kp, ki, kd)
 
 # Set Point
@@ -38,12 +37,11 @@ ctl.rbar = q_target
 # New cl-dynamic
 cl_sys = ctl + sys
 
-cl_sys.cost_function = None
-
 # Simultation
-cl_sys.x0[0] = 0.1
+cl_sys.x0[0] = 1.0
 
-cl_sys.compute_trajectory(tf=20, n=20001, solver='euler')
+cl_sys.compute_trajectory(tf=10, n=20001, solver='euler')
 cl_sys.plot_phase_plane_trajectory()
 cl_sys.plot_trajectory('xu')
-cl_sys.animate_simulation()
+cl_sys.plot_trajectory_with_internal_states()
+#cl_sys.animate_simulation()

@@ -13,6 +13,7 @@ from pyro.dynamic import system
 
 from pyro.analysis import phaseanalysis
 from pyro.analysis import simulation
+from pyro.analysis import graphical
 from pyro.analysis import costfunction
 
 ###############################################################################
@@ -205,7 +206,6 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         # Default State and inputs        
         self.xbar = self.plant.xbar
         self.ubar = self.controller.rbar
-        self.ybar = self.plant.ybar
         
         ################################
         # Variables
@@ -269,6 +269,8 @@ class ClosedLoopSystem( system.ContinuousDynamicSystem ):
         """
         
         #y = np.zeros(self.p) # Output vector
+        
+        # Using u = ubar to avoid algeabric loops
         
         y = self.plant.h( x , self.plant.ubar , t )
         
@@ -522,6 +524,7 @@ class DynamicController( StaticController ):
     def __add__(self, sys):
         
         return DynamicClosedLoopSystem( sys, self)
+    
         
 
 ##############################################################################
@@ -565,9 +568,22 @@ class DynamicClosedLoopSystem( ClosedLoopSystem ):
         self.xbar = np.concatenate([ self.plant.xbar,
                                      self.controller.zbar
                                     ], axis=0)
+        
+        ################################
+        # Variables
+        ################################
+        
+        # Initial value for simulations
         self.x0   = np.concatenate([ self.plant.x0,
                                      np.zeros( self.controller.l )
                                     ], axis=0)
+        
+        # Result of last simulation
+        self.traj = None
+        
+        # Cost function for evaluation
+        # default is a quadratic cost function with diag Q and R matrices
+        self.cost_function = costfunction.QuadraticCostFunction.from_sys(self)
         
             
     ######################################
@@ -607,6 +623,40 @@ class DynamicClosedLoopSystem( ClosedLoopSystem ):
         return dx
     
     
+    ######################################
+    def fzbar(self, x_plant , u, t = 0):
+        """ 
+        Continuous time foward dynamics evaluation dx = f(x,u,t)
+        
+        with 
+        z = zbar
+        r = u
+        
+        INPUTS
+        x  : state vector             plant.n x 1
+        t  : time                     1 x 1
+        
+        OUPUTS
+        dx : state derivative vector  n x 1
+        
+        """
+        
+        # Input to global system interpreted as reference signal
+        r = u
+
+        # Eval current system output. Assume there is no feedforward term,
+        # as it would cause an algebraic loop
+        y = self.plant.h( x_plant, self.plant.ubar, t)
+
+        # input u to dynamic system evaluated by controller
+        u = self.controller.c( self.controller.zbar, y, r, t)
+        
+        # Time derivative of states
+        dx = self.plant.f( x_plant, u, t)
+        
+        return dx
+    
+    
     ##########################################
     def h(self, x, u, t):
         """ 
@@ -618,39 +668,15 @@ class DynamicClosedLoopSystem( ClosedLoopSystem ):
         t  : time                     1 x 1
         
         OUTPUTS
-        y  : output derivative vector o x 1
+        y  : output derivative vector p x 1
         
         """
         
-        x, z = self._split_states(x)
+        x, z = self._split_states( x )
         
-        y    = self.plant.h(x, u, t)
+        y    = self.plant.h( x, u, t)
         
         return y
-    
-    
-    #############################################
-    def _compute_inputs(self, sol):
-        """ Compute internal control signal of the closed-loop system """
-
-        r_sol = sol.u.copy() # reference is input of combined sys
-        u_sol = np.empty((sol.n, self.controller.m))
-
-        # Compute internal input signal
-        for i in range(r_sol.shape[0]):
-
-            ri = r_sol[i,:]
-            yi = sol.y[i,:]
-            ti = sol.t[i]
-            _, x_ctl = self._split_states(sol.x[i, :])
-
-            u_sol[i,:] = self.controller.c(x_ctl, yi, ri, ti)
-
-        new_sol = copy(sol)
-        new_sol.r = r_sol
-        new_sol.u = u_sol
-
-        return new_sol
     
     
     #######################################
@@ -664,6 +690,18 @@ class DynamicClosedLoopSystem( ClosedLoopSystem ):
         assert x_ctl.shape == (self.controller.l,)
         
         return (x_sys, x_ctl)
+    
+    
+    #############################
+    def xut2q( self, x , u , t ):
+        """ Compute configuration variables ( q vector ) """
+        
+        x , z = self._split_states( x )
+        
+        # Use the plant function
+        q = self.plant.xut2q( x, u, t)
+        
+        return q
     
     
     #############################
@@ -681,6 +719,56 @@ class DynamicClosedLoopSystem( ClosedLoopSystem ):
         self.traj = sim.compute()
 
         return self.traj
+    
+    
+    #############################
+    def plot_trajectory_with_internal_states(self, plot='x', **kwargs):
+        """
+        Plot time evolution of a simulation of this system
+        ------------------------------------------------
+        note: will call compute_trajectory if no simulation data is present
+
+        """
+        
+        # Check if trajectory is already computed
+        if self.traj == None:
+            self.compute_trajectory()
+        
+        plotter = graphical.TrajectoryPlotter( self )
+        plotter.plot( self.traj, plot, **kwargs)
+    
+    
+    ###########################################################################
+    def plot_phase_plane_closed_loop( self , x_axis = 0 , y_axis = 1 ):
+        """ 
+        Plot Phase Plane vector field of the system
+        ------------------------------------------------
+        
+        blue arrows for the open-loop behavior
+        red arrows  for the closed-loop behavior
+        
+        """
+
+        pp = phaseanalysis.PhasePlot( self.plant , x_axis , y_axis )
+        
+        pp.compute_grid()
+        pp.plot_init()
+        
+        # Closed-loop Behavior
+        pp.color = 'b'
+        pp.compute_vector_field()
+        pp.plot_vector_field()
+        
+        # Open-Loop Behavior
+        pp.f     = self.fzbar    # assume default internal states
+        pp.ubar  = self.ubar
+        pp.color = 'r'
+        pp.compute_vector_field()
+        pp.plot_vector_field()
+        
+        pp.plot_finish()
+        
+        return pp
 
 
 '''

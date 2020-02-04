@@ -21,9 +21,9 @@ matplotlib.rcParams['ps.fonttype']  = 42
 class TrajectoryPlotter:
     
     ##########################################################################
-    def __init__(self, cds):
+    def __init__(self, sys):
         
-        self.sys = cds
+        self.sys = sys
 
         # Ploting
         self.fontsize = 5
@@ -53,10 +53,10 @@ class TrajectoryPlotter:
         sys = self.sys
 
         # For closed-loop systems, extract the inner Dynamic system for plotting
-        try:
-            sys = self.sys.plant # sys is the global system
-        except AttributeError:
-            pass
+        #try:
+        #    sys = self.sys.plant # sys is the global system
+        #except AttributeError:
+        #    pass
 
         # Number of subplots
         if plot == 'All':

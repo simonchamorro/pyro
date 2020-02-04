@@ -85,7 +85,7 @@ class CostFunction():
             u = traj.u[i, :]
             y = traj.y[i, :]
             t = traj.t[i]
-            dJ[i] = self.g(x, u, y, t)
+            dJ[i] = self.g( x, u, y, t)
 
         J = cumtrapz(y=dJ, x=traj.t, initial=0)
 
@@ -148,9 +148,10 @@ class QuadraticCostFunction( CostFunction ):
         
         instance.xbar = sys.xbar
         instance.ubar = sys.ubar
-        instance.ybar = sys.ybar
+        instance.ybar = np.zeros( sys.p )
         
         return instance
+    
 
     #############################
     def h(self, x , t = 0):

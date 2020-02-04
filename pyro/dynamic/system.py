@@ -85,7 +85,6 @@ class ContinuousDynamicSystem:
         # Default state and inputs values    
         self.xbar = np.zeros(self.n)
         self.ubar = np.zeros(self.m)
-        self.ybar = np.zeros(self.p)
         
         ################################
         # Variables
@@ -142,7 +141,7 @@ class ContinuousDynamicSystem:
         t  : time                     1 x 1
         
         OUTPUTS
-        y  : output derivative vector o x 1
+        y  : output derivative vector p x 1
         
         """
         

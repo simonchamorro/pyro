@@ -126,8 +126,10 @@ class PIDController( controller.DynamicController ):
         *m x p* Matrix of integral controller gain
     KD : array_like
         *m x p* Matrix of derivative controller gain
-    dv_tau : float, optional
+    tau : float, optional
         Time constant of derivative filter.
+    sat : float, optional
+        Saturation of u signal
 
     Notes
     -----
@@ -138,7 +140,7 @@ class PIDController( controller.DynamicController ):
     """
     
     ##########################################################
-    def __init__(self, KP, KI=None, KD=None, dv_tau=3E-3):
+    def __init__(self, KP, KI=None, KD=None, tau=3E-3 , sat = 10):
         
         self.KP = to_2D_arr(KP)
 
@@ -156,7 +158,8 @@ class PIDController( controller.DynamicController ):
             if self.KD.shape != self.KP.shape:
                 raise ValueError("Shape of KD does not match KP")
 
-        self.dv_tau = dv_tau
+        self.tau = tau
+        self.sat = sat # saturation
         self.name = "PID Controller"
         
         k = self.KP.shape[1]
@@ -165,6 +168,11 @@ class PIDController( controller.DynamicController ):
         p = self.KP.shape[1]
 
         controller.DynamicController.__init__( self, k, l, m, p)
+        
+        for i in range(p):
+            self.internal_state_label[i] = 'Integral of output ' + str(i)
+            self.internal_state_label[i+self.p] = ('Filter state of output ' 
+                                                   + str(i) )
         
         
     #################################
@@ -180,16 +188,16 @@ class PIDController( controller.DynamicController ):
         e = r - y
 
         # Integrator state derivative
-        dx_int = e
+        dz_integral = e
 
         # Filtered derivative state
-        x_dv = self.get_x_dv(z)
-        dx_dv = (e - x_dv) / self.dv_tau
+        z_filter  = self.get_z_filter( z )
+        dz_filter = (e - z_filter) / self.tau
 
-        dx = np.concatenate([dx_int, dx_dv], axis=0)
-        assert dx.shape == (self.l,)
+        dz = np.concatenate([dz_integral, dz_filter], axis=0)
+        assert dz.shape == (self.l,)
         
-        return dx
+        return dz
     
     
     #################################
@@ -201,25 +209,29 @@ class PIDController( controller.DynamicController ):
         e = r - y
 
         # Error integral value
-        ei = self.get_x_int( z )
+        ei = self.get_z_integral( z )
 
         # Error derivative value
-        de = (e - self.get_x_dv(z)) / self.dv_tau
+        de = (e - self.get_z_filter(z)) / self.tau
         
         u = self.KP.dot( e ) + self.KI.dot( ei ) + self.KD.dot( de )
+        
+        # Saturation
+        if self.sat is not None:
+            u = np.clip( u , -self.sat , self.sat)
 
         return u
     
     
     #################################
-    def get_x_int(self, z):
+    def get_z_integral(self, z):
         """ get intergral error internal states """
         
         return z[:self.p]
     
     
     #################################
-    def get_x_dv(self, z):
+    def get_z_filter(self, z):
         """ get filter internal states """
         
         return z[self.p:]
