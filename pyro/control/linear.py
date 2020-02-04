@@ -101,7 +101,7 @@ class ProportionalController(controller.StaticController):
         controller.StaticController.__init__(self, k, m, p)
 
         self.rbar = np.zeros((self.k,))
-        self.name = "%d X %d Proportional Contrller" % self.KP.shape
+        self.name = "%d X %d Proportional Contrller" % self.K.shape
         
         
     ##############################
@@ -245,4 +245,23 @@ class PIDController( controller.DynamicController ):
 
 
 if __name__ == "__main__":
-    pass
+    from pyro.dynamic import integrator
+    
+    plant = integrator.DoubleIntegrator()
+    
+    ctl      = PIDController( 10 , 0.1 , 5)
+    ctl.rbar = np.array([ 2 ])
+    
+    sys = ctl + plant
+    
+    
+    sys.compute_trajectory()
+    sys.plot_trajectory('xu')
+    sys.plot_trajectory_with_internal_states('x')
+    
+    
+    
+    
+    
+    
+    

@@ -263,7 +263,7 @@ class CLosedLoopSimulator(Simulator):
             yi = traj.y[i,:]
             ti = traj.t[i]
 
-            ui = self.controller.c( yi , ri , ti )
+            ui = self.cds.controller.c( yi , ri , ti )
             
             u[i,:] = ui
 
