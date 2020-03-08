@@ -13,6 +13,10 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import RectBivariateSpline as interpol2D
 from scipy.interpolate import RegularGridInterpolator as rgi
 
+import multiprocessing as mp
+
+from pyro.analysis import stopwatch
+
 from mpl_toolkits.mplot3d import Axes3D
 
 from pyro.control import controller
@@ -373,6 +377,7 @@ class ValueIteration_ND:
         # Options
         self.uselookuptable = True
 
+
     ##############################
     def initialize(self):
         """ initialize cost-to-go and policy """
@@ -414,60 +419,7 @@ class ValueIteration_ND:
 
         # For all state nodes
         for node in range(self.grid_sys.nodes_n):
-
-            x = self.grid_sys.nodes_state[node, :]
-
-            # use tuple to get dynamic list of indices
-            indices = tuple(self.grid_sys.nodes_index[node, i] for i in range(self.n_dim))
-
-            # One steps costs - Q values
-            Q = np.zeros(self.grid_sys.actions_n)
-
-            # For all control actions
-            for action in range(self.grid_sys.actions_n):
-
-                u = self.grid_sys.actions_input[action, :]
-
-                # Compute next state and validity of the action
-
-                if self.uselookuptable:
-
-                    x_next = self.grid_sys.x_next[node, action, :]
-                    action_isok = self.grid_sys.action_isok[node, action]
-
-                else:
-
-                    x_next = self.sys.f(x, u) * self.grid_sys.dt + x
-                    x_ok = self.sys.isavalidstate(x_next)
-                    u_ok = self.sys.isavalidinput(x, u)
-                    action_isok = (u_ok & x_ok)
-
-                # If the current option is allowable
-                if action_isok:
-                    if self.n_dim == 2:
-                        J_next = J_interpol(x_next[0], x_next[1])
-                    elif self.n_dim == 3:
-                        J_next = J_interpol([x_next[0], x_next[1], x_next[2]])
-                    else:
-                        J_next = J_interpol([x_next[0], x_next[1], x_next[2], x_next[3]])
-
-                    # Cost-to-go of a given action
-                    y = self.sys.h(x, u, 0)
-                    if self.n_dim == 2:
-                        Q[action] = self.cf.g(x, u, y, 0) + J_next[0, 0]
-                    else:
-                        Q[action] = self.cf.g(x, u, y, 0) + J_next
-
-                else:
-                    # Not allowable states or inputs/states combinations
-                    Q[action] = self.cf.INF
-
-            self.Jnew[indices] = Q.min()
-            self.action_policy[indices] = Q.argmin()
-
-            # Impossible situation ( unaceptable situation for any control actions )
-            if self.Jnew[indices] > (self.cf.INF - 1):
-                self.action_policy[indices] = -1
+            self.compute_node(node, J_interpol)
 
         # Convergence check
         delta = self.J - self.Jnew
@@ -480,6 +432,67 @@ class ValueIteration_ND:
 
         # TODO: Combine deltas? Check if delta_min or max changes
         return delta_min
+
+
+    #############################
+    def compute_node(self, node, J_interpol):
+        x = self.grid_sys.nodes_state[node, :]
+
+        # use tuple to get dynamic list of indices
+        indices = tuple(self.grid_sys.nodes_index[node, i] for i in range(self.n_dim))
+
+        # One steps costs - Q values
+        Q = np.zeros(self.grid_sys.actions_n)
+
+        # For all control actions
+        for action in range(self.grid_sys.actions_n):
+            self.compute_action(Q, action, node, J_interpol, x)
+
+        self.Jnew[indices] = Q.min()
+        self.action_policy[indices] = Q.argmin()
+
+        # Impossible situation ( unaceptable situation for any control actions )
+        if self.Jnew[indices] > (self.cf.INF - 1):
+            self.action_policy[indices] = -1
+
+
+    #############################
+    def compute_action(self, Q, action, node, J_interpol, x):
+        u = self.grid_sys.actions_input[action, :]
+
+        # Compute next state and validity of the action
+
+        if self.uselookuptable:
+
+            x_next = self.grid_sys.x_next[node, action, :]
+            action_isok = self.grid_sys.action_isok[node, action]
+
+        else:
+
+            x_next = self.sys.f(x, u) * self.grid_sys.dt + x
+            x_ok = self.sys.isavalidstate(x_next)
+            u_ok = self.sys.isavalidinput(x, u)
+            action_isok = (u_ok & x_ok)
+
+        # If the current option is allowable
+        if action_isok:
+            if self.n_dim == 2:
+                J_next = J_interpol(x_next[0], x_next[1])
+            elif self.n_dim == 3:
+                J_next = J_interpol([x_next[0], x_next[1], x_next[2]])
+            else:
+                J_next = J_interpol([x_next[0], x_next[1], x_next[2], x_next[3]])
+
+            # Cost-to-go of a given action
+            y = self.sys.h(x, u, 0)
+            if self.n_dim == 2:
+                Q[action] = self.cf.g(x, u, y, 0) + J_next[0, 0]
+            else:
+                Q[action] = self.cf.g(x, u, y, 0) + J_next
+
+        else:
+            # Not allowable states or inputs/states combinations
+            Q[action] = self.cf.INF
 
     ################################
     def assign_interpol_controller(self):
@@ -535,6 +548,30 @@ class ValueIteration_ND:
         # Asign Controller
         self.ctl.vi_law = self.vi_law
 
+    def compute_steps(self, l=50, plot=False, threshold=1.0e-25, maxJ=1000):
+        """ compute number of step """
+        step = 0
+        print('Step:', step)
+        cur_threshold = self.compute_step()
+        print('Current threshold', cur_threshold)
+        if plot:
+            self.plot_dynamic_cost2go(maxJ)
+        timer = stopwatch.Stopwatch()
+        timer.start()
+        while step < l:
+            step = step + 1
+            print('Step:', step)
+            cur_threshold = self.compute_step()
+            print('Current threshold', cur_threshold)
+            if plot:
+                self.draw_cost2go(maxJ)
+            timer.start_new_lap(step)
+        timer.stop()
+        timer.create_graph()
+        timer.to_string()
+
+        ###############################
+
     ################################
     def vi_law(self, x, t=0):
         """ controller from optimal actions """
@@ -556,23 +593,105 @@ class ValueIteration_ND:
 
         return u
 
-    ################################
-    def compute_steps(self, l=50, plot=False, threshold=1.0e-25, maxJ=1000):
+        ################################
+
+    def compute_steps_multi(self, l=50, plot=False, maxJ=1000):
+
         """ compute number of step """
         step = 0
         print('Step:', step)
-        cur_threshold = self.compute_step()
+        cur_threshold = self.compute_step_multi()
         print('Current threshold', cur_threshold)
+
         if plot:
-            self.plot_dynamic_cost2go(maxJ)
-        # while abs(cur_threshold) > threshold:
+           self.plot_dynamic_cost2go(maxJ)
+
+        timer = stopwatch.Stopwatch()
+        timer.start()
+
         while step < l:
             step = step + 1
             print('Step:', step)
-            cur_threshold = self.compute_step()
+            cur_threshold = self.compute_step_multi()
             print('Current threshold', cur_threshold)
+
             if plot:
-                self.draw_cost2go(maxJ)
+               self.draw_cost2go(maxJ)
+
+            timer.start_new_lap(step)
+
+        timer.stop()
+        timer.create_graph()
+        timer.to_string()
+
+    ###############################
+    def compute_step_multi(self):
+        """ One step of value iteration """
+
+        # Parallel CPU
+        cpu_cores = mp.cpu_count()
+        pool = mp.Pool(processes=cpu_cores)
+
+        # Get interpolation of current cost space
+        if self.n_dim == 2:
+            J_interpol = interpol2D(self.grid_sys.xd[0], self.grid_sys.xd[1],
+                                    self.J, bbox=[None, None, None, None], kx=1, ky=1)
+        elif self.n_dim == 3:
+            # call function for random shape
+            J_interpol = rgi([self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]], self.J)
+        else:
+            points = tuple(self.grid_sys.xd[i] for i in range(self.n_dim))
+            J_interpol = rgi(points, self.J)
+
+        # Split nodes in equal sections to give to the cpu cores
+        nodes_array = np.arange(self.grid_sys.nodes_n)
+        split_arrays = np.array_split(nodes_array, mp.cpu_count())
+        for i in range(len(split_arrays)):
+            # print(split_arrays[i])
+            pool.apply(self.compute_node_multi, args=(split_arrays[i], J_interpol))
+
+        # For all state nodes
+        # for node in range(self.grid_sys.nodes_n):
+        #   self.compute_node_multi(node, J_interpol)
+
+        pool.close()
+        pool.join()
+
+        # Convergence check
+        delta = self.J - self.Jnew
+        j_max = self.Jnew.max()
+        delta_max = delta.max()
+        delta_min = delta.min()
+        print('Max:', j_max, 'Delta max:', delta_max, 'Delta min:', delta_min)
+
+        self.J = self.Jnew.copy()
+
+        # TODO: Combine deltas? Check if delta_min or max changes
+        return delta_min
+
+    #############################
+    def compute_node_multi(self, nodes, J_interpol):
+        for node in nodes:
+            x = self.grid_sys.nodes_state[node, :]
+
+            # use tuple to get dynamic list of indices
+            indices = tuple(self.grid_sys.nodes_index[node, i] for i in range(self.n_dim))
+
+            # One steps costs - Q values
+            Q = np.zeros(self.grid_sys.actions_n)
+
+            # For all control actions
+            for action in range(self.grid_sys.actions_n):
+                self.compute_action(Q, action, node, J_interpol, x)
+
+            self.Jnew[indices] = Q.min()
+            self.action_policy[indices] = Q.argmin()
+
+            # Impossible situation ( unaceptable situation for any control actions )
+            if self.Jnew[indices] > (self.cf.INF - 1):
+                self.action_policy[indices] = -1
+
+
 
     ################################
     def plot_dynamic_cost2go(self, maxJ=1000):

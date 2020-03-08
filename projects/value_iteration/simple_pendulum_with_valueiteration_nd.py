@@ -9,13 +9,13 @@ import numpy as np
 
 from pyro.dynamic  import pendulum
 from pyro.planning import discretizer
-from pyro.analysis import costfunction
+from pyro.analysis import costfunction, stopwatch
 from pyro.planning import valueiteration
 from pyro.control  import controller
 
 sys  = pendulum.SinglePendulum()
 
-# Discrete world 
+# Discrete world
 grid_sys = discretizer.GridDynamicSystem( sys )
 
 # Cost Function
@@ -31,6 +31,9 @@ qcf.INF  = 10000
 # VI algo
 vi = valueiteration.ValueIteration_ND( grid_sys , qcf )
 
+# Timer
+timer = stopwatch.Stopwatch()
+
 vi.initialize()
 # vi.load_data('simple_pendulum_vi')
 vi.compute_steps(200, plot=True)
@@ -40,12 +43,11 @@ vi.plot_cost2go()
 # vi.save_data('simple_pendulum_vi')
 
 #asign controller
-cl_sys = controller.ClosedLoopSystem( sys , vi.ctl )
+cl_sys = vi.ctl + sys
 
 # Simulation and animation
-x0   = [0,0]
-tf   = 10
-sim = cl_sys.compute_trajectory(x0, tf, costfunc=qcf)
-cl_sys.get_plotter().plot(sim, 'xuj')
-cl_sys.get_animator().animate_simulation(sim, save=False, file_name='simple_pendulum')
+cl_sys.x0   = np.array([0,0])
+cl_sys.compute_trajectory(tf=20)
+cl_sys.plot_trajectory('xu')
+cl_sys.animate_simulation()
 

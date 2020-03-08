@@ -9,7 +9,7 @@ import numpy as np
 
 from pyro.dynamic  import vehicle
 from pyro.planning import discretizer
-from pyro.analysis import costfunction
+from pyro.analysis import costfunction, stopwatch
 from pyro.planning import valueiteration
 
 sys  = vehicle.Holonomic3DMobileRobotwithObstacles()
@@ -26,23 +26,25 @@ cf = costfunction.QuadraticCostFunction(
 
 cf.INF = 1E9
 
+timer = stopwatch.Stopwatch()
+
 # VI algo
 vi = valueiteration.ValueIteration_ND( grid_sys , cf )
 
 vi.initialize()
-vi.load_data('holonomic_3d_obstacles_vi')
-# vi.compute_steps(0, maxJ=4000, plot=False)
-vi.plot_cost2go(4000)
+vi.load_data('holonomic_3d_obstacles_vi_2')
+vi.compute_steps(50, maxJ=8000, plot=True)
+vi.plot_cost2go(8000)
 vi.assign_interpol_controller()
 vi.plot_policy(0)
 vi.plot_policy(1)
-# vi.save_data('holonomic_3d_obstacles_vi')
+vi.save_data('holonomic_3d_obstacles_vi_2')
 
 # Closed loop
 cl_sys = vi.ctl + sys
 
 # Simulation and animation
-x0   = [9,0,0]
-sim = cl_sys.compute_trajectory(x0 , tf=20)
-cl_sys.plot_trajectory(sim, 'xu')
-cl_sys.animate_simulation(sim, save=True, file_name='holonomic_3d-2')
+cl_sys.x0   = np.array([9,0,0])
+cl_sys.compute_trajectory(tf=20)
+cl_sys.plot_trajectory('xu')
+cl_sys.animate_simulation()

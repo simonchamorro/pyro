@@ -14,13 +14,12 @@ from copy import copy
 from scipy.integrate import cumtrapz
 
 
-
 ##########################################################################
 # Cost functions
 ##########################################################################
 
 class CostFunction(ABC):
-    """ 
+    """
     Mother class for cost functions of continuous dynamical systems
     ----------------------------------------------
     n : number of states
@@ -28,8 +27,9 @@ class CostFunction(ABC):
     p : number of outputs
     ---------------------------------------
     J = int( g(x,u,y,t) * dt ) + h( x(T) , y(T) , T )
-    
+
     """
+
     ###########################################################################
     # The two following functions needs to be implemented by child classes
     ###########################################################################
@@ -39,23 +39,21 @@ class CostFunction(ABC):
         self.INF = 1E3
         self.EPS = 1E-3
 
+    #############################
+    def h(self, x, t=0):
+        """ Final cost function """
+
+        raise NotImplementedError
 
     #############################
-    def h(self, x , t = 0):
-        """ Final cost function """
-        
-        raise NotImplementedError
-    
-    
-    #############################
-    def g(self, x , u , y, t ):
+    def g(self, x, u, y, t):
         """ step cost function """
-        
+
         raise NotImplementedError
-    
+
     #############################
     def eval(self, traj):
-        """ 
+        """
         Compute cost of a trajectory and add J values in traj object
 
         Parameters
@@ -75,10 +73,10 @@ class CostFunction(ABC):
         """
 
         dJ = np.empty(traj.time_steps)
-        
+
         for i in range(traj.time_steps):
-            x = traj.x[i,:]
-            u = traj.u[i,:]
+            x = traj.x[i, :]
+            u = traj.u[i, :]
             y = traj.y[i, :]
             t = traj.t[i]
             dJ[i] = self.g(x, u, y, t)
@@ -91,10 +89,11 @@ class CostFunction(ABC):
 
         return new_traj
 
+
 #############################################################################
-     
-class QuadraticCostFunction( CostFunction ):
-    """ 
+
+class QuadraticCostFunction(CostFunction):
+    """
     Quadratic cost functions of continuous dynamical systems
     ----------------------------------------------
     n : number of states
@@ -102,38 +101,37 @@ class QuadraticCostFunction( CostFunction ):
     p : number of outputs
     ---------------------------------------
     J = int( g(x,u,y,t) * dt ) + h( x(T) , y(T) , T )
-    
+
     g = xQx + uRu + yVy
     h = 0
-    
+
     """
-    
+
     ############################
-    def __init__(self, n, m, p):
+    def __init__(self, q, r, v):
         super().__init__()
 
-        self.n = n
-        self.m = m
-        self.p = p
+        self.n = q.shape[0]
+        self.m = r.shape[0]
+        self.p = v.shape[0]
 
         self.xbar = np.zeros(self.n)
         self.ubar = np.zeros(self.m)
         self.ybar = np.zeros(self.p)
 
         # Quadratic cost weights
-        self.Q = np.diag( np.ones(n) )
-        self.R = np.diag( np.ones(m) )
-        self.V = np.zeros((p,p))
+        self.Q = np.diag( q )
+        self.R = np.diag( r )
+        self.V = np.diag( v )
 
         self.ontarget_check = True
 
     #############################
-    def h(self, x , t = 0):
+    def h(self, x, t=0):
         """ Final cost function with zero value """
-        
+
         return 0
-    
-    
+
     #############################
     def g(self, x, u, y, t):
         """ Quadratic additive cost """
@@ -158,23 +156,23 @@ class QuadraticCostFunction( CostFunction ):
         dx = x - self.xbar
         du = u - self.ubar
         dy = y - self.ybar
-        
-        dJ = ( np.dot( dx.T , np.dot(  self.Q , dx ) ) +
-               np.dot( du.T , np.dot(  self.R , du ) ) +
-               np.dot( dy.T , np.dot(  self.V , dy ) ) )
-        
+
+        dJ = (np.dot(dx.T, np.dot(self.Q, dx)) +
+              np.dot(du.T, np.dot(self.R, du)) +
+              np.dot(dy.T, np.dot(self.V, dy)))
+
         # set cost to zero if on target
         if self.ontarget_check:
-            if ( np.linalg.norm( dx ) < self.EPS ):
+            if (np.linalg.norm(dx) < self.EPS):
                 dJ = 0
-        
+
         return dJ
-    
+
 
 ##############################################################################
 
-class TimeCostFunction( CostFunction ):
-    """ 
+class TimeCostFunction(CostFunction):
+    """
     Mother class for cost functions of continuous dynamical systems
     ----------------------------------------------
     n : number of states
@@ -182,30 +180,29 @@ class TimeCostFunction( CostFunction ):
     p : number of outputs
     ---------------------------------------
     J = int( g(x,u,y,t) * dt ) + h( x(T) , y(T) , T ) = T
-    
+
     g = 1
     h = 0
-    
+
     """
-    
+
     ############################
-    def __init__(self, xbar ):
-        
+    def __init__(self, xbar):
+
         super().__init__()
-        
+
         self.xbar = xbar
-        
+
         self.ontarget_check = True
-        
+
     #############################
-    def h(self, x , t = 0):
+    def h(self, x, t=0):
         """ Final cost function with zero value """
-        
+
         return 0
-    
-    
+
     #############################
-    def g(self, x , u , y, t = 0 ):
+    def g(self, x, u, y, t=0):
         """ Unity """
 
         if (x.shape[0] != self.xbar.shape[0]):
@@ -213,13 +210,14 @@ class TimeCostFunction( CostFunction ):
                              (x.shape[1], self.xbar.shape[0]))
 
         dJ = 1
-        
+
         if self.ontarget_check:
             dx = x - self.xbar
-            if ( np.linalg.norm( dx ) < self.EPS ):
+            if (np.linalg.norm(dx) < self.EPS):
                 dJ = 0
-                
+
         return dJ
+
 
 '''
 #################################################################
@@ -227,8 +225,7 @@ class TimeCostFunction( CostFunction ):
 #################################################################
 '''
 
-
-if __name__ == "__main__":     
+if __name__ == "__main__":
     """ MAIN TEST """
-    
+
     pass

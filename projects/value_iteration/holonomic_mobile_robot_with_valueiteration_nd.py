@@ -9,7 +9,7 @@ import numpy as np
 
 from pyro.dynamic  import vehicle
 from pyro.planning import discretizer
-from pyro.analysis import costfunction
+from pyro.analysis import costfunction, stopwatch
 from pyro.planning import valueiteration
 
 sys  = vehicle.HolonomicMobileRobotwithObstacles()
@@ -25,6 +25,9 @@ cf = costfunction.QuadraticCostFunction(
 )
 
 cf.INF = 1E9
+
+# Timer
+timer = stopwatch.Stopwatch()
 
 # VI algo
 vi = valueiteration.ValueIteration_ND( grid_sys , cf )
@@ -42,7 +45,7 @@ vi.plot_policy(1)
 cl_sys = vi.ctl + sys
 
 # Simulation and animation
-x0   = [9,0]
-sim = cl_sys.compute_trajectory(x0 , tf=20)
-cl_sys.plot_trajectory(sim, 'xu')
-cl_sys.animate_simulation(sim, save=False, file_name='holonomic')
+cl_sys.x0   = np.array([9,0])
+cl_sys.compute_trajectory(tf=20)
+cl_sys.plot_trajectory('xu')
+cl_sys.animate_simulation()
