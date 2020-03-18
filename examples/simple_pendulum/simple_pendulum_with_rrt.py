@@ -38,5 +38,7 @@ planner.find_path_to_goal( x_goal )
 planner.save_solution('pendulum_rrt.npy')
 planner.plot_tree()
 planner.plot_open_loop_solution()
-sys.animate_simulation(planner.trajectory)
+
+sys.trajectory = planner.trajectory
+sys.animate_simulation()
 
