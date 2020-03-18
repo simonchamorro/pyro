@@ -7,6 +7,9 @@ Created on Mon Nov 12 20:28:17 2018
 
 import numpy as np
 
+import cProfile as profile
+import pstats
+
 from pyro.dynamic  import vehicle
 from pyro.planning import discretizer
 from pyro.analysis import costfunction, stopwatch
@@ -33,12 +36,15 @@ vi = valueiteration.ValueIteration_ND( grid_sys , cf )
 
 vi.initialize()
 # vi.load_data('holonomic_3d_obstacles_vi_2')
-vi.compute_steps(400, maxJ=8000, plot=True)
+profile.run('vi.compute_steps(400, maxJ=8000, plot=True)', 'profile_2')
 vi.plot_cost2go(8000)
 vi.assign_interpol_controller()
 vi.plot_policy(0)
 vi.plot_policy(1)
-vi.save_data('holonomic_3d_obstacles_vi_2')
+# vi.save_data('holonomic_3d_obstacles_vi_2')
+
+p = pstats.Stats('profile_2')
+p.strip_dirs().sort_stats(-1).print_stats()
 
 # Closed loop
 cl_sys = vi.ctl + sys

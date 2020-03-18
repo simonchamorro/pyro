@@ -632,21 +632,24 @@ class ValueIteration_ND:
         # Parallel CPU
         cpu_cores = mp.cpu_count()
         pool = mp.Pool(processes=cpu_cores)
+        manager = mp.Manager()
+        im_j = self.J.copy()
 
         # Get interpolation of current cost space
         if self.n_dim == 2:
             J_interpol = interpol2D(self.grid_sys.xd[0], self.grid_sys.xd[1],
-                                    self.J, bbox=[None, None, None, None], kx=1, ky=1)
+                                    im_j, bbox=[None, None, None, None], kx=1, ky=1)
         elif self.n_dim == 3:
             # call function for random shape
-            J_interpol = rgi([self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]], self.J)
+            J_interpol = rgi([self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]], im_j)
         else:
             points = tuple(self.grid_sys.xd[i] for i in range(self.n_dim))
-            J_interpol = rgi(points, self.J)
+            J_interpol = rgi(points, im_j)
 
         # copy array in multiprocessing array variables
-        im_arr = mp.Array(self.Jnew, self.grid_sys.xgriddim)
-        im_pol = mp.Array(self.action_policy, self.grid_sys.xgriddim)
+        # TODO: generalize size for 3 DoF and ++
+        im_arr = manager.list(self.Jnew)
+        im_pol = manager.list(self.action_policy)
 
         # Split nodes in equal sections to give to the cpu cores
         nodes = np.arange(self.grid_sys.nodes_n)
@@ -657,13 +660,9 @@ class ValueIteration_ND:
         pool.close()
         pool.join()
 
-        print(im_arr, im_pol)
-
-        # copy back new array
-        self.Jnew = np.ctypeslib.as_array(im_arr, self.grid_sys.xgriddim)
-        self.action_policy = np.ctypeslib.as_array(im_pol, self.grid_sys.xgriddim)
-
-        print(self.Jnew, self.action_policy)
+        self.J = np.array(im_j)
+        self.Jnew = np.array(im_arr)
+        self.action_policy = np.array(im_pol)
 
         # Convergence check
         delta = self.J - self.Jnew
@@ -674,7 +673,6 @@ class ValueIteration_ND:
 
         self.J = self.Jnew.copy()
 
-        # TODO: Combine deltas? Check if delta_min or max changes
         return delta_min
 
     #############################
@@ -689,53 +687,53 @@ class ValueIteration_ND:
             Q = np.zeros(self.grid_sys.actions_n)
 
             for action in np.arange(self.grid_sys.actions_n):
-                self.compute_action(Q, action, node, J_interpol, x)
+                self.compute_action_multi(Q, action, node, J_interpol, x)
 
-            im_arr[indices] = Q.min()
-            im_pol[indices] = Q.argmin()
+            if self.n_dim == 2:
+                im_arr[indices[0]][indices[1]] = Q.min()
+                im_pol[indices[0]][indices[1]] = Q.argmin()
 
             # Impossible situation ( unaceptable situation for any control actions )
-            if im_arr[indices] > (self.cf.INF - 1):
-                im_pol[indices] = -1
+            if im_arr[indices[0]][indices[1]] > (self.cf.INF - 1):
+                im_pol[indices[0]][indices[1]] = -1
 
     #############################
-    def compute_action_multi(self, Q, actions, node, J_interpol, x):
-        for action in actions:
-            u = self.grid_sys.actions_input[action, :]
+    def compute_action_multi(self, Q, action, node, J_interpol, x):
+        u = self.grid_sys.actions_input[action, :]
 
-            # Compute next state and validity of the action
+        # Compute next state and validity of the action
 
-            if self.uselookuptable:
+        if self.uselookuptable:
 
-                x_next = self.grid_sys.x_next[node, action, :]
-                action_isok = self.grid_sys.action_isok[node, action]
+            x_next = self.grid_sys.x_next[node, action, :]
+            action_isok = self.grid_sys.action_isok[node, action]
 
+        else:
+
+            x_next = self.sys.f(x, u) * self.grid_sys.dt + x
+            x_ok = self.sys.isavalidstate(x_next)
+            u_ok = self.sys.isavalidinput(x, u)
+            action_isok = (u_ok & x_ok)
+
+        # If the current option is allowable
+        if action_isok:
+            if self.n_dim == 2:
+                J_next = J_interpol(x_next[0], x_next[1])
+            elif self.n_dim == 3:
+                J_next = J_interpol([x_next[0], x_next[1], x_next[2]])
             else:
+                J_next = J_interpol([x_next[0], x_next[1], x_next[2], x_next[3]])
 
-                x_next = self.sys.f(x, u) * self.grid_sys.dt + x
-                x_ok = self.sys.isavalidstate(x_next)
-                u_ok = self.sys.isavalidinput(x, u)
-                action_isok = (u_ok & x_ok)
-
-            # If the current option is allowable
-            if action_isok:
-                if self.n_dim == 2:
-                    J_next = J_interpol(x_next[0], x_next[1])
-                elif self.n_dim == 3:
-                    J_next = J_interpol([x_next[0], x_next[1], x_next[2]])
-                else:
-                    J_next = J_interpol([x_next[0], x_next[1], x_next[2], x_next[3]])
-
-                # Cost-to-go of a given action
-                y = self.sys.h(x, u, 0)
-                if self.n_dim == 2:
-                    Q[action] = self.cf.g(x, u, y, 0) + J_next[0, 0]
-                else:
-                    Q[action] = self.cf.g(x, u, y, 0) + J_next
-
+            # Cost-to-go of a given action
+            y = self.sys.h(x, u, 0)
+            if self.n_dim == 2:
+                Q[action] = self.cf.g(x, u, y, 0) + J_next[0, 0]
             else:
-                # Not allowable states or inputs/states combinations
-                Q[action] = self.cf.INF
+                Q[action] = self.cf.g(x, u, y, 0) + J_next
+
+        else:
+            # Not allowable states or inputs/states combinations
+            Q[action] = self.cf.INF
 
     ################################
     def plot_dynamic_cost2go(self, maxJ=1000):

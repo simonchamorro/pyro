@@ -6,6 +6,8 @@ Created on Mon Nov 12 20:28:17 2018
 """
 
 import numpy as np
+import cProfile as profile
+import pstats
 
 from pyro.dynamic  import pendulum
 from pyro.planning import discretizer
@@ -36,11 +38,14 @@ timer = stopwatch.Stopwatch()
 
 vi.initialize()
 # vi.load_data('simple_pendulum_vi')
-vi.compute_steps(200, plot=True)
+profile.run('vi.compute_steps(200, plot=True)', 'profile')
 vi.assign_interpol_controller()
 vi.plot_policy(0)
 vi.plot_cost2go()
 # vi.save_data('simple_pendulum_vi')
+
+p = pstats.Stats('profile')
+p.strip_dirs().sort_stats(-1).print_stats()
 
 #asign controller
 cl_sys = vi.ctl + sys
