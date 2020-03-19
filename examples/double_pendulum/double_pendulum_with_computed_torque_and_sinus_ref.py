@@ -29,7 +29,7 @@ ctl.zeta = 0.5
 # Custom time-based reference for controller
 def t2r( t ):
     r = np.array([0.,0.])
-    r[1] = 0.1 * np.sin( t )
+    r[1] = 1.0 * np.sin( 5 * t )
     return r
 
 ctl.t2r = t2r

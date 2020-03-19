@@ -48,6 +48,7 @@ x0 = np.array([0,0,0,0])
 tf = 5
 
 for robot in (robot_with_joint_pid, robot_with_effector_pid):
-    sim = robot.compute_trajectory(x0, tf)
-    robot.animate_simulation(sim)
-    robot.plot_trajectory(sim, 'xu')
+    robot.x0 = x0
+    robot.compute_trajectory(tf)
+    robot.animate_simulation()
+    robot.plot_trajectory('xu')
