@@ -70,8 +70,8 @@ class SinglePendulum( mechanical.MechanicalSystem ):
         c1  = np.cos( q )
         s1  = np.sin( q )
 
-        
         return [c1,s1]
+    
     
     ###########################################################################
     def H(self, q ):
@@ -90,6 +90,7 @@ class SinglePendulum( mechanical.MechanicalSystem ):
         
         return H
     
+    
     ###########################################################################
     def C(self, q , dq ):
         """ 
@@ -104,8 +105,8 @@ class SinglePendulum( mechanical.MechanicalSystem ):
         
         C = np.zeros((self.dof,self.dof))
 
-        
         return C
+    
     
     ###########################################################################
     def B(self, q ):
@@ -116,6 +117,7 @@ class SinglePendulum( mechanical.MechanicalSystem ):
         B = np.diag( np.ones( self.dof ) ) #  identity matrix
         
         return B
+    
     
     ###########################################################################
     def g(self, q ):
@@ -130,6 +132,7 @@ class SinglePendulum( mechanical.MechanicalSystem ):
         g[0] = self.m1 * self.gravity * self.lc1 * s1
 
         return g
+    
         
     ###########################################################################
     def d(self, q , dq ):
@@ -142,6 +145,7 @@ class SinglePendulum( mechanical.MechanicalSystem ):
         d[0] = self.d1 * dq[0]
         
         return d
+    
         
     ###########################################################################
     # Graphical output
@@ -156,6 +160,7 @@ class SinglePendulum( mechanical.MechanicalSystem ):
         domain  = [ (-l,l) , (-l,l) , (-l,l) ]#  
                 
         return domain
+    
     
     ###########################################################################
     def forward_kinematic_lines(self, q ):
@@ -273,6 +278,7 @@ class DoublePendulum( mechanical.MechanicalSystem ):
         
         return H
     
+    
     ###########################################################################
     def C(self, q , dq ):
         """ 
@@ -296,8 +302,8 @@ class DoublePendulum( mechanical.MechanicalSystem ):
         C[0,1] = - h * ( dq[0] + dq[1] )
         C[1,1] = 0
 
-        
         return C
+    
     
     ###########################################################################
     def B(self, q ):
@@ -308,6 +314,7 @@ class DoublePendulum( mechanical.MechanicalSystem ):
         B = np.diag( np.ones( self.dof ) ) #  identity matrix
         
         return B
+    
     
     ###########################################################################
     def g(self, q ):
@@ -326,6 +333,7 @@ class DoublePendulum( mechanical.MechanicalSystem ):
         G[1] = - g2 * s12
 
         return G
+    
         
     ###########################################################################
     def d(self, q , dq ):
@@ -343,6 +351,7 @@ class DoublePendulum( mechanical.MechanicalSystem ):
         d = np.dot( D , dq )
         
         return d
+    
         
     ###########################################################################
     # Graphical output
@@ -357,6 +366,7 @@ class DoublePendulum( mechanical.MechanicalSystem ):
         domain  = [ (-l,l) , (-l,l) , (-l,l) ]#  
                 
         return domain
+    
     
     ###########################################################################
     def forward_kinematic_lines(self, q ):
@@ -413,21 +423,8 @@ class DoublePendulum( mechanical.MechanicalSystem ):
 if __name__ == "__main__":     
     """ MAIN TEST """
     
-    #sys  = SinglePendulum()
-    #x0   = np.array([0,1])
-    
-    #sys.plot_trajectory( x0 )
-    
-    #sys.show( np.array([0]))
-    #sys.show3( np.array([0]))
-    
-    #sys.animate_sim()
-    
     sys = DoublePendulum()
-    x0 = np.array([0.1,0.1,0,0])
-    
-    #sys.show(np.array([0.1,0.1]))
-    sys.show3(np.array([0.1,0.1]))
-    
-    sys.plot_trajectory( x0 , 20)
+    sys.x0 = np.array([0.1,0.1,0,0])
+    tf = 20
+    sys.compute_trajectory( tf )
     sys.animate_simulation()

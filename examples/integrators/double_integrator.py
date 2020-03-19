@@ -39,13 +39,12 @@ sys.plot_phase_plane_trajectory()
 
 # Cost computing
 
-qcf = costfunction.QuadraticCostFunction(2, 1, 1)
-tcf = costfunction.TimeCostFunction( np.array([0,0]) )
+qcf           = costfunction.QuadraticCostFunction(2, 1, 1)
+traj_with_qcf = qcf.trajectory_evaluation( traj )
+sys.traj      = traj_with_qcf
+sys.plot_trajectory('xuj')
 
-traj_with_qcf = qcf.eval( traj )
-traj_with_tcf = tcf.eval( traj )
-
-plotter = sys.get_plotter()
-
-plotter.plot( traj_with_qcf , 'xuj' )
-plotter.plot( traj_with_tcf , 'xuj' )
+tcf           = costfunction.TimeCostFunction( np.array([0,0]) )
+traj_with_tcf = tcf.trajectory_evaluation( traj )
+sys.traj      = traj_with_tcf
+sys.plot_trajectory('xuj')

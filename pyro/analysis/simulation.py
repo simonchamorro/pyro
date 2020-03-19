@@ -15,7 +15,7 @@ from scipy.integrate import odeint
 ##########################################################################
 
 class Trajectory():
-    """Simulation data"""
+    """ Simulation data """
 
     _dict_keys = ['x', 'u', 't', 'dx', 'y', 'r', 'J', 'dJ']
 
@@ -40,11 +40,14 @@ class Trajectory():
         
     ############################
     def _asdict(self):
+        
         return {k: getattr(self, k) for k in self._dict_keys}
     
     ############################
-    def save(self, name = 'trajectory_solution.npy' ):
+    def save(self, name = 'trajectory.npy' ):
+        
         np.savez(name , **self._asdict())
+        
     
     ############################
     @classmethod
@@ -59,8 +62,10 @@ class Trajectory():
             data = np.load(name, allow_pickle=True)
             return cls(*data)
         
+        
     ############################
     def _compute_size(self):
+        
         self.time_final = self.t.max()
         self.time_steps = self.t.size
 
@@ -89,6 +94,7 @@ class Trajectory():
         #    u = self.ubar
 
         return u
+    
 
     ############################
     def t2x(self, t ):
@@ -97,8 +103,9 @@ class Trajectory():
         # Find time index
         i = (np.abs(self.t - t)).argmin()
 
-        # Find associated control input
+        # Find associated state
         return self.x[i,:]
+    
 
 
 ##########################################################################
@@ -134,6 +141,7 @@ class Simulator:
             raise ValueError(
                 "Number of elements in x0 must be equal to number of states"
             )
+            
 
     ##############################
     def compute(self):
@@ -181,7 +189,8 @@ class Simulator:
 
                 y_sol[i,:] = self.cds.h( xi , ui , ti )
                 u_sol[i,:] = ui
-
+                
+        #########################
         traj = Trajectory(
           x = x_sol,
           u = u_sol,
@@ -189,12 +198,14 @@ class Simulator:
           dx= dx_sol,
           y = y_sol
         )
+        #########################
         
         # Compute Cost function
         if self.cf is not None :
-            traj = self.cf.eval( traj )
+            traj = self.cf.trajectory_evaluation( traj )
         
         return traj
+
 
 
 ###############################################################################
@@ -207,25 +218,31 @@ class CLosedLoopSimulator(Simulator):
     --------------------------------------------------------
     CLSystem  : Instance of ClosedLoopSystem
     tf : final time
-    n  : number if point
+    n  : number of point
     solver : 'ode' or 'euler'
     --------------------------------------------------------
     Use this class instead of Simulation() in order to access
     internal control inputs
     """
     
-    ###########################################################################
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    ############################
+    def __init__(self, ClosedLoopSystem, tf=10, n=10001, solver='ode'):
         
-        self.sys = self.cds.cds
-        self.ctl = self.cds.ctl
+        # Mother class init
+        Simulator.__init__( self, ClosedLoopSystem, tf, n, solver)
+        
+        # Special cases
+        
+        # Use the plant cost function for closed-loop sys
+        self.plant_cf = ClosedLoopSystem.plant.cost_function
+        
 
     ###########################################################################
     def compute(self):
-
-        traj = super().compute()
-        r, u = self._compute_inputs( traj )
+        
+        traj = Simulator.compute(self)
+        
+        u = self._compute_control_inputs( traj )
 
         cl_traj = Trajectory(
             x  = traj.x,
@@ -233,21 +250,23 @@ class CLosedLoopSimulator(Simulator):
             t  = traj.t,
             dx = traj.dx,
             y  = traj.y,
-            r  = r
+            r  = traj.u.copy() # reference is input of global sys
         )
         
         # Compute Cost function
-        if self.cf is not None :
-            traj = self.cf.eval( traj )
+        if self.plant_cf is not None :
+            
+            cl_traj = self.plant_cf.trajectory_evaluation( cl_traj )
 
         return cl_traj
+        
 
     ###########################################################################
-    def _compute_inputs(self, traj ):
-        """ Compute internal control signal_proc of the closed-loop system """
+    def _compute_control_inputs(self, traj ):
+        """ Compute internal control inputs of the closed-loop system """
 
         r = traj.u.copy() # reference is input of combined sys
-        u = np.zeros((self.n,self.sys.m))
+        u = np.zeros((self.n,self.cds.plant.m))
 
         # Compute internal input signal_proc
         for i in range(self.n):
@@ -256,8 +275,42 @@ class CLosedLoopSimulator(Simulator):
             yi = traj.y[i,:]
             ti = traj.t[i]
 
-            ui = self.ctl.c( yi , ri , ti )
+            ui = self.cds.controller.c( yi , ri , ti )
             
             u[i,:] = ui
 
-        return (r,u)
+        return u
+    
+    
+###############################################################################
+# Dynamic Closed Loop Simulator
+###############################################################################
+    
+class DynamicCLosedLoopSimulator( CLosedLoopSimulator ):
+    """ 
+    Specific simulator for extracting internal control signal
+    """
+
+    ###########################################################################
+    def _compute_control_inputs(self, traj ):
+        """ Compute internal control inputs of the closed-loop system """
+
+        r = traj.u.copy() # reference is input of combined sys
+        u = np.zeros((self.n,self.cds.plant.m))
+
+        # Compute internal input signal_proc
+        for i in range(self.n):
+
+            ri = r[i,:]
+            yi = traj.y[i,:]
+            xi = traj.x[i,:]
+            ti = traj.t[i]
+            
+            # extract internal controller states
+            xi,zi = self.cds._split_states( xi ) 
+
+            ui = self.cds.controller.c( zi, yi , ri , ti )
+            
+            u[i,:] = ui
+
+        return u

@@ -7,9 +7,9 @@ Created on Mon Oct 22 11:37:48 2018
 ###############################################################################
 import numpy as np
 ###############################################################################
-from . import controller
+from pyro.control import controller
 
-from .._utils import to_2D_arr
+from pyro._utils import to_2D_arr
 ###############################################################################
 
 
@@ -82,28 +82,40 @@ class ProportionnalSingleVariableController( controller.StaticController ) :
 ###############################################################################
         
 class ProportionalController(controller.StaticController):
-    """General (SISO or MIMO) proportional controller."""
-    def __init__(self, KP):
-        self.KP = to_2D_arr(KP)
+    """
+    General (SISO or MIMO) proportional controller
+    -------------------------------------------------
+    
+    u = K * ( r - y )
+    
+    """
+    
+    ###############################
+    def __init__(self, K):
+        self.K = to_2D_arr(K)
 
-        k = self.KP.shape[1]
-        m = self.KP.shape[0]
-        p = self.KP.shape[1]
-        super().__init__(k, m, p)
+        k = self.K.shape[1]
+        m = self.K.shape[0]
+        p = self.K.shape[1]
+        
+        controller.StaticController.__init__(self, k, m, p)
 
         self.rbar = np.zeros((self.k,))
-        self.name = "%d X %d Proportional Contrller" % self.KP.shape
+        self.name = "%d X %d Proportional Contrller" % self.K.shape
+        
         
     ##############################
     def c(self, y, r, t=0):
-        return self.KP.dot(r - y)
+        """ Feedback law """
+        
+        return self.K.dot(r - y)
 
 
 
 ###############################################################################
 # MIMO PID controller
 ###############################################################################
-class PIDController(controller.StatefulController):
+class PIDController( controller.DynamicController ):
     """General (SISO or MIMO) PID controller
 
     Parameters
@@ -114,8 +126,10 @@ class PIDController(controller.StatefulController):
         *m x p* Matrix of integral controller gain
     KD : array_like
         *m x p* Matrix of derivative controller gain
-    dv_tau : float, optional
+    tau : float, optional
         Time constant of derivative filter.
+    sat : float, optional
+        Saturation of u signal
 
     Notes
     -----
@@ -124,8 +138,10 @@ class PIDController(controller.StatefulController):
     https://www.mathworks.com/help/physmod/sps/ref/filteredderivativediscreteorcontinuous.html
 
     """
-
-    def __init__(self, KP, KI=None, KD=None, dv_tau=3E-3):
+    
+    ##########################################################
+    def __init__(self, KP, KI=None, KD=None, tau=3E-3 , sat = 10):
+        
         self.KP = to_2D_arr(KP)
 
         if KI is None:
@@ -142,17 +158,29 @@ class PIDController(controller.StatefulController):
             if self.KD.shape != self.KP.shape:
                 raise ValueError("Shape of KD does not match KP")
 
-        self.dv_tau = dv_tau
+        self.tau = tau
+        self.sat = sat # saturation
         self.name = "PID Controller"
+        
+        k = self.KP.shape[1]
+        l = self.KP.shape[1]*2
+        m = self.KP.shape[0]
+        p = self.KP.shape[1]
 
-        super().__init__(n=self.KP.shape[1]*2, m=self.KP.shape[0], p=self.KP.shape[1])
+        controller.DynamicController.__init__( self, k, l, m, p)
+        
+        for i in range(p):
+            self.internal_state_label[i] = 'Integral of output ' + str(i)
+            self.internal_state_label[i+self.p] = ('Filter state of output ' 
+                                                   + str(i) )
+        
         
     #################################
-    def f(self, x_ctl, y, r, t):
-        """Evaluate derivative of controller state"""
+    def b(self, z, y, r, t):
+        """ Evaluate derivative of controller state """
 
-        if x_ctl.shape != (self.n,):
-            raise ValueError("Expected x_ctl with shape (%d,)" % self.n)
+        if z.shape != (self.l,):
+            raise ValueError("Expected z with shape (%d,)" % self.l)
         if y.shape != (self.p,) or r.shape != (self.p,):
             raise ValueError("Expected r and y with shape (%d,)" % self.p)
 
@@ -160,55 +188,53 @@ class PIDController(controller.StatefulController):
         e = r - y
 
         # Integrator state derivative
-        dx_int = e
+        dz_integral = e
 
         # Filtered derivative state
-        x_dv = self.get_x_dv(x_ctl)
-        dx_dv = (e - x_dv) / self.dv_tau
+        z_filter  = self.get_z_filter( z )
+        dz_filter = (e - z_filter) / self.tau
 
-        dx = np.concatenate([dx_int, dx_dv], axis=0)
-        assert dx.shape == (self.n,)
-        return dx
+        dz = np.concatenate([dz_integral, dz_filter], axis=0)
+        assert dz.shape == (self.l,)
+        
+        return dz
+    
     
     #################################
-    def c(self, x_ctl, y, r, t):
-        if x_ctl.shape != (self.n, ):
-            raise ValueError("expected x_ctl with shape (%d,)" % self.n)
+    def c(self, z, y, r, t):
+        if z.shape != (self.l, ):
+            raise ValueError("expected z with shape (%d,)" % self.l)
 
         # Instantaneous error
         e = r - y
 
         # Error integral value
-        I_e = self.get_x_int(x_ctl)
+        ei = self.get_z_integral( z )
 
         # Error derivative value
-        D_e = (e - self.get_x_dv(x_ctl)) / self.dv_tau
+        de = (e - self.get_z_filter(z)) / self.tau
         
-        u = self.KP.dot(e) + self.KI.dot(I_e) + self.KD.dot(D_e)
+        u = self.KP.dot( e ) + self.KI.dot( ei ) + self.KD.dot( de )
+        
+        # Saturation
+        if self.sat is not None:
+            u = np.clip( u , -self.sat , self.sat)
 
         return u
     
-    #################################
-    def get_x_int(self, x_ctl):
-        return x_ctl[:self.p]
     
     #################################
-    def get_x_dv(self, x_ctl):
-        return x_ctl[self.p:]
+    def get_z_integral(self, z):
+        """ get intergral error internal states """
+        
+        return z[:self.p]
+    
     
     #################################
-    def get_initial_state(self, sys, x0_sys, r):
-        """Evaluate the initial condition for the numerical solution"""
-        y = sys.h(x0_sys, sys.ubar, t=0)
-        error = r(0) - y
-
-        x0_int = np.zeros(self.p)
-        x0_deriv = error
-        x0 = np.concatenate([x0_int, x0_deriv], axis=0)
-
-        assert x0.shape == (self.n,)
-        return x0
-    
+    def get_z_filter(self, z):
+        """ get filter internal states """
+        
+        return z[self.p:]
 
 
 '''
@@ -219,4 +245,23 @@ class PIDController(controller.StatefulController):
 
 
 if __name__ == "__main__":
-    pass
+    from pyro.dynamic import integrator
+    
+    plant = integrator.DoubleIntegrator()
+    
+    ctl      = PIDController( 10 , 0.1 , 5)
+    ctl.rbar = np.array([ 2 ])
+    
+    sys = ctl + plant
+    
+    
+    sys.compute_trajectory()
+    sys.plot_trajectory('xu')
+    sys.plot_trajectory_with_internal_states('x')
+    
+    
+    
+    
+    
+    
+    

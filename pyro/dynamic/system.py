@@ -10,12 +10,14 @@ import numpy as np
 from pyro.analysis import simulation
 from pyro.analysis import phaseanalysis
 from pyro.analysis import graphical
+from pyro.analysis import costfunction
        
 '''
 ###############################################################################
 '''
 
 
+###############################################################################
 class ContinuousDynamicSystem:
     """ 
     Mother class for continuous dynamical systems
@@ -84,9 +86,6 @@ class ContinuousDynamicSystem:
         self.xbar = np.zeros(self.n)
         self.ubar = np.zeros(self.m)
         
-        # Cost function for evaluation
-        self.cost_function = None
-        
         ################################
         # Variables
         ################################
@@ -96,6 +95,10 @@ class ContinuousDynamicSystem:
         
         # Result of last simulation
         self.traj = None
+        
+        # Cost function for evaluation
+        # default is a quadratic cost function with diag Q and R matrices
+        self.cost_function = costfunction.QuadraticCostFunction.from_sys(self)
 
     
     #############################
@@ -117,9 +120,8 @@ class ContinuousDynamicSystem:
         
         ################################################
         # Place holder: put the equations of motion here
-        ################################################
-        
         raise NotImplementedError
+        ################################################
         
         return dx
     
@@ -139,7 +141,7 @@ class ContinuousDynamicSystem:
         t  : time                     1 x 1
         
         OUTPUTS
-        y  : output derivative vector o x 1
+        y  : output derivative vector p x 1
         
         """
         
@@ -160,12 +162,12 @@ class ContinuousDynamicSystem:
         OUTPUTS
         u  : control inputs vector    m x 1
         
-        Defaul is a constant signal equal to self.ubar, can overload the
+        Defaul is a constant signal equal to self.ubar, can be overloaded
         with a more complexe reference signal time-function 
         
         """
         
-        #Default is a constant signal
+        # Default is a constant signal
         u = self.ubar
         
         return u
@@ -197,7 +199,7 @@ class ContinuousDynamicSystem:
     
     
     ###########################################################################
-    # Place holder graphical output, ovewload with specific graph output
+    # Place holder graphical output, overload with specific graph output
     ###########################################################################
         
     #############################
@@ -208,15 +210,17 @@ class ContinuousDynamicSystem:
         
         return x
     
+    
     ###########################################################################
     def forward_kinematic_domain(self, q ):
-        """ 
-        """
+        """ Set the domain range for ploting, can be static or dynamic """
+        
         l = 10
         
-        domain  = [ (-l,l) , (-l,l) , (-l,l) ]#  
+        domain  = [ (-l,l) , (-l,l) , (-l,l) ]  
                 
         return domain
+    
     
     ###########################################################################
     def forward_kinematic_lines(self, q ):
@@ -237,19 +241,20 @@ class ContinuousDynamicSystem:
         ###########################
             
         # simple place holder
-        for i in range(self.n):
+        for q_i in q:
             pts      = np.zeros(( 1 , 3 ))     # array of 1 pts for the line
-            pts[0,0] = q[i]                    # x cord of point 0 = q
+            pts[0,0] = q_i                     # x cord of point 0 = q
             lines_pts.append( pts )            # list of all arrays of pts
                 
         return lines_pts
+    
     
     ###########################################################################
     # No need to overwrite the following functions for custom dynamic systems
     ###########################################################################
     
     #############################
-    def fsim( self, x , t ):
+    def fsim( self, x , t = 0 ):
         """ 
         Continuous time foward dynamics evaluation dx = f(x,t), inlcuding the
         internal reference input signal computation
@@ -270,7 +275,7 @@ class ContinuousDynamicSystem:
     
 
     #############################
-    def x_next( self , x , u , t , dt = 0.1 , steps = 1 ):
+    def x_next( self , x , u , t = 0 , dt = 0.1 , steps = 1 ):
         """ 
         Discrete time foward dynamics evaluation 
         -------------------------------------
@@ -294,12 +299,20 @@ class ContinuousDynamicSystem:
     ###########################################################################
     # Quick Analysis Shorcuts
     ###########################################################################
-
+    
+    #############################
     def get_plotter(self):
+        """ Return a Plotter object with param based on sys instance """
+        
         return graphical.TrajectoryPlotter(self)
-
+    
+    
+    #############################
     def get_animator(self):
+        """ Return an Animator object with param based on sys instance """
+        
         return graphical.Animator(self)
+    
 
     #############################
     def plot_phase_plane(self , x_axis = 0 , y_axis = 1 ):
@@ -311,9 +324,9 @@ class ContinuousDynamicSystem:
         
         """
 
-        self.pp = phaseanalysis.PhasePlot( self , x_axis , y_axis )
+        pp = phaseanalysis.PhasePlot( self , x_axis , y_axis )
         
-        self.pp.plot()
+        pp.plot()
         
         
     #############################
@@ -328,7 +341,7 @@ class ContinuousDynamicSystem:
 
         sim = simulation.Simulator(self, tf, n, solver)
 
-        self.traj = sim.compute()
+        self.traj = sim.compute() # save the result in the instance
 
         return self.traj
 
@@ -338,6 +351,7 @@ class ContinuousDynamicSystem:
         """
         Plot time evolution of a simulation of this system
         ------------------------------------------------
+        note: will call compute_trajectory if no simulation data is present
 
         """
         
@@ -353,7 +367,8 @@ class ContinuousDynamicSystem:
         """
         Plot a trajectory in the Phase Plane
         ---------------------------------------------------------------
-
+        note: will call compute_trajectory if no simulation data is present
+        
         """
         
         # Check is trajectory is already computed
@@ -366,12 +381,9 @@ class ContinuousDynamicSystem:
     #############################
     def plot_phase_plane_trajectory_3d(self , x_axis=0, y_axis=1, z_axis=2):
         """
-        Simulates the system and plot the trajectory in the Phase Plane
+        Plot the trajectory in the Phase Plane
         ---------------------------------------------------------------
-        x0 : initial time
-        tf : final time
-        x_axis : index of state on x axis
-        y_axis : index of state on y axis
+        note: will call compute_trajectory if no simulation data is present
 
         """
         
@@ -379,27 +391,29 @@ class ContinuousDynamicSystem:
         if self.traj == None:
             self.compute_trajectory()
             
-        self.get_plotter().phase_plane_trajectory_3d( self.traj, x_axis , y_axis, z_axis)
+        self.get_plotter().phase_plane_trajectory_3d( 
+                self.traj, x_axis , y_axis, z_axis)
 
 
     #############################################
     def show(self, q , x_axis = 0 , y_axis = 1 ):
         """ Plot figure of configuration q """
         
-        self.ani = graphical.Animator( self )
-        self.ani.x_axis  = x_axis
-        self.ani.y_axis  = y_axis
+        ani = graphical.Animator( self )
+        ani.x_axis  = x_axis
+        ani.y_axis  = y_axis
         
-        self.ani.show( q )
+        ani.show( q )
         
     
     #############################################
     def show3(self, q ):
         """ Plot figure of configuration q """
         
-        self.ani = graphical.Animator( self )
+        ani = graphical.Animator( self )
         
-        self.ani.show3( q )
+        ani.show3( q )
+        
 
     ##############################
     def animate_simulation(self, **kwargs):
@@ -407,6 +421,7 @@ class ContinuousDynamicSystem:
         Show Animation of the simulation
         ----------------------------------
         time_factor_video < 1 --> Slow motion video
+        note: will call compute_trajectory if no simulation data is present
 
         """
         
