@@ -77,14 +77,14 @@ traj_sld_ctl.rbar = q_goal
 
 # Controller selection
 
-#ctl = p_ctl
+ctl = p_ctl
 #ctl = pd_ctl
 #ctl = pid_ctl
 #ctl = ctc_ctl
 #ctl = sld_ctl
 #ctl = traj_ctl
 #ctl = traj_ctc_ctl 
-ctl = traj_sld_ctl
+#ctl = traj_sld_ctl
 
 
 ###############################################################################
@@ -101,3 +101,5 @@ cl_sys.sim.compute()
 cl_sys.sim.plot('xu')
 cl_sys.animate_simulation()
 cl_sys.sim.phase_plane_trajectory(0,1)
+
+sys.plot_phase_plane()

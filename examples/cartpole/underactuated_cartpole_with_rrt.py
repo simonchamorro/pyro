@@ -40,4 +40,4 @@ planner.find_path_to_goal( x_goal )
 
 planner.plot_tree()
 planner.plot_open_loop_solution()
-sys.animate_simulation(1.0,True)
+sys.animate_simulation(planner.trajectory, is_3d=True)

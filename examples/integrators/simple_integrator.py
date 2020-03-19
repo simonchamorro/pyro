@@ -9,28 +9,32 @@ import numpy as np
 
 ###############################################################################
 from pyro.dynamic  import integrator
-    
+from pyro.analysis import costfunction
 ###################################
 # Simple integrator
 ###################################
 
-si = integrator.SimpleIntegrator()
+# Simple integrator
+sys      = integrator.SimpleIntegrator()
 
-si.ubar = np.array([1]) # constant input = 1
+# Default input signal
+sys.ubar = np.array([1]) 
 
 ###################################
 # Analysis
 ###################################
 
-# Phase plane
-si.plot_phase_plane(0,0) # only one state for two axis!
+# Phase plane behavior
+sys.plot_phase_plane(0,0) # only one state for two axis!
+
+# Cost function with unit weights
+sys.cost_function = costfunction.QuadraticCostFunction(1,1,1)
+
+sys.cost_function.Q[0,0] = 0.1
 
 # Simulation
-si.compute_trajectory( np.array([2]) )
-
-# Compute cost
-si.sim.compute_cost()
+sys.x0 = np.array([2])
 
 # Plot output
-si.sim.plot('xuj')
-si.sim.phase_plane_trajectory(0,0)
+sys.plot_trajectory('xuj')
+sys.plot_phase_plane_trajectory(0,0)

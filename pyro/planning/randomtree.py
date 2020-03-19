@@ -11,9 +11,9 @@ import mpl_toolkits.mplot3d.axes3d as p3
 
 ###############################################################################
 from pyro.dynamic  import system
-from pyro.analysis import simulation
-from pyro.signal   import timefiltering
+from pyro.signal_proc   import timefiltering
 from pyro.planning import plan
+from pyro.analysis import Trajectory
 
 
 ###############################################################################
@@ -378,20 +378,16 @@ class RRT:
         dx = np.fliplr( dx )
             
         # Save plan
-        self.trajectory = plan.Trajectory( x.T , u.T , t.T , dx.T)
+        # y = x
+        self.trajectory = Trajectory(x.T, u.T, t.T, dx.T, x.T)
         
         # Create open-loop controller
         self.open_loop_controller = plan.OpenLoopController( self.trajectory )
         
         #
         self.solution_is_found = True
-    
-    
-    ############################
-    def filter_solution( self , fc = 3 ):
-        
-        self.trajectory.lowpassfilter( fc )
-    
+
+
     ############################
     def save_solution(self, name = 'RRT_Solution.npy' ):
         
@@ -399,16 +395,15 @@ class RRT:
         
     ############################
     def load_solution(self, name = 'RRT_Solution.npy' ):
-        
-        self.trajectory = plan.load_trajectory( name )
-    
+
+        self.trajectory = Trajectory.load(name)
+
     ############################
     def plot_open_loop_solution(self, params = 'xu' ):
-        
-        self.trajectory.plot_trajectory( self.sys , params )
-        
-        
-        
+
+        self.sys.get_plotter().plot(self.trajectory, params)
+
+
     ##################################################################
     ### Ploting functions
     ##################################################################            

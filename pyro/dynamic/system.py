@@ -10,12 +10,14 @@ import numpy as np
 from pyro.analysis import simulation
 from pyro.analysis import phaseanalysis
 from pyro.analysis import graphical
+from pyro.analysis import costfunction
        
 '''
 ###############################################################################
 '''
 
 
+###############################################################################
 class ContinuousDynamicSystem:
     """ 
     Mother class for continuous dynamical systems
@@ -26,6 +28,10 @@ class ContinuousDynamicSystem:
     ---------------------------------------
     dx = f( x , u , t )
     y  = h( x , u , t )
+    
+    optionnal: 
+    u = t2u( t ) : time-dependent input signal
+    
     
     """
     ###########################################################################
@@ -38,6 +44,10 @@ class ContinuousDynamicSystem:
         The __init__ method of the Mother class can be used to fill-in default
         labels, units, bounds, and base values.
         """
+        
+        #############################
+        # Parameters
+        #############################
 
         # Dimensions
         self.n = n   
@@ -76,6 +86,20 @@ class ContinuousDynamicSystem:
         self.xbar = np.zeros(self.n)
         self.ubar = np.zeros(self.m)
         
+        ################################
+        # Variables
+        ################################
+        
+        # Initial value for simulations
+        self.x0   = np.zeros(self.n) 
+        
+        # Result of last simulation
+        self.traj = None
+        
+        # Cost function for evaluation
+        # default is a quadratic cost function with diag Q and R matrices
+        self.cost_function = costfunction.QuadraticCostFunction.from_sys(self)
+
     
     #############################
     def f( self , x , u , t ):
@@ -96,9 +120,8 @@ class ContinuousDynamicSystem:
         
         ################################################
         # Place holder: put the equations of motion here
-        ################################################
-        
         raise NotImplementedError
+        ################################################
         
         return dx
     
@@ -118,7 +141,7 @@ class ContinuousDynamicSystem:
         t  : time                     1 x 1
         
         OUTPUTS
-        y  : output derivative vector o x 1
+        y  : output derivative vector p x 1
         
         """
         
@@ -127,6 +150,27 @@ class ContinuousDynamicSystem:
         y = x      # default output is all states
         
         return y
+    
+    #############################
+    def t2u( self , t ):
+        """ 
+        Reference signal fonction u = t2u(t)
+        
+        INPUTS
+        t  : time                     1 x 1
+        
+        OUTPUTS
+        u  : control inputs vector    m x 1
+        
+        Defaul is a constant signal equal to self.ubar, can be overloaded
+        with a more complexe reference signal time-function 
+        
+        """
+        
+        # Default is a constant signal
+        u = self.ubar
+        
+        return u
     
         
     ###########################################################################
@@ -155,26 +199,28 @@ class ContinuousDynamicSystem:
     
     
     ###########################################################################
-    # Place holder graphical output, ovewload with specific graph output
+    # Place holder graphical output, overload with specific graph output
     ###########################################################################
         
     #############################
     def xut2q( self, x , u , t ):
-        """ Compute configuration variables """
+        """ Compute configuration variables ( q vector ) """
         
         # default is q = x
         
         return x
     
+    
     ###########################################################################
     def forward_kinematic_domain(self, q ):
-        """ 
-        """
+        """ Set the domain range for ploting, can be static or dynamic """
+        
         l = 10
         
-        domain  = [ (-l,l) , (-l,l) , (-l,l) ]#  
+        domain  = [ (-l,l) , (-l,l) , (-l,l) ]  
                 
         return domain
+    
     
     ###########################################################################
     def forward_kinematic_lines(self, q ):
@@ -195,22 +241,23 @@ class ContinuousDynamicSystem:
         ###########################
             
         # simple place holder
-        for i in range(self.n):
+        for q_i in q:
             pts      = np.zeros(( 1 , 3 ))     # array of 1 pts for the line
-            pts[0,0] = q[i]                    # x cord of point 0 = q
+            pts[0,0] = q_i                     # x cord of point 0 = q
             lines_pts.append( pts )            # list of all arrays of pts
                 
         return lines_pts
+    
     
     ###########################################################################
     # No need to overwrite the following functions for custom dynamic systems
     ###########################################################################
     
     #############################
-    def fbar( self , x , t ):
+    def fsim( self, x , t = 0 ):
         """ 
-        Continuous time foward dynamics evaluation dx = f( x , u = ubar , t )
-        for default constant control input (open-loop)
+        Continuous time foward dynamics evaluation dx = f(x,t), inlcuding the
+        internal reference input signal computation
         
         INPUTS
         x  : state vector             n x 1
@@ -221,13 +268,14 @@ class ContinuousDynamicSystem:
         
         """
         
-        dx = self.f( x , self.ubar , t )
+        u  = self.t2u( t )
+        dx = self.f( x, u, t)
         
         return dx
     
-        
+
     #############################
-    def x_next( self , x , u , t , dt = 0.1 , steps = 1 ):
+    def x_next( self , x , u , t = 0 , dt = 0.1 , steps = 1 ):
         """ 
         Discrete time foward dynamics evaluation 
         -------------------------------------
@@ -251,7 +299,21 @@ class ContinuousDynamicSystem:
     ###########################################################################
     # Quick Analysis Shorcuts
     ###########################################################################
+    
+    #############################
+    def get_plotter(self):
+        """ Return a Plotter object with param based on sys instance """
         
+        return graphical.TrajectoryPlotter(self)
+    
+    
+    #############################
+    def get_animator(self):
+        """ Return an Animator object with param based on sys instance """
+        
+        return graphical.Animator(self)
+    
+
     #############################
     def plot_phase_plane(self , x_axis = 0 , y_axis = 1 ):
         """ 
@@ -262,117 +324,112 @@ class ContinuousDynamicSystem:
         
         """
 
-        self.pp = phaseanalysis.PhasePlot( self , x_axis , y_axis )
+        pp = phaseanalysis.PhasePlot( self , x_axis , y_axis )
         
-        self.pp.plot()
+        pp.plot()
         
         
     #############################
-    def compute_trajectory(self , x0 , tf = 10 , n = 10001 , solver = 'ode'):
+    def compute_trajectory(
+        self, tf=10, n=10001, solver='ode'):
         """ 
         Simulation of time evolution of the system
         ------------------------------------------------
-        x0 : initial time
         tf : final time
-        
-        """
-        
-        self.sim = simulation.Simulation( self , tf , n , solver )
-        self.sim.x0 = x0
-        self.sim.compute()
-        
-    #############################
-    def plot_trajectory(self , x0 , tf = 10 , n = 10001 , solver = 'ode'):
-        """ 
-        Simulation of time evolution of the system
-        ------------------------------------------------
-        x0 : initial time
-        tf : final time
-        
+        n  : time steps
         """
 
-        self.compute_trajectory( x0 , tf , n , solver )
-        
-        self.sim.plot()
-        
-        
+        sim = simulation.Simulator(self, tf, n, solver)
+
+        self.traj = sim.compute() # save the result in the instance
+
+        return self.traj
+
+
     #############################
-    def plot_phase_plane_trajectory(self , x0, tf=10, x_axis=0, y_axis=1):
-        """ 
-        Simulates the system and plot the trajectory in the Phase Plane 
+    def plot_trajectory(self, plot='x', **kwargs):
+        """
+        Plot time evolution of a simulation of this system
+        ------------------------------------------------
+        note: will call compute_trajectory if no simulation data is present
+
+        """
+        
+        # Check if trajectory is already computed
+        if self.traj == None:
+            self.compute_trajectory()
+        
+        self.get_plotter().plot( self.traj, plot, **kwargs)
+
+
+    #############################
+    def plot_phase_plane_trajectory(self, x_axis=0, y_axis=1):
+        """
+        Plot a trajectory in the Phase Plane
         ---------------------------------------------------------------
-        x0 : initial time
-        tf : final time
-        x_axis : index of state on x axis
-        y_axis : index of state on y axis
+        note: will call compute_trajectory if no simulation data is present
         
         """
         
-        self.sim = simulation.Simulation( self , tf )
-        
-        self.sim.x0 = x0
-        self.sim.compute()
-        self.sim.phase_plane_trajectory( x_axis , y_axis )
-        
-    
+        # Check is trajectory is already computed
+        if self.traj == None:
+            self.compute_trajectory()
+            
+        self.get_plotter().phase_plane_trajectory( self.traj, x_axis , y_axis)
+
+
     #############################
-    def plot_phase_plane_trajectory_3d(self , x0, tf=10,
-                                       x_axis=0, y_axis=1, z_axis=2):
-        """ 
-        Simulates the system and plot the trajectory in the Phase Plane 
+    def plot_phase_plane_trajectory_3d(self , x_axis=0, y_axis=1, z_axis=2):
+        """
+        Plot the trajectory in the Phase Plane
         ---------------------------------------------------------------
-        x0 : initial time
-        tf : final time
-        x_axis : index of state on x axis
-        y_axis : index of state on y axis
-        
+        note: will call compute_trajectory if no simulation data is present
+
         """
         
-        self.sim = simulation.Simulation( self , tf )
-        
-        self.sim.x0 = x0
-        self.sim.compute()
-        self.sim.phase_plane_trajectory_3d( x_axis , y_axis , z_axis )
-        
-    
+        # Check is trajectory is already computed
+        if self.traj == None:
+            self.compute_trajectory()
+            
+        self.get_plotter().phase_plane_trajectory_3d( 
+                self.traj, x_axis , y_axis, z_axis)
+
+
     #############################################
     def show(self, q , x_axis = 0 , y_axis = 1 ):
         """ Plot figure of configuration q """
         
-        self.ani = graphical.Animator( self )
-        self.ani.x_axis  = x_axis
-        self.ani.y_axis  = y_axis
+        ani = graphical.Animator( self )
+        ani.x_axis  = x_axis
+        ani.y_axis  = y_axis
         
-        self.ani.show( q )
+        ani.show( q )
         
     
     #############################################
     def show3(self, q ):
         """ Plot figure of configuration q """
         
-        self.ani = graphical.Animator( self )
+        ani = graphical.Animator( self )
         
-        self.ani.show3( q )
-    
-    #############################
-    def plot_animation(self, x0 , tf = 10 , n = 10001 , solver = 'ode' ):
-        """ Simulate and animate system """
+        ani.show3( q )
         
-        self.compute_trajectory( x0 , tf , n , solver )
-        
-        self.ani = graphical.Animator( self )
-        self.ani.animate_simulation( 1.0 )
-        
+
     ##############################
-    def animate_simulation(self, time_factor_video =  1.0 , is_3d = False, save = False , file_name = 'RobotSim' ):
-        """ 
-        Show Animation of the simulation 
+    def animate_simulation(self, **kwargs):
+        """
+        Show Animation of the simulation
         ----------------------------------
-        time_factor_video < 1 --> Slow motion video        
+        time_factor_video < 1 --> Slow motion video
+        note: will call compute_trajectory if no simulation data is present
+
+        """
         
-        """  
-        self.ani = graphical.Animator( self )
-        self.ani.animate_simulation( time_factor_video , is_3d, save , file_name )
+        # Check is trajectory is already computed
+        if self.traj == None:
+            self.compute_trajectory()
+
+        self.get_animator().animate_simulation( self.traj, **kwargs)
 
 
 '''

@@ -69,6 +69,7 @@ ctl.rbar = np.array([0,0])
 cl_sys = ctl + sys
 
 # Simultation
-cl_sys.plot_phase_plane_trajectory( x_start  )
-cl_sys.sim.plot('xu')
+cl_sys.x0 = x_start
+cl_sys.plot_trajectory('xu')
+cl_sys.plot_phase_plane_trajectory()
 cl_sys.animate_simulation()

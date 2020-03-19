@@ -34,8 +34,6 @@ robot_with_effector_pid = effector_pid + torque_controlled_robot
 
 # Simulations
 
-x0 = np.array([0,0,0,0])
-tf = 5
-
-robot_with_effector_pid.plot_animation( x0 , tf )
-robot_with_effector_pid.sim.plot('xu')
+robot_with_effector_pid.x0 = np.array([0,0,0,0])
+robot_with_effector_pid.plot_trajectory('xu')
+robot_with_effector_pid.animate_simulation()

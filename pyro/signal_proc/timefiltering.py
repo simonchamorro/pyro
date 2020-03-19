@@ -59,7 +59,7 @@ class LowPassFilter:
     ############################
     def filter_array(self, data ):
         
-        #self.filtered_data = signal.lfilter( self.b, self.a, data )
+        #self.filtered_data = signal_proc.lfilter( self.b, self.a, data )
         self.filtered_data = signal.filtfilt( self.b, self.a, data )
         
         return self.filtered_data

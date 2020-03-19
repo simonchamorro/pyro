@@ -11,18 +11,17 @@ import numpy as np
 from pyro.dynamic  import vehicle
 ###############################################################################
 
-def main():
-    # Vehicule dynamical system
-    sys = vehicle.KinematicBicyleModel()
+# Vehicule dynamical system
+sys = vehicle.KinematicBicyleModel()
 
-    # Set default wheel steering angle and velocity
-    sys.ubar = np.array([0.01,15])
+# Set default wheel velocity and steering angle
+sys.ubar = np.array([2,0.1])
+sys.x0   = np.array([0,0,0])
 
-    # Plot open-loop behavior
-    sys.plot_trajectory( np.array([0,0,0]) , 10 )
+# Plot open-loop behavior
+tf = 10
+sys.compute_trajectory( tf )
+sys.plot_trajectory()
 
-    # Animate the simulation
-    sys.animate_simulation( )
-
-if __name__ == "__main__":
-    main()
+# Animate the simulation
+sys.animate_simulation()

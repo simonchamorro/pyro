@@ -8,19 +8,41 @@ Created on Fri Nov 16 12:05:08 2018
 import numpy as np
 ###############################################################################
 from pyro.dynamic  import pendulum
-from pyro.control  import robotcontrollers
-from pyro.analysis import simulation
+from pyro.control  import linear
 ###############################################################################
 
-sys  = pendulum.SinglePendulum()
 
+class SinglePendulum_with_position_output( pendulum.SinglePendulum ):
+    
+    def __init__(self):
+        pendulum.SinglePendulum.__init__( self )
+        
+        self.p    = 1             # output size
+        #self.rbar = np.array([0]) # ref size
+        
+        self.cost_function = None
+        #TODO: Fix bug when of using standard cost function with system with
+        # internal controller states.
+
+    def h(self, x, u, t):
+        
+        # New output function
+        
+        y = pendulum.SinglePendulum.h(self, x, u, t)
+        
+        y_position    = np.zeros(1)
+        y_position[0] = y[0]
+        
+        return y_position
+
+sys = SinglePendulum_with_position_output()
 dof = 1
 
 kp = 2 # 2,4
 kd = 1 # 1
 ki = 1
 
-ctl  = robotcontrollers.JointPID( dof, kp , ki, kd)
+ctl = linear.PIDController(kp, ki, kd)
 
 # Set Point
 q_target = np.array([3.14])
@@ -30,11 +52,10 @@ ctl.rbar = q_target
 cl_sys = ctl + sys
 
 # Simultation
-x_start  = np.array([0,0])
+cl_sys.x0[0] = 1.0
 
-cl_sys.sim = simulation.CLosedLoopSimulation( cl_sys , 20 , 20001 , 'euler' )
-cl_sys.sim.x0 = x_start
-cl_sys.sim.compute()
-cl_sys.sim.phase_plane_trajectory(0,1)
-cl_sys.sim.plot('xu')
+cl_sys.compute_trajectory(tf=10, n=20001, solver='euler')
+cl_sys.plot_phase_plane_trajectory()
+cl_sys.plot_trajectory('xu')
+cl_sys.plot_trajectory_with_internal_states()
 cl_sys.animate_simulation()

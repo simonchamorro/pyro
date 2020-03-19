@@ -10,7 +10,6 @@ import numpy as np
 
 ###############################################################################
 from pyro.dynamic  import system
-from pyro.analysis import costfunction
 from pyro.control  import controller
 ###############################################################################
 
@@ -72,13 +71,17 @@ class DoubleIntegrator2( system.ContinuousDynamicSystem ):
         dx[1] = u[0]  # 
         
         return dx
+
+
+################
+# Controller
+################
     
-
-
+    
 class OptmimalDoubleIntegratorController( controller.StaticController ) :
     
     ############################
-    def __init__( self):
+    def __init__( self ):
         """ """
         
         # Dimensions
@@ -103,8 +106,8 @@ class OptmimalDoubleIntegratorController( controller.StaticController ) :
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal vector     p x 1
-        r  : reference signal vector  k x 1
+        y  : sensor signal_proc vector     p x 1
+        r  : reference signal_proc vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS
@@ -142,7 +145,7 @@ ctl.xd = 2
 # New cl-dynamic
 cl_sys = ctl + sys
 
-x0 = np.array([-2,-2])
-cl_sys.plot_trajectory( x0 , 10 , 10001, 'euler')
-cl_sys.sim.plot('xu')
-cl_sys.sim.phase_plane_trajectory(0,1)
+cl_sys.x0 = np.array([-2,-2])
+cl_sys.compute_trajectory( 10 , 10001, 'euler')
+cl_sys.plot_trajectory('xu')
+cl_sys.plot_phase_plane_trajectory()

@@ -22,7 +22,8 @@ ctl.rbar = q_target
 cl_sys = ctl + sys
 
 # Simultation
-x_start  = np.array([-2,0])
-cl_sys.plot_phase_plane_trajectory( x_start  )
-cl_sys.sim.plot('xu')
+cl_sys.x0  = np.array([-2,0])
+cl_sys.compute_trajectory()
+cl_sys.plot_phase_plane_trajectory()
+cl_sys.plot_trajectory('xu')
 cl_sys.animate_simulation()

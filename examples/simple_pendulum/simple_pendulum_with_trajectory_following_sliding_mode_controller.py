@@ -9,18 +9,16 @@ import numpy as np
 ###############################################################################
 from pyro.dynamic  import pendulum
 from pyro.control  import nonlinear
-from pyro.planning import plan
+from pyro.analysis import simulation
 ###############################################################################
 
 sys  = pendulum.SinglePendulum()
 
 
-
 # Controller
 
-traj = plan.load_trajectory('pendulum_rrt.npy')
+traj = simulation.Trajectory.load('pendulum_rrt.npy')
 
-#ctl  = nonlinear.ComputedTorqueController( sys , traj )
 ctl  = nonlinear.SlidingModeController( sys , traj )
 
 ctl.lam  = 5
@@ -33,6 +31,8 @@ ctl.rbar = np.array([-3.14])
 cl_sys = ctl + sys
 
 # Simultation
-x_start  = np.array([0.1,0])
-cl_sys.plot_trajectory(x_start, 5, 10001, 'euler')
+cl_sys.x0 = np.array([0.1,0])
+cl_sys.compute_trajectory(tf=5, n=10001, solver='euler') 
+# Note: Use "euler" solver when using sliding mode controllers
+cl_sys.plot_trajectory('xu')
 cl_sys.animate_simulation()

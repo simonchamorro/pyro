@@ -15,6 +15,9 @@ from pyro.dynamic import vehicle
 ###############################################################################
 
 
+# NOTE: models in development and not fully validated
+
+
 ###############################################################################
         
 class LateralDynamicBicycleModelwithSpeedInput( vehicle.KinematicCarModel ):
@@ -406,7 +409,7 @@ class FullDynamicBicycleModelwithTorquesInputs( LateralDynamicBicycleModelwithSp
     def combinedSlipTireModel(self,x,u):
         
         #Tire-road friction coefficient
-        self.mu = 0.9
+        self.mu = 0.1
         F_nf = self.mass*self.g*self.b/(self.b+self.a)
         F_nr = self.mass*self.g*self.a/(self.b+self.a)
         #Compute the max forces available
@@ -526,18 +529,14 @@ if __name__ == "__main__":
     """ MAIN TEST """
     
     #sys = LateralDynamicBicycleModelwithSpeedInput()
-    #sys.ubar = np.array([0.2,0.5])
-    # x0 = np.array([0,0,0,0,0])
+    #sys.ubar = np.array([1.1,10])
     
     #sys      = LateralDynamicBicycleModelwithForceInputs()
-    #sys.ubar = np.array([0.2,100,100])
-    #x0 = np.array([0,0,0,0,0,0])
+    #sys.ubar = np.array([0.8,000,200])
     
     sys      = FullDynamicBicycleModelwithTorquesInputs()
-    sys.ubar = np.array([0.8,0,1000])
-    x0 = np.array([0,0,0,0,0,0,0,0])
+    sys.ubar = np.array([0.2,0,1000])
     
-    sys.plot_trajectory( x0 , 10 )
-    
-    sys.animate_simulation( 1 )
+    sys.plot_trajectory()
+    sys.animate_simulation()
         

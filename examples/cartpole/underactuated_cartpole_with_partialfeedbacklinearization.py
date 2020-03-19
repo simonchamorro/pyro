@@ -46,8 +46,8 @@ class CartPoleController( controller.StaticController ) :
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal vector     p x 1
-        r  : reference signal vector  k x 1
+        y  : sensor signal_proc vector     p x 1
+        r  : reference signal_proc vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS
@@ -100,7 +100,7 @@ ctl = CartPoleController( sys )
 cl_sys = ctl + sys
 
 # Simultation
-x0 = np.array([0,-3.14,0,0])
-cl_sys.plot_trajectory( x0 , 10 )
-cl_sys.sim.plot('xu')
-cl_sys.animate_simulation(1.0,True)
+cl_sys.x0 = np.array([0,-3.14,0,0])
+cl_sys.compute_trajectory( 10 )
+cl_sys.plot_trajectory('xu')
+cl_sys.animate_simulation(time_factor_video=1.0, is_3d=True)

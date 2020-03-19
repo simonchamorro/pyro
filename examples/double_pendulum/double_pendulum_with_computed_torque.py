@@ -22,7 +22,8 @@ ctl.rbar = np.array([0,0])
 cl_sys = ctl + sys
 
 # Simultation
-x_start  = np.array([-3.14,1,0,0])
-cl_sys.plot_trajectory( x_start , 10 , 10001, 'euler')
-cl_sys.sim.phase_plane_trajectory(0,2)
+cl_sys.x0  = np.array([-3.14,1,0,0])
+cl_sys.compute_trajectory( tf = 10 )
+cl_sys.plot_trajectory()
+cl_sys.plot_phase_plane_trajectory(0, 2)
 cl_sys.animate_simulation()

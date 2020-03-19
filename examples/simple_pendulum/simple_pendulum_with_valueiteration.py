@@ -4,49 +4,52 @@ Created on Mon Nov 12 20:28:17 2018
 
 @author: Alexandre
 """
-
+##############################################################################
 import numpy as np
-
+##############################################################################
 from pyro.dynamic  import pendulum
 from pyro.planning import discretizer
 from pyro.analysis import costfunction
 from pyro.planning import valueiteration
 from pyro.control  import controller
+##############################################################################
 
 sys  = pendulum.SinglePendulum()
+
+##############################################################################
+
+# VI algo offline computation
 
 # Discrete world 
 grid_sys = discretizer.GridDynamicSystem( sys )
 
 # Cost Function
-cf = costfunction.QuadraticCostFunction( sys )
+qcf = costfunction.QuadraticCostFunction.from_sys( sys )
 
-cf.xbar = np.array([ -3.14 , 0 ]) # target
-cf.INF  = 10000
+qcf.xbar = np.array([ -3.14 , 0 ]) # target
+qcf.INF  = 10000
 
 # VI algo
-vi = valueiteration.ValueIteration_2D( grid_sys , cf )
+vi = valueiteration.ValueIteration_2D( grid_sys , qcf )
 
 vi.initialize()
 vi.load_data('simple_pendulum_vi')
-#vi.compute_steps(200)
-#vi.load_data()
+# vi.compute_steps(100)
 vi.assign_interpol_controller()
 vi.plot_policy(0)
 vi.plot_cost2go()
-vi.save_data('simple_pendulum_vi')
+#vi.save_data('simple_pendulum_vi')
 
-#asign controller
+##############################################################################
+
+# CLosed-loop behavior
+
 cl_sys = controller.ClosedLoopSystem( sys , vi.ctl )
 
-# Simulation and animation
-x0   = [0,0]
-tf   = 10
-cl_sys.plot_trajectory( x0 , tf )
-cl_sys.sim.plot('xu')
-cl_sys.animate_simulation()
+##############################################################################
 
-# Compute and plot cost
-cl_sys.sim.cf = cf
-cl_sys.sim.compute_cost()
-cl_sys.sim.plot('j')
+# Simulation and animation
+
+cl_sys.x0   = np.array([0 ,0])
+cl_sys.plot_trajectory('xuj')
+cl_sys.animate_simulation()

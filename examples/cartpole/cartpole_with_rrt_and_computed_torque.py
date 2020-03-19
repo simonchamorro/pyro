@@ -48,7 +48,9 @@ planner.plot_tree()
 planner.save_solution('fullyactuatedcartpole_rrt')
 
 #planner.plot_open_loop_solution()
-sys.animate_simulation(1.0,True)
+sys.get_animator().animate_simulation(planner.trajectory,
+                                      time_factor_video=1.0,
+                                      is_3d=True)
 
 ###############################################################################
 
@@ -69,6 +71,8 @@ ctl.rbar = np.array([0,0])
 cl_sys = ctl + sys
 
 # Simultation
-cl_sys.plot_phase_plane_trajectory( x_start  )
-cl_sys.sim.plot('xu')
-cl_sys.animate_simulation(1.2,True)
+cl_sys.x0 = x_start
+cl_sys.compute_trajectory(15)
+cl_sys.plot_phase_plane_trajectory()
+cl_sys.plot_trajectory( 'xu')
+cl_sys.animate_simulation( time_factor_video=1.2, is_3d=True)

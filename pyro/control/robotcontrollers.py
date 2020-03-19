@@ -56,8 +56,8 @@ class JointPID( RobotController ) :
     Linear controller for mechanical system with full state feedback (y=x)
     Independent PID for each DOF
     ---------------------------------------
-    r  : reference signal vector  dof x 1
-    y  : sensor signal vector     n   x 1
+    r  : reference signal_proc vector  dof x 1
+    y  : sensor signal_proc vector     n   x 1
     u  : control inputs vector    dof x 1
     t  : time                     1   x 1
     ---------------------------------------
@@ -91,8 +91,8 @@ class JointPID( RobotController ) :
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal vector     p x 1
-        r  : reference signal vector  k x 1
+        y  : sensor signal_proc vector     p x 1
+        r  : reference signal_proc vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS
@@ -132,8 +132,8 @@ class EndEffectorPID( RobotController ) :
     """ 
     PID in effector coordinates, using the Jacobian of the system
     ---------------------------------------
-    r  : reference signal vector  e   x 1
-    y  : sensor signal vector     n   x 1
+    r  : reference signal_proc vector  e   x 1
+    y  : sensor signal_proc vector     n   x 1
     u  : control inputs vector    dof x 1
     t  : time                     1   x 1
     ---------------------------------------
@@ -172,8 +172,8 @@ class EndEffectorPID( RobotController ) :
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal vector     p x 1
-        r  : reference signal vector  k x 1
+        y  : sensor signal_proc vector     p x 1
+        r  : reference signal_proc vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS
@@ -220,8 +220,8 @@ class EndEffectorKinematicController( RobotController ) :
     """ 
     Kinematic effector coordinates controller using the Jacobian of the system
     ---------------------------------------
-    r  : reference signal vector  e   x 1
-    y  : sensor signal vector     dof x 1
+    r  : reference signal_proc vector  e   x 1
+    y  : sensor signal_proc vector     dof x 1
     u  : control inputs vector    dof x 1
     t  : time                     1   x 1
     ---------------------------------------
@@ -259,8 +259,8 @@ class EndEffectorKinematicController( RobotController ) :
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal vector     p x 1
-        r  : reference signal vector  k x 1
+        y  : sensor signal_proc vector     p x 1
+        r  : reference signal_proc vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS
@@ -309,68 +309,5 @@ class EndEffectorKinematicController( RobotController ) :
 '''
 
 
-if __name__ == "__main__":     
-    """ MAIN TEST """
-    
-   
-    robot       = manipulator.TwoLinkManipulator()
-    
-    kp = 10
-    kd = 0
-    
-    joint_pid         = JointPID(2, kp , 0 , kd)
-    joint_pid.rbar    = np.array([0,0])
-    
-    kp = 200
-    kd = 0
-    
-    effector_pid      = EndEffectorPID( robot , kp , 0 , kd)
-    effector_pid.rbar = np.array([0.5,0.5])
-
-    #closed_loop_sys = joint_pid + robot
-    closed_loop_sys = effector_pid + robot
-    
-    # Simulation
-    x0              = np.array([2,2,0,0])
-    
-    closed_loop_sys.compute_trajectory( x0 )
-    closed_loop_sys.animate_simulation()
-    closed_loop_sys.sim.plot('xu')
-    
-    ##############################################################
-    
-    kin_robot = manipulator.SpeedControlledManipulator( robot )
-    
-    k = 1
-    kin_ctl = EndEffectorKinematicController( kin_robot , k )
-    
-    kin_ctl.rbar = np.array([0.5,0.5])
-    
-    kin_closed_loop = kin_ctl + kin_robot
-    
-    x0              = np.array([2,2])
-    
-    kin_closed_loop.compute_trajectory( x0 )
-    kin_closed_loop.animate_simulation()
-    kin_closed_loop.sim.plot('xu')
-    
-    
-    ##############################################################
-    
-    robot5 = manipulator.FiveLinkPlanarManipulator()
-    
-    kin_robot5 = manipulator.SpeedControlledManipulator( robot5 )
-    
-    k = 1
-    kin_ctl5 = EndEffectorKinematicController( kin_robot5 , k )
-    
-    kin_ctl5.rbar = np.array([1,1])
-    
-    kin_closed_loop5 = kin_ctl5 + kin_robot5
-    
-    x0              = np.array([-0.1,0.1,0.1,-0.1,0])
-    
-    kin_closed_loop5.compute_trajectory( x0 , 5 ) # , 1001 , 'euler')
-    kin_closed_loop5.animate_simulation()
-    kin_closed_loop5.sim.plot('xu')
-    
+if __name__ == "__main__":
+    pass

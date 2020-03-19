@@ -9,10 +9,6 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
-from mpl_toolkits.mplot3d import axes3d
-
-from scipy.integrate import odeint
-
 # Embed font type in PDF
 matplotlib.rcParams['pdf.fonttype'] = 42
 matplotlib.rcParams['ps.fonttype']  = 42
@@ -36,8 +32,8 @@ class PhasePlot:
         # System
         self.cds  = ContinuousDynamicSystem
         self.f    = self.cds.f      # dynamic function
-        self.xbar = self.cds.xbar   # default state
-        self.ubar = self.cds.ubar   # default input
+        self.xbar = np.copy( self.cds.xbar )  # default state
+        self.ubar = np.copy( self.cds.ubar ) # default input
         self.t    = 0               # default time
         
         # Grid
@@ -62,6 +58,7 @@ class PhasePlot:
         self.headlength = 4.5
         self.fontsize   = 6
         
+        
     ###########################################################################
     def compute_grid(self):
         
@@ -81,7 +78,7 @@ class PhasePlot:
             for j in range(self.y_axis_n):
                 
                 # Actual states
-                x  = self.xbar    # default value for all states
+                x  = np.copy( self.xbar )   # default value for all states
                 x[ self.x_axis ] = self.X[i, j]
                 x[ self.y_axis ] = self.Y[i, j]
                 
@@ -91,6 +88,7 @@ class PhasePlot:
                 # Assign vector components
                 self.v[i,j] = dx[ self.x_axis ]
                 self.w[i,j] = dx[ self.y_axis ]
+                
                        
     ###########################################################################
     def plot_init(self):
@@ -101,11 +99,15 @@ class PhasePlot:
         self.phasefig.canvas.set_window_title('Phase plane of ' + 
                                                 self.cds.name )
         
+        
     ###########################################################################
     def plot_vector_field(self):
         
-        self.ax = self.phasefig.add_subplot(111, autoscale_on=False )
-                       
+        try:
+            self.ax = self.phasefig.axes[0]
+        except IndexError:
+            self.ax = self.phasefig.add_subplot(111, autoscale_on=False )
+
         if self.streamplot:
             self.ax.streamplot( self.X, self.Y, self.v, self.w, 
                                     color      =self.color,  
@@ -117,6 +119,7 @@ class PhasePlot:
                                 color     = self.color,  
                                 linewidth = self.linewidth)
                                 #, headlength = self.headlength )
+            
         
     ###########################################################################
     def plot_finish(self):
@@ -133,6 +136,7 @@ class PhasePlot:
         self.ax.grid(True)
         self.phasefig.tight_layout()
         
+        
     ###########################################################################
     def plot(self):
         """ Plot phase plane """
@@ -142,7 +146,7 @@ class PhasePlot:
         self.compute_vector_field()
         self.plot_vector_field()
         self.plot_finish()
-        
+        self.phasefig.show()
         
         
 ###############################################################################
@@ -182,6 +186,7 @@ class PhasePlot3( PhasePlot ):
         self.arrowstyle = '->'
         self.fontsize   = 6
         
+        
     ###########################################################################
     def compute_grid(self):
         
@@ -190,6 +195,7 @@ class PhasePlot3( PhasePlot ):
         z = np.linspace( self.z_axis_min , self.z_axis_max , self.z_axis_n )
         
         self.X, self.Y, self.Z = np.meshgrid( x, y, z)
+        
             
     ###########################################################################
     def compute_vector_field(self):
@@ -203,7 +209,7 @@ class PhasePlot3( PhasePlot ):
                 for k in range(self.z_axis_n):
                 
                     # Actual states
-                    x  = self.xbar    # default value for all states
+                    x  = np.copy( self.xbar )    # default value for all states
                     x[ self.x_axis ] = self.X[i, j, k]
                     x[ self.y_axis ] = self.Y[i, j, k]
                     x[ self.z_axis ] = self.Z[i, j, k]
@@ -215,16 +221,20 @@ class PhasePlot3( PhasePlot ):
                     self.v[i,j,k] = dx[ self.x_axis ]
                     self.w[i,j,k] = dx[ self.y_axis ]
                     self.u[i,j,k] = dx[ self.z_axis ]
+                    
                        
     ###########################################################################
     def plot_vector_field(self):
-        
-        self.ax = self.phasefig.add_subplot(111,projection='3d')
-        
+        try:
+            self.ax = self.phasefig.axes[0]
+        except IndexError:
+            self.ax = self.phasefig.add_subplot(111, projection='3d')
+
         self.ax.quiver( self.X, self.Y, self.Z, self.v, self.w, self.u, 
                        color=self.color,  linewidth = self.linewidth,
                        length = self.length)
                        #, headlength = self.headlength, normalize = True )
+        
         
     ###########################################################################
     def plot_finish(self):

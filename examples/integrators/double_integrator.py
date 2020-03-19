@@ -16,9 +16,9 @@ from pyro.analysis import costfunction
 # Simple integrator
 ###################################
 
-di = integrator.DoubleIntegrator()
+sys = integrator.DoubleIntegrator()
 
-di.ubar = np.array([1]) # constant input = 1
+sys.ubar = np.array([1]) # constant input = 1
 
 
 ###################################
@@ -26,21 +26,25 @@ di.ubar = np.array([1]) # constant input = 1
 ###################################
     
 # Phase plane behavior test
-di.plot_phase_plane()
+sys.plot_phase_plane()
 
 # Simulation
-x0 = np.array([0,0])
-di.plot_trajectory( x0 )
-di.sim.plot('y')
+sys.x0 = np.array([0,0])
+
+traj = sys.compute_trajectory( tf = 10 )
+
+sys.plot_trajectory()
+sys.plot_trajectory('y')
+sys.plot_phase_plane_trajectory()
 
 # Cost computing
-di.sim.compute_cost()
-di.sim.plot('xuj')
 
-# Time cost
-di.sim.cf = costfunction.TimeCostFunction( di )
-di.sim.compute_cost()
-di.sim.plot('j')
+qcf           = costfunction.QuadraticCostFunction(2, 1, 1)
+traj_with_qcf = qcf.trajectory_evaluation( traj )
+sys.traj      = traj_with_qcf
+sys.plot_trajectory('xuj')
 
-# Phase plane trajectory
-di.plot_phase_plane_trajectory( x0 )
+tcf           = costfunction.TimeCostFunction( np.array([0,0]) )
+traj_with_tcf = tcf.trajectory_evaluation( traj )
+sys.traj      = traj_with_tcf
+sys.plot_trajectory('xuj')

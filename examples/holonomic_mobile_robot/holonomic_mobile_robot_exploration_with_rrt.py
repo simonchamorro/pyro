@@ -41,4 +41,5 @@ planner.find_path_to_goal( x_goal )
 planner.plot_tree()
 planner.plot_open_loop_solution()
 
+sys.traj = planner.trajectory
 sys.animate_simulation()
