@@ -8,26 +8,40 @@ Created on Fri Nov 16 12:05:08 2018
 import numpy as np
 ###############################################################################
 from pyro.dynamic  import pendulum
-from pyro.control  import robotcontrollers, linear
+from pyro.control  import linear
 ###############################################################################
 
 
-class SinglePendulum1out(pendulum.SinglePendulum):
+class SinglePendulum_with_position_output( pendulum.SinglePendulum ):
+    
     def __init__(self):
-        super().__init__()
-        self.p = 1
+        pendulum.SinglePendulum.__init__( self )
+        
+        self.p    = 1             # output size
+        #self.rbar = np.array([0]) # ref size
+        
+        self.cost_function = None
+        #TODO: Fix bug when of using standard cost function with system with
+        # internal controller states.
 
     def h(self, x, u, t):
-        return super().h(x, u, t)[0][np.newaxis]
+        
+        # New output function
+        
+        y = pendulum.SinglePendulum.h(self, x, u, t)
+        
+        y_position    = np.zeros(1)
+        y_position[0] = y[0]
+        
+        return y_position
 
-sys = SinglePendulum1out()
+sys = SinglePendulum_with_position_output()
 dof = 1
 
 kp = 2 # 2,4
 kd = 1 # 1
 ki = 1
 
-ctl = robotcontrollers.JointPID( dof, kp , ki, kd)
 ctl = linear.PIDController(kp, ki, kd)
 
 # Set Point
@@ -44,4 +58,4 @@ cl_sys.compute_trajectory(tf=10, n=20001, solver='euler')
 cl_sys.plot_phase_plane_trajectory()
 cl_sys.plot_trajectory('xu')
 cl_sys.plot_trajectory_with_internal_states()
-#cl_sys.animate_simulation()
+cl_sys.animate_simulation()

@@ -45,6 +45,13 @@ if __name__ == "__main__":
     
     sys =  MyCustomPendulum()
     
-    x0 = np.array([0.8,0])
+    # Can also change param here
     
-    sys.plot_animation( x0 )
+    sys.gravity = 2
+    
+    #
+    
+    sys.x0 = np.array([0.8,0])
+    
+    sys.plot_trajectory()
+    sys.animate_simulation()

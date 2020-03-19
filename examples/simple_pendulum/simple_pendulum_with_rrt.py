@@ -4,11 +4,13 @@ Created on Mon Nov 12 20:28:17 2018
 
 @author: Alexandre
 """
-
+##############################################################################
 import numpy as np
-
+##############################################################################
 from pyro.dynamic  import pendulum
 from pyro.planning import randomtree
+##############################################################################
+
 
 # Dynamic sysem
 sys  = pendulum.SinglePendulum()
@@ -39,6 +41,7 @@ planner.save_solution('pendulum_rrt.npy')
 planner.plot_tree()
 planner.plot_open_loop_solution()
 
-sys.trajectory = planner.trajectory
+# Animate Solution
+sys.traj = planner.trajectory
 sys.animate_simulation()
 
