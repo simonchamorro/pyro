@@ -25,12 +25,7 @@ sys.u_lb = np.array( [-1,-1.0] )
 # Discrete world 
 grid_sys = discretizer.GridDynamicSystem( sys , (41,41,21) , (3,3) , 0.05 )
 # Cost Function
-cf = costfunction.QuadraticCostFunction(
-    q=np.ones(sys.n),
-    r=np.ones(sys.m),
-    v=np.zeros(sys.p)
-)
-
+cf = costfunction.QuadraticCostFunction.from_sys( sys )
 cf.xbar = np.array( [1,1,0])
 cf.INF  = 1E4
 cf.EPS  = 0

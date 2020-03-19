@@ -224,6 +224,18 @@ class CLosedLoopSimulator(Simulator):
     Use this class instead of Simulation() in order to access
     internal control inputs
     """
+    
+    ############################
+    def __init__(self, ClosedLoopSystem, tf=10, n=10001, solver='ode'):
+        
+        # Mother class init
+        Simulator.__init__( self, ClosedLoopSystem, tf, n, solver)
+        
+        # Special cases
+        
+        # Use the plant cost function for closed-loop sys
+        self.plant_cf = ClosedLoopSystem.plant.cost_function
+        
 
     ###########################################################################
     def compute(self):
@@ -242,9 +254,9 @@ class CLosedLoopSimulator(Simulator):
         )
         
         # Compute Cost function
-        if self.cf is not None :
+        if self.plant_cf is not None :
             
-            cl_traj = self.cf.trajectory_evaluation( cl_traj )
+            cl_traj = self.plant_cf.trajectory_evaluation( cl_traj )
 
         return cl_traj
         

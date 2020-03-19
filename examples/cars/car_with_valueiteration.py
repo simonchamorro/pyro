@@ -7,7 +7,6 @@ Created on Tue Nov 13 11:05:07 2018
 
 ###############################################################################
 import numpy as np
-import argparse
 ###############################################################################
 from pyro.dynamic  import vehicle
 from pyro.planning import discretizer
@@ -40,27 +39,30 @@ cf.EPS  = 0.00
 cf.R    = np.array([[0.1,0],[0,0]])
 
 # VI algo
-
 vi = valueiteration.ValueIteration_ND( grid_sys , cf )
 
 vi.uselookuptable = True
 vi.initialize()
 
-#if load_data:
 vi.load_data('car_vi')
-# vi.compute_steps(100, plot=True, maxJ=100)
-#if save_data:
-# vi.save_data('car_vi_racecar_proto_scale_8')
+# vi.compute_steps(100)
+# vi.save_data('new_car_vi')
+
+###############################################################################
+
+# Closed-loop Law
 
 vi.assign_interpol_controller()
 
-#vi.plot_cost2go(maxJ=100)
 vi.plot_policy(0)
 vi.plot_policy(1)
 
 cl_sys = controller.ClosedLoopSystem( sys , vi.ctl )
-#
+
+###############################################################################
+
 ## Simulation and animation
+
 x0   = np.array([0, 0, 0])
 tf   = 20
 
