@@ -57,6 +57,6 @@ cl_sys = vi.ctl + sys
 # Simulation and animation
 cl_sys.x0   = np.array([0,0])
 cl_sys.compute_trajectory(tf=20)
-# cl_sys.plot_trajectory('xu')
-# cl_sys.animate_simulation(11)
+cl_sys.plot_trajectory('xu')
+cl_sys.animate_simulation(11)
 

@@ -555,21 +555,21 @@ class ValueIteration_ND:
         print('Step:', step)
         cur_threshold = self.compute_step()
         print('Current threshold', cur_threshold)
-        # if plot:
-        #    self.plot_dynamic_cost2go(maxJ)
-        # timer = stopwatch.Stopwatch()
-        # timer.start()
+        if plot:
+           self.plot_dynamic_cost2go(maxJ)
+        timer = stopwatch.Stopwatch()
+        timer.start()
         while step < l:
             step = step + 1
             print('Step:', step)
             cur_threshold = self.compute_step()
             print('Current threshold', cur_threshold)
-            # if plot:
-            #    self.draw_cost2go(maxJ)
-            # timer.start_new_lap(step)
-        # timer.stop()
-        # timer.create_graph()
-        # timer.to_string()
+            if plot:
+               self.draw_cost2go(maxJ)
+            timer.start_new_lap(step)
+        timer.stop()
+        timer.create_graph()
+        timer.to_string()
 
         ###############################
 
