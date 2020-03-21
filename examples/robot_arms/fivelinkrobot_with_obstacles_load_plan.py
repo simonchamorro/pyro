@@ -20,22 +20,7 @@ q_goal  = np.array([1.57,0,0,0,0])
 
 planner = randomtree.RRT( speed_controlled_robot , q_start )
 
-t = 0.5
-    
-planner.u_options = [
-        np.array([ +t, -0, +0, +0, +0]),
-        np.array([ -t, -0, +0, +0, +0]),
-        np.array([ -t, -t, +t, +t, +t]),
-        np.array([ +t, +t, -t, -t, -t]),
-        np.array([ -t, -t, -t, +t, +t]),
-        np.array([ +t, +t, +t, -t, -t])
-        ]
-
-planner.goal_radius = 1.0
-planner.max_nodes   = 20000
-#planner.dyna_plot   = False
-
-planner.find_path_to_goal( q_goal )
+planner.load_solution('fivelinkplan.npz')
 
 planner.plot_tree()
 planner.plot_open_loop_solution()
