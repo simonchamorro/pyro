@@ -25,3 +25,4 @@ sys.cost_function = costfunction.QuadraticCostFunction(3,1,1)
 # Compute and show results
 sys.plot_trajectory('xuj')
 sys.plot_phase_plane_trajectory(0, 1)
+sys.plot_phase_plane_trajectory_3d()

@@ -5,25 +5,19 @@ Created on Fri Nov 16 12:05:08 2018
 @author: Alexandre
 """
 
-from pathlib import Path
 ###############################################################################
 import numpy as np
 ###############################################################################
 from pyro.dynamic  import pendulum
 from pyro.control  import nonlinear
-from pyro.planning import plan
-from pyro.analysis import Trajectory
+from pyro.analysis import simulation
 ###############################################################################
 
 sys  = pendulum.SinglePendulum()
 
 # Controller
 
-#this_script_dir = Path(__file__).parent
-#traj_file = this_script_dir.joinpath('pendulum_rrt.npy')
-#traj = Trajectory.load(str(traj_file))
-
-traj = Trajectory.load('pendulum_rrt.npy')
+traj = simulation.Trajectory.load('pendulum_rrt.npy')
 
 ctl  = nonlinear.ComputedTorqueController( sys , traj )
 

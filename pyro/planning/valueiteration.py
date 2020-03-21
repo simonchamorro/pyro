@@ -464,7 +464,7 @@ class ValueIteration_ND:
         # Compute next state and validity of the action
 
         if self.uselookuptable:
-
+    
             x_next = self.grid_sys.x_next[node, action, :]
             action_isok = self.grid_sys.action_isok[node, action]
 
@@ -615,6 +615,8 @@ class ValueIteration_ND:
             print('Step:', step)
             cur_threshold = self.compute_step_multi()
             print('Current threshold', cur_threshold)
+            if plot:
+                self.draw_cost2go(maxJ)
 
             if plot:
                self.draw_cost2go(maxJ)

@@ -33,9 +33,7 @@ robot_with_joint_pid    = joint_pid    + torque_controlled_robot
 
 # Simulations
 
-x0 = np.array([0,0,0,0])
-tf = 5
+robot_with_joint_pid.x0 = np.array([0,0,0,0])
 
-sim = robot_with_joint_pid.compute_trajectory(x0, tf)
-robot_with_joint_pid.animate_simulation(sim)
-robot_with_joint_pid.plot_trajectory(sim, 'xu')
+robot_with_joint_pid.plot_trajectory('xu')
+robot_with_joint_pid.animate_simulation()

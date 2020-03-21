@@ -89,6 +89,7 @@ class RotatingCartPole( mechanical.MechanicalSystem ):
         
         return H
     
+    
     ###########################################################################
     def C(self, q , dq ):
         """ 
@@ -110,7 +111,6 @@ class RotatingCartPole( mechanical.MechanicalSystem ):
         C[0,1] = - self.m2 * self.l1 * self.l2 * s2 * dq[1]
         C[1,1] = 0
 
-        
         return C
     
     ###########################################################################
@@ -122,6 +122,7 @@ class RotatingCartPole( mechanical.MechanicalSystem ):
         B = np.diag( np.ones( self.dof ) ) #  identity matrix
         
         return B
+    
     
     ###########################################################################
     def g(self, q ):
@@ -137,6 +138,7 @@ class RotatingCartPole( mechanical.MechanicalSystem ):
         G[1] = - self.m2 * self.gravity * self.l2 * s2
         
         return G
+    
         
     ###########################################################################
     def d(self, q , dq ):
@@ -154,6 +156,7 @@ class RotatingCartPole( mechanical.MechanicalSystem ):
         d = np.dot( D , dq )
         
         return d
+    
         
     ###########################################################################
     # Graphical output
@@ -168,6 +171,7 @@ class RotatingCartPole( mechanical.MechanicalSystem ):
         domain  = [ (-l,l) , (-l,l) , (-l,l) ]#  
                 
         return domain
+    
     
     ###########################################################################
     def forward_kinematic_lines(self, q ):
@@ -232,7 +236,7 @@ class RotatingCartPole( mechanical.MechanicalSystem ):
 class UnderActuatedRotatingCartPole( RotatingCartPole ):
     
     ############################
-    def __init__(self, ):
+    def __init__(self):
         """ """
         
         # Degree of Freedom
@@ -246,9 +250,6 @@ class UnderActuatedRotatingCartPole( RotatingCartPole ):
         
         # initialize standard params
         system.ContinuousDynamicSystem.__init__(self, n, m, p)
-        
-        # Name
-        self.name = str(dof) + 'DoF Mechanical System'
         
         # Labels, bounds and units
         self.x_ub[0] = + np.pi * 2
@@ -276,12 +277,12 @@ class UnderActuatedRotatingCartPole( RotatingCartPole ):
         self.input_label[0] = 'Torque ' + str(1)
         self.input_units[0] ='[Nm]'
         
-        
         # Name
-        self.name = 'Rotating Cart Pole'
+        self.name = 'Underactuated Rotating Cart Pole'
         
         # params
         self.setparams()
+    
     
     ###########################################################################
     def B(self, q ):
@@ -308,11 +309,7 @@ class UnderActuatedRotatingCartPole( RotatingCartPole ):
 if __name__ == "__main__":     
     """ MAIN TEST """
     
-#    sys = RotatingCartPole()
     sys = UnderActuatedRotatingCartPole()
-    x0 = np.array([0,0.1,0,0])
-    
-    #sys.show3(np.array([0.3,0.2]))
-    
-    sys.plot_trajectory( x0 , 10 ) #5, 50001, 'euler' )
-    sys.animate_simulation(1.0,True)
+    sys.x0 = np.array([0,0.1,0,0])
+    sys.show3(np.array([0.3,0.2]))
+    sys.animate_simulation( is_3d = True)

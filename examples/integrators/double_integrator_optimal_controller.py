@@ -71,13 +71,17 @@ class DoubleIntegrator2( system.ContinuousDynamicSystem ):
         dx[1] = u[0]  # 
         
         return dx
+
+
+################
+# Controller
+################
     
-
-
+    
 class OptmimalDoubleIntegratorController( controller.StaticController ) :
     
     ############################
-    def __init__( self):
+    def __init__( self ):
         """ """
         
         # Dimensions
@@ -141,7 +145,7 @@ ctl.xd = 2
 # New cl-dynamic
 cl_sys = ctl + sys
 
-x0 = np.array([-2,-2])
-sim = cl_sys.compute_trajectory( x0 , 10 , 10001, 'euler')
-cl_sys.plot_trajectory(sim, 'xu')
-cl_sys.plot_phase_plane_trajectory(sim, 0, 1)
+cl_sys.x0 = np.array([-2,-2])
+cl_sys.compute_trajectory( 10 , 10001, 'euler')
+cl_sys.plot_trajectory('xu')
+cl_sys.plot_phase_plane_trajectory()

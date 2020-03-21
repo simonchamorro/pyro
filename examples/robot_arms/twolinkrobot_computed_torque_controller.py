@@ -21,10 +21,9 @@ ctl.rbar = np.array([0,0])
 
 closed_loop_robot = ctl + sys
     
-x0        = np.array([3.14,+1,0,0])
+closed_loop_robot.x0 = np.array([3.14,+1,0,0])
     
-sim = closed_loop_robot.compute_trajectory( x0, 5 )
-closed_loop_robot.plot_trajectory(sim, 'x')
-closed_loop_robot.plot_trajectory(sim, 'u')
-
-closed_loop_robot.animate_simulation(sim)
+closed_loop_robot.compute_trajectory( 5 )
+closed_loop_robot.plot_trajectory('x')
+closed_loop_robot.plot_trajectory('u')
+closed_loop_robot.animate_simulation()

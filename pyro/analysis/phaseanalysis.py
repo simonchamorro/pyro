@@ -9,10 +9,6 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
-from mpl_toolkits.mplot3d import axes3d
-
-from scipy.integrate import odeint
-
 # Embed font type in PDF
 matplotlib.rcParams['pdf.fonttype'] = 42
 matplotlib.rcParams['ps.fonttype']  = 42
@@ -62,6 +58,7 @@ class PhasePlot:
         self.headlength = 4.5
         self.fontsize   = 6
         
+        
     ###########################################################################
     def compute_grid(self):
         
@@ -91,6 +88,7 @@ class PhasePlot:
                 # Assign vector components
                 self.v[i,j] = dx[ self.x_axis ]
                 self.w[i,j] = dx[ self.y_axis ]
+                
                        
     ###########################################################################
     def plot_init(self):
@@ -100,6 +98,7 @@ class PhasePlot:
                                    frameon=True)
         self.phasefig.canvas.set_window_title('Phase plane of ' + 
                                                 self.cds.name )
+        
         
     ###########################################################################
     def plot_vector_field(self):
@@ -120,6 +119,7 @@ class PhasePlot:
                                 color     = self.color,  
                                 linewidth = self.linewidth)
                                 #, headlength = self.headlength )
+            
         
     ###########################################################################
     def plot_finish(self):
@@ -136,6 +136,7 @@ class PhasePlot:
         self.ax.grid(True)
         self.phasefig.tight_layout()
         
+        
     ###########################################################################
     def plot(self):
         """ Plot phase plane """
@@ -146,7 +147,6 @@ class PhasePlot:
         self.plot_vector_field()
         self.plot_finish()
         self.phasefig.show()
-        
         
         
 ###############################################################################
@@ -186,6 +186,7 @@ class PhasePlot3( PhasePlot ):
         self.arrowstyle = '->'
         self.fontsize   = 6
         
+        
     ###########################################################################
     def compute_grid(self):
         
@@ -194,6 +195,7 @@ class PhasePlot3( PhasePlot ):
         z = np.linspace( self.z_axis_min , self.z_axis_max , self.z_axis_n )
         
         self.X, self.Y, self.Z = np.meshgrid( x, y, z)
+        
             
     ###########################################################################
     def compute_vector_field(self):
@@ -219,6 +221,7 @@ class PhasePlot3( PhasePlot ):
                     self.v[i,j,k] = dx[ self.x_axis ]
                     self.w[i,j,k] = dx[ self.y_axis ]
                     self.u[i,j,k] = dx[ self.z_axis ]
+                    
                        
     ###########################################################################
     def plot_vector_field(self):
@@ -231,6 +234,7 @@ class PhasePlot3( PhasePlot ):
                        color=self.color,  linewidth = self.linewidth,
                        length = self.length)
                        #, headlength = self.headlength, normalize = True )
+        
         
     ###########################################################################
     def plot_finish(self):

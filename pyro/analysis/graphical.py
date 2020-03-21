@@ -18,16 +18,20 @@ matplotlib.rcParams['pdf.fonttype'] = 42
 matplotlib.rcParams['ps.fonttype']  = 42
 
 ###############################################################################
-
 class TrajectoryPlotter:
-    def __init__(self, cds):
-        self.sys = cds
+    
+    ##########################################################################
+    def __init__(self, sys):
+        
+        self.sys = sys
 
         # Ploting
         self.fontsize = 5
         self.figsize  = (4, 3)
         self.dpi      = 300
 
+
+    ##########################################################################
     def plot(self, traj, plot = 'x' , show = True):
         """
         Create a figure with trajectories for states, inputs, outputs and cost
@@ -49,10 +53,10 @@ class TrajectoryPlotter:
         sys = self.sys
 
         # For closed-loop systems, extract the inner Dynamic system for plotting
-        try:
-            sys = self.sys.cds # sys is the global system
-        except AttributeError:
-            pass
+        #try:
+        #    sys = self.sys.plant # sys is the global system
+        #except AttributeError:
+        #    pass
 
         # Number of subplots
         if plot == 'All':
@@ -137,11 +141,13 @@ class TrajectoryPlotter:
         if show:
             simfig.canvas.draw()
             plt.draw()
-            plt.pause(5)
+            #plt.pause(5)
 
         self.fig   = simfig
         self.plots = plots
-
+        
+    
+    ##########################################################################
     def phase_plane_trajectory(self, traj, x_axis=0, y_axis=1):
         """ """
         pp = phaseanalysis.PhasePlot( self.sys , x_axis , y_axis )
@@ -152,6 +158,7 @@ class TrajectoryPlotter:
         plt.plot([traj.x[-1,x_axis]], [traj.x[-1,y_axis]], 's') # end
 
         pp.phasefig.tight_layout()
+        
 
     ###########################################################################
     def phase_plane_trajectory_3d(self, traj, x_axis=0, y_axis=1, z_axis=2):
@@ -182,7 +189,8 @@ class TrajectoryPlotter:
 
         pp.phasefig.tight_layout()
 
-            ###########################################################################
+
+    ###########################################################################
     def phase_plane_trajectory_closed_loop(self, traj, x_axis, y_axis):
         """ """
         pp = phaseanalysis.PhasePlot( self.sys , x_axis , y_axis )
@@ -210,7 +218,12 @@ class TrajectoryPlotter:
         plt.plot([traj.x[-1,x_axis]], [traj.x[-1,y_axis]], 's') # end
 
         plt.tight_layout()
-
+        
+        
+        
+##########################################################################
+# Animator
+##########################################################################
 class Animator:
     """ 
 
@@ -248,6 +261,7 @@ class Animator:
         self.dpi       = 300
         self.linestyle = 'o-'
         self.fontsize  = 5
+        
 
     ###########################################################################
     def show(self, q , x_axis = 0 , y_axis = 1 ):
@@ -282,6 +296,7 @@ class Animator:
 
         plt.show()
     
+    
     ###########################################################################
     def show3(self, q ):
         """ Plot figure of configuration q """
@@ -314,7 +329,6 @@ class Animator:
         
         plt.show()
         
-    
 
     ###########################################################################
     def animate_simulation(self, traj, time_factor_video =  1.0 , is_3d = False, 
@@ -444,6 +458,7 @@ class Animator:
         # self.ani_fig.show()
         plt.ioff()
         plt.show(block=True)
+        
 
     #####################################    
     def __ani_init__(self):
@@ -499,33 +514,21 @@ if __name__ == "__main__":
     from pyro.dynamic import pendulum
     from pyro.dynamic import vehicle
     
-    #sys  = SinglePendulum()
-    #x0   = np.array([0,1])
-    
-    #sys.plot_trajectory( x0 )
-    
-    #sys.show( np.array([0]))
-    #sys.show3( np.array([0]))
-    
-    #sys.animate_simulation()
-    
-    sys = pendulum.DoublePendulum()
-    x0 = np.array([0.1,0.1,0,0])
-    
-    #sys.show(np.array([0.1,0.1]))
-    #sys.show3(np.array([0.1,0.1]))
-    
+    sys    = pendulum.DoublePendulum()
+    sys.x0 = np.array([0.1,0.1,0,0])
+
     is_3d = False
     
-    sys.plot_trajectory( x0 , 20)
+    sys.plot_trajectory()
     
     a = Animator(sys)
-    a.animate_simulation(1,is_3d)
+    a.animate_simulation( sys.traj, 1, is_3d)
     
-    sys = vehicle.KinematicBicyleModel()
+    sys      = vehicle.KinematicBicyleModel()
     sys.ubar = np.array([1,0.01])
-    x0 = np.array([0,0,0])
+    sys.x0   = np.array([0,0,0])
     
     b = Animator(sys)
-    sys.plot_trajectory( x0 , 100 )
-    b.animate_simulation(10,is_3d)
+    sys.compute_trajectory( 100 )
+    sys.plot_trajectory()
+    b.animate_simulation( sys.traj, 10, is_3d)

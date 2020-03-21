@@ -14,7 +14,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/SherbyRobotics/pyro",
     packages=setuptools.find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
-    python_requires='~=3.3',
+    python_requires='~=3.4',
     install_requires=[
         'numpy>=1.10',
         'matplotlib>3.0',
