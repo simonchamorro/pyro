@@ -33,10 +33,11 @@ planner.u_options = [
 
 planner.goal_radius = 1.0
 planner.max_nodes   = 20000
-#planner.dyna_plot   = False
+planner.dyna_plot   = False
 
 planner.find_path_to_goal( q_goal )
 
+planner.save_solution('fivelinkplan.npy')
 planner.plot_tree()
 planner.plot_open_loop_solution()
 
