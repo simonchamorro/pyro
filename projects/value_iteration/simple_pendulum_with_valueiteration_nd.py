@@ -38,14 +38,18 @@ timer = stopwatch.Stopwatch()
 
 vi.initialize()
 # vi.load_data('simple_pendulum_vi')
-profile.run('vi.compute_steps(200, plot=True)', 'profile')
+
+profile.run('vi.compute_steps(200, plot=False)', 'profile')
+print('Profiling finished')
+p = pstats.Stats('profile')
+p.strip_dirs().sort_stats(-1).print_stats()
+p.sort_stats('time', 'cumulative', 'ncalls').print_stats(.5, 'init')
+p.print_callers(.5, 'init')
+
 vi.assign_interpol_controller()
 vi.plot_policy(0)
 vi.plot_cost2go()
 # vi.save_data('simple_pendulum_vi')
-
-p = pstats.Stats('profile')
-p.strip_dirs().sort_stats(-1).print_stats()
 
 #asign controller
 cl_sys = vi.ctl + sys
@@ -53,6 +57,6 @@ cl_sys = vi.ctl + sys
 # Simulation and animation
 cl_sys.x0   = np.array([0,0])
 cl_sys.compute_trajectory(tf=20)
-cl_sys.plot_trajectory('xu')
-cl_sys.animate_simulation()
+# cl_sys.plot_trajectory('xu')
+# cl_sys.animate_simulation(11)
 
