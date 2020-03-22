@@ -31,9 +31,11 @@ planner.u_options = [
         np.array([ +t, +t, +t, -t, -t])
         ]
 
-planner.goal_radius = 1.0
+planner.goal_radius = 0.4
 planner.max_nodes   = 20000
 planner.dyna_plot   = False
+planner.max_solution_time = 20
+
 
 planner.find_path_to_goal( q_goal )
 
