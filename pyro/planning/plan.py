@@ -4,13 +4,10 @@ Created on Fri Nov 16 13:41:26 2018
 
 @author: Alexandre
 """
-###############################################################################
-import numpy as np
 
 ###############################################################################
 from pyro.analysis import Trajectory
 from pyro.control  import controller
-from pyro.signal_proc   import timefiltering
 
 
 

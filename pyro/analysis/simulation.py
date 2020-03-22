@@ -38,15 +38,33 @@ class Trajectory():
 
         self._compute_size()
         
+        
     ############################
     def _asdict(self):
         
         return {k: getattr(self, k) for k in self._dict_keys}
     
+    
+    ############################
+    def save2(self, name = 'trajectory' ):
+        
+        #TODO ne fonctionne pas cet version, voir avec Françis?
+        np.savez(name , **self._asdict())
+        
+        
     ############################
     def save(self, name = 'trajectory.npy' ):
         
-        np.savez(name , **self._asdict())
+        data = np.array( [ self.x , 
+                           self.u , 
+                           self.t ,
+                           self.dx,
+                           self.y ,
+                           self.r ,
+                           self.J , 
+                           self.dJ ] )
+        
+        np.save( name , data )
         
     
     ############################
@@ -59,12 +77,15 @@ class Trajectory():
 
         except ValueError:
             # If that fails, try to load as "legacy" numpy object array
+            print('\nLoading Legacy Numpy object .npy')
             data = np.load(name, allow_pickle=True)
             return cls(*data)
         
         
     ############################
     def _compute_size(self):
+        
+        #print(self.t)
         
         self.time_final = self.t.max()
         self.time_steps = self.t.size
