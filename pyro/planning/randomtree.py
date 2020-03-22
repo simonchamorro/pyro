@@ -7,13 +7,10 @@ Created on Sun Mar  6 15:09:12 2016
 ###############################################################################
 import numpy as np
 import matplotlib.pyplot as plt
-import mpl_toolkits.mplot3d.axes3d as p3
 
 ###############################################################################
-from pyro.dynamic  import system
-from pyro.signal_proc   import timefiltering
 from pyro.planning import plan
-from pyro.analysis import Trajectory
+from pyro.analysis import simulation
 
 
 ###############################################################################
@@ -379,7 +376,7 @@ class RRT:
             
         # Save plan
         # y = x
-        self.trajectory = Trajectory(x.T, u.T, t.T, dx.T, x.T)
+        self.trajectory = simulation.Trajectory(x.T, u.T, t.T, dx.T, x.T)
         
         # Create open-loop controller
         self.open_loop_controller = plan.OpenLoopController( self.trajectory )
@@ -396,12 +393,12 @@ class RRT:
     ############################
     def load_solution(self, name = 'RRT_Solution.npy' ):
 
-        self.trajectory = Trajectory.load(name)
+        self.trajectory = simulation.Trajectory.load(name)
 
     ############################
     def plot_open_loop_solution(self, params = 'xu' ):
 
-        self.sys.get_plotter().plot(self.trajectory, params)
+        self.sys.get_plotter().plot( self.trajectory, params)
 
 
     ##################################################################
@@ -629,7 +626,6 @@ if __name__ == "__main__":
     """ MAIN TEST """
     
     from pyro.dynamic import pendulum
-    from pyro.dynamic import vehicle
     
 
     sys  = pendulum.SinglePendulum()
@@ -654,6 +650,7 @@ if __name__ == "__main__":
     
     planner.plot_tree()
     planner.plot_open_loop_solution()
+    sys.traj = planner.trajectory
     sys.animate_simulation()
     
     planner.z_axis = 0

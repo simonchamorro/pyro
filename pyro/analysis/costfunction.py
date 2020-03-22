@@ -134,11 +134,11 @@ class QuadraticCostFunction(CostFunction):
         self.ybar = np.zeros(self.p)
 
         # Quadratic cost weights
-        self.Q = np.diag(np.ones(n))
-        self.R = np.diag(np.ones(m))
-        self.V = np.diag(np.ones(p))
-
-        # Optionnal zone of zero cost if ||dx|| < EPS
+        self.Q = np.diag( np.ones(n)  )
+        self.R = np.diag( np.ones(m)  )
+        self.V = np.diag( np.zeros(p) )
+        
+        # Optionnal zone of zero cost if ||dx|| < EPS 
         self.ontarget_check = True
 
     ############################

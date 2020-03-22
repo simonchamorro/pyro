@@ -259,33 +259,24 @@ class SpeedControlledManipulator( system.ContinuousDynamicSystem ):
     -------------------------------------------------------
     
     """
-    
     ############################
-    def __init__(self, Manipulator):
+    def __init__(self, dof , e ):
         """ """
         
         # Effector space dimensions
-        self.e = Manipulator.e
-        
-        # Kinematic functions 
-        self.forward_kinematic_lines = Manipulator.forward_kinematic_lines
-        self.forward_kinematic_domain = Manipulator.forward_kinematic_domain
-        self.forward_kinematic_effector = Manipulator.forward_kinematic_effector
-        self.J = Manipulator.J
+        self.e = e
 
         # Degree of Freedom
-        self.dof = Manipulator.dof
+        self.dof = dof
         
-        # Dimensions
-        n = Manipulator.dof  
-        m = Manipulator.dof  
-        p = Manipulator.dof
+        # Nb of states
+        n = dof
         
         # initialize standard params
-        system.ContinuousDynamicSystem.__init__(self, n, m, p)
+        system.ContinuousDynamicSystem.__init__(self, dof, dof, dof)
         
         # Name
-        self.name = str(n) + 'Joint Speed Controlled Manipulator'
+        self.name = str(n) + ' Joint Speed Controlled Manipulator'
         
         # Labels, bounds and units
         for i in range(n):
@@ -300,6 +291,23 @@ class SpeedControlledManipulator( system.ContinuousDynamicSystem ):
             self.u_lb[i] = - np.pi * 2
             self.input_label[i] = 'Velocity ' + str(i)
             self.input_units[i] = '[rad/sec]'
+            
+    
+    ############################
+    @classmethod
+    def from_manipulator(cls, Manipulator):
+        """ From ContinuousDynamicSystem instance """
+        
+        instance = cls( Manipulator.dof , Manipulator.e )
+        
+        instance.forward_kinematic_lines    = Manipulator.forward_kinematic_lines
+        instance.forward_kinematic_domain   = Manipulator.forward_kinematic_domain
+        instance.forward_kinematic_effector = Manipulator.forward_kinematic_effector
+        instance.J                          = Manipulator.J
+        instance.isavalidstate              = Manipulator.isavalidstate
+        
+        return instance
+        
             
     ###########################################################################
     def f(self, x , u , t = 0 ):
@@ -321,6 +329,45 @@ class SpeedControlledManipulator( system.ContinuousDynamicSystem ):
         dx = u       
         
         return dx
+    
+    ##############################
+    def forward_differential_kinematic_effector(self, q, dq ):
+        """ 
+        End-effector foward differential kinematic
+        ------------------------------------------
+        dr : time derivative of effector position vector
+        """
+        
+        dr = np.dot( self.J(q) , dq )
+        
+        return dr
+    
+    ##############################
+    def forward_kinematic_effector(self, q ):
+        """ 
+        Foward kinematic of the end-effector
+        -------------------------------------
+        r : effector position vector
+        q : joint space vector
+        """
+        
+        r = np.zeros( self.e ) # Place holder
+        
+        return r
+    
+    ##############################
+    def J(self, q ):
+        """
+        Jacobian from joint space to effector space
+        -------------------------------------------
+        J : e x dof
+        e : nb of effector position variables
+        dof: number of configuration variables
+        """
+        
+        J = np.zeros( ( self.e  , self.dof ) ) # Place holder
+        
+        return J
             
 
 
@@ -1404,6 +1451,213 @@ class FiveLinkPlanarManipulator( Manipulator ):
         lines_pts.append( pts )
                 
         return lines_pts
+
+
+
+##############################################################################
+# Two Planar Link Manipulator with obstacles
+###############################################################################
+        
+class TwoLinkManipulatorwithObstacles( TwoLinkManipulator ):
+    """
+    Maniplator with non-allowable states based on end-effector position only
+    """
+    
+    ############################
+    def __init__(self):
+        """ """
+        # initialize standard params
+        TwoLinkManipulator.__init__(self)
+        
+        self.l1 = 1.1
+        self.l2 = 0.9
+        
+        # Labels
+        self.name = 'Two Link Planar Manipulator with Obstacles'
+
+        self.obstacles = [
+                [ (-1, -1),( 3, -0.2)],
+                [ (0.5, 0.5),(2, 3)],
+                [ (-2, 0),(-0.2, 3)]
+                ]
+        
+        
+    #############################
+    def isavalidstate(self , x ):
+        """ check if x is in the state domain """
+        ans = False
+        for i in range( x.size ):
+            ans = ans or ( x[i] < self.x_lb[i] )
+            ans = ans or ( x[i] > self.x_ub[i] )
+        
+        # effector position
+        q = self.xut2q( x, self.ubar, 0)
+        r = self.forward_kinematic_effector( q )
+
+        buffer = 0.0
+        
+        for obs in self.obstacles:
+            on_obs = (( r[0] + buffer > obs[0][0]) and  
+                      ( r[1] + buffer > obs[0][1]) and 
+                      ( r[0] - buffer < obs[1][0]) and 
+                      ( r[1] - buffer < obs[1][1]) )
+                     
+            ans = ans or on_obs
+            
+        return not(ans)
+    
+        
+    ###########################################################################
+    def forward_kinematic_domain(self, q ):
+        """ 
+        """
+        l = 3
+        
+        domain  = [ (-l,l) , (-l,l) , (-l,l) ]#  
+                
+        return domain
+        
+       
+    ###########################################################################
+    def forward_kinematic_lines(self, q ):
+        """ 
+        Compute points p = [x;y;z] positions given config q 
+        ----------------------------------------------------
+        - points of interest for ploting
+        
+        Outpus:
+        lines_pts = [] : a list of array (n_pts x 3) for each lines
+        
+        """
+        
+        lines_pts = TwoLinkManipulator.forward_kinematic_lines(self, q )
+        
+
+        ###########################
+        # obstacles
+        ###########################
+        
+        for obs in self.obstacles:
+            
+            pts = np.zeros((5,3))
+            
+            pts[0,0] = obs[0][0]
+            pts[0,1] = obs[0][1]
+            
+            pts[1,0] = obs[0][0]
+            pts[1,1] = obs[1][1]
+            
+            pts[2,0] = obs[1][0]
+            pts[2,1] = obs[1][1]
+            
+            pts[3,0] = obs[1][0]
+            pts[3,1] = obs[0][1]
+            
+            pts[4,0] = obs[0][0]
+            pts[4,1] = obs[0][1]
+            
+            lines_pts.append( pts )
+            
+                
+        return lines_pts
+
+    ###########################################################################
+
+
+###############################################################################
+# Five Planar Link Manipulator with obstacles
+###############################################################################
+        
+class FiveLinkPlanarManipulatorwithObstacles( FiveLinkPlanarManipulator ):
+    """
+    Maniplator with non-allowable states based on end-effector position only
+    """
+    
+    ############################
+    def __init__(self):
+        """ """
+        # initialize standard params
+        FiveLinkPlanarManipulator.__init__(self)
+        
+        # Labels
+        self.name = 'Five Link Planar Manipulator with Obstacles'
+
+        self.obstacles = [
+                [ (-1, -1),( 3, -0.2)],
+                [ (0.5, 0.5),(2, 3)],
+                [ (-2, 0),(-0.2, 3)]
+                ]
+        
+        
+    #############################
+    def isavalidstate(self , x ):
+        """ check if x is in the state domain """
+        ans = False
+        for i in range( x.size ):
+            ans = ans or ( x[i] < self.x_lb[i] )
+            ans = ans or ( x[i] > self.x_ub[i] )
+        
+        # effector position
+        q = self.xut2q( x, self.ubar, 0)
+        r = self.forward_kinematic_effector( q )
+
+        buffer = 0.0
+        
+        for obs in self.obstacles:
+            on_obs = (( r[0] + buffer > obs[0][0]) and  
+                      ( r[1] + buffer > obs[0][1]) and 
+                      ( r[0] - buffer < obs[1][0]) and 
+                      ( r[1] - buffer < obs[1][1]) )
+                     
+            ans = ans or on_obs
+            
+        return not(ans)
+        
+       
+    ###########################################################################
+    def forward_kinematic_lines(self, q ):
+        """ 
+        Compute points p = [x;y;z] positions given config q 
+        ----------------------------------------------------
+        - points of interest for ploting
+        
+        Outpus:
+        lines_pts = [] : a list of array (n_pts x 3) for each lines
+        
+        """
+        
+        lines_pts = FiveLinkPlanarManipulator.forward_kinematic_lines(self, q )
+        
+
+        ###########################
+        # obstacles
+        ###########################
+        
+        for obs in self.obstacles:
+            
+            pts = np.zeros((5,3))
+            
+            pts[0,0] = obs[0][0]
+            pts[0,1] = obs[0][1]
+            
+            pts[1,0] = obs[0][0]
+            pts[1,1] = obs[1][1]
+            
+            pts[2,0] = obs[1][0]
+            pts[2,1] = obs[1][1]
+            
+            pts[3,0] = obs[1][0]
+            pts[3,1] = obs[0][1]
+            
+            pts[4,0] = obs[0][0]
+            pts[4,1] = obs[0][1]
+            
+            lines_pts.append( pts )
+            
+                
+        return lines_pts
+
+    ###########################################################################
     
     
     
@@ -1421,14 +1675,19 @@ if __name__ == "__main__":
     #sys = TwoLinkManipulator()
     
     sys.x0[0] = 0.1
-    sys.animate_simulation()
-    sys.plot_trajectory()
+    #sys.animate_simulation()
+    #sys.plot_trajectory()
     
     sys = ThreeLinkManipulator3D()
     sys.x0[0] = 0.1
-    sys.animate_simulation( is_3d = True )
-    sys.plot_trajectory()
+    #sys.animate_simulation( is_3d = True )
+    #sys.plot_trajectory()
     
-    sys = FiveLinkPlanarManipulator()
-    sys.ubar = np.array([1,1,1,1,1])
-    sys.animate_simulation()
+    #sys = FiveLinkPlanarManipulator()
+    #sys.ubar = np.array([1,1,1,1,1])
+    #sys.animate_simulation()
+    
+    aaa = TwoLinkManipulatorwithObstacles()
+    bbb = SpeedControlledManipulator.from_manipulator( aaa )
+    bbb.ubar = np.array([1,1])
+    bbb.animate_simulation()
