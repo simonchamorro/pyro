@@ -18,6 +18,8 @@ sys  = pendulum.SinglePendulum()
 # Discrete world 
 grid_sys = discretizer.GridDynamicSystem( sys )
 
+print(sys.cost_function)
+
 # Cost Function
 qcf = sys.cost_function
 
@@ -37,7 +39,6 @@ vi.plot_cost2go()
 
 #asign controller
 cl_sys = controller.ClosedLoopSystem( sys , vi.ctl )
-cl_sys.cost_function = None
 
 # Simulation and animation
 cl_sys.x0   = np.array([0,0])
