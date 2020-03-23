@@ -32,11 +32,10 @@ sys.u_lb = np.array([-3, -1])
 grid_sys = discretizer.GridDynamicSystem(sys, (51, 51, 21), (3, 3), 0.1)
 
 # Cost Function
-cf = costfunction.QuadraticCostFunction.from_sys( sys )
-cf.xbar = np.array( [30, 0, 0] ) # target
-cf.INF  = 1E8
-cf.EPS  = 0.00
-cf.R    = np.array([[0.1,0],[0,0]])
+xbar    = np.array( [30, 0, 0] ) 
+cf      = costfunction.TimeCostFunction( xbar )
+cf.INF  = 50
+cf.EPS  = 0.5
 
 # VI algo
 vi = valueiteration.ValueIteration_ND( grid_sys , cf )
@@ -44,9 +43,9 @@ vi = valueiteration.ValueIteration_ND( grid_sys , cf )
 vi.uselookuptable = True
 vi.initialize()
 
-vi.load_data('car_vi2')
+vi.load_data('car_vi_min_time')
 vi.compute_steps(20,False)
-vi.save_data('car_vi2')
+vi.save_data('car_vi_min_time')
 
 ###############################################################################
 
