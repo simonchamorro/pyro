@@ -15,14 +15,16 @@ sys = WCRT.B3DDL()
 ctl  = nonlinear.ComputedTorqueController( sys )
 
 ctl.w0   = 1.5
-ctl.zeta = 0.5 
+ctl.zeta = 0.8
 ctl.rbar = np.array([0,0,0])
 
 # New cl-dynamic
-cl_sys = ctl + sys
+#cl_sys = ctl + sys
+cl_sys = sys
 
 # Simultation
-x_start  = np.array([1,0,1,0,0,0])
-cl_sys.plot_trajectory( x_start , 10 , 10001, 'euler')
-cl_sys.sim.phase_plane_trajectory(0,2)
-cl_sys.animate_simulation()
+cl_sys.x0  = np.array([0,1,-0.2,0,0,0])
+cl_sys.compute_trajectory( tf = 5 )
+cl_sys.plot_trajectory()
+cl_sys.plot_phase_plane_trajectory(0, 2)
+cl_sys.animate_simulation(is_3d = True)
