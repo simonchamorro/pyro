@@ -18,6 +18,7 @@ class StateSpaceSystem(ContinuousDynamicSystem):
     """
     ############################################
     def __init__(self, A, B, C, D):
+        
         self.A = A
         self.B = B
         self.C = C
@@ -33,6 +34,7 @@ class StateSpaceSystem(ContinuousDynamicSystem):
         
     ############################################
     def _check_dimensions(self):
+        
         if self.A.shape[0] != self.A.shape[1]:
             raise ValueError("A must be square")
 
@@ -190,12 +192,15 @@ if __name__ == "__main__":
     
     print('\nA:\n',linearized_sys.A)
     print('\nB:\n',linearized_sys.B)
-    print('\nC:\n',linearized_sys.C) # Still bugged
+    print('\nC:\n',linearized_sys.C)
     print('\nD:\n',linearized_sys.D)
     
     # Small oscillations
     non_linear_sys.x0 = np.array([0.1,0])
     linearized_sys.x0 = np.array([0.1,0])
+    
+    non_linear_sys.compute_trajectory()
+    linearized_sys.compute_trajectory()
     
     non_linear_sys.plot_trajectory()
     linearized_sys.plot_trajectory()
