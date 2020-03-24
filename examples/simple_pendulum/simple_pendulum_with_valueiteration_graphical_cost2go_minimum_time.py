@@ -17,6 +17,8 @@ from pyro.control  import controller
 
 sys  = pendulum.SinglePendulum()
 
+sys.x_lb[0] = -10
+sys.x_ub[0] = +10
 
 ##############################################################################
 
@@ -27,17 +29,21 @@ grid_sys = discretizer.GridDynamicSystem( sys )
 
 xbar = np.array([-3.14,0])
 tcf = costfunction.TimeCostFunction( xbar )
+tcf.EPS = 0.1
+
+sys.cost_function = tcf
 
 # VI algo
-vi = valueiteration.ValueIteration_ND( grid_sys , qcf )
+vi = valueiteration.ValueIteration_ND( grid_sys , tcf )
 
 vi.initialize()
-#vi.load_data('simple_pendulum_vi')
-vi.compute_steps(200,True)
+vi.plot_max_J = 10
+vi.load_data('simple_pendulum_vi_minimum_time')
+#vi.compute_steps(300,True)
 vi.assign_interpol_controller()
 vi.plot_policy(0)
-#vi.plot_cost2go()
-#vi.save_data('simple_pendulum_vi')
+vi.plot_cost2go(10)
+vi.save_data('simple_pendulum_vi_minimum_time')
 
 ##############################################################################
 
@@ -48,6 +54,7 @@ cl_sys = controller.ClosedLoopSystem( sys , vi.ctl )
 
 # Simulation and animation
 cl_sys.x0   = np.array([0,0])
-cl_sys.plot_trajectory('xu')
+cl_sys.compute_trajectory()
+cl_sys.plot_trajectory('xuj')
 cl_sys.plot_phase_plane_trajectory()
 cl_sys.animate_simulation()
