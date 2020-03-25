@@ -23,7 +23,7 @@ ctl.rbar = np.array([0,0,0])
 cl_sys = sys
 
 # Simultation
-cl_sys.x0  = np.array([0,1,-0.2,0,0,0])
+cl_sys.x0  = np.array([0,0,0,0,0,0])
 cl_sys.compute_trajectory( tf = 5 )
 cl_sys.plot_trajectory()
 cl_sys.plot_phase_plane_trajectory(0, 2)

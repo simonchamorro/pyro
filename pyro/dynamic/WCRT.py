@@ -50,9 +50,9 @@ class B3DDL( mechanical.MechanicalSystem ):
         
         self.gravity = 9.81
         
-        self.d1 = 2
-        self.d2 = 2
-        self.d3 = 2
+        self.d1 = 1
+        self.d2 = 1
+        self.d3 = 1
         
         
     ##############################
@@ -98,7 +98,6 @@ class B3DDL( mechanical.MechanicalSystem ):
         H[0,2] = H[2,0]
         H[1,2] = H[2,1]
         H[2,2] = self.m3*self.lc3**2
-        
         
         return H
     
