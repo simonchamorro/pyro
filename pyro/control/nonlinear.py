@@ -31,8 +31,8 @@ class ComputedTorqueController( controller.StaticController ) :
         """
         
         ---------------------------------------
-        r  : reference signal_proc vector  k x 1
-        y  : sensor signal_proc vector     p x 1
+        r  : reference signal vector  k x 1
+        y  : sensor signal vector     p x 1
         u  : control inputs vector    m x 1
         t  : time                     1 x 1
         ---------------------------------------
@@ -71,8 +71,8 @@ class ComputedTorqueController( controller.StaticController ) :
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal_proc vector     p x 1
-        r  : reference signal_proc vector  k x 1
+        y  : sensor signal vector     p x 1
+        r  : reference signal vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS
@@ -134,10 +134,10 @@ class ComputedTorqueController( controller.StaticController ) :
         
         self.trajectory = traj
         
-        q   = traj.x[ :,    0           :     self.model.dof ]
-        dq  = traj.x[ :, self.model.dof : 2 * self.model.dof ]
-        ddq = traj.dx[:, self.model.dof : 2 * self.model.dof ]
-        t   = traj.t
+        q   = traj.x_sol[ :,    0           :     self.model.dof ]
+        dq  = traj.x_sol[ :, self.model.dof : 2 * self.model.dof ]
+        ddq = traj.dx_sol[:, self.model.dof : 2 * self.model.dof ]
+        t   = traj.t_sol
         
         # Create interpol functions
         self.q   = interp1d(t,q.T)
@@ -194,8 +194,8 @@ class ComputedTorqueController( controller.StaticController ) :
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal_proc vector     p x 1
-        r  : reference signal_proc vector  k x 1
+        y  : sensor signal vector     p x 1
+        r  : reference signal vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS
@@ -226,14 +226,10 @@ class SlidingModeController( ComputedTorqueController ):
         
         ComputedTorqueController.__init__( self , model , traj )
         
-        
         # Params
-        
         self.lam  = 1   # Sliding surface slope
         self.gain = 1   # Discontinuous gain
         self.nab  = 0.1 # Min convergence rate
-        
-        
         
         
     ############################
@@ -322,6 +318,8 @@ class SlidingModeController( ComputedTorqueController ):
         
         return u
 
+
+    
 '''
 #################################################################
 ##################          Main                         ########
@@ -329,5 +327,20 @@ class SlidingModeController( ComputedTorqueController ):
 '''
 
 
-if __name__ == "__main__":
-    pass
+if __name__ == "__main__":     
+    """ MAIN TEST """
+    
+    from pyro.dynamic import pendulum
+
+
+    sys  = pendulum.DoublePendulum()
+    ctl  = ComputedTorqueController( sys )
+    
+    # New cl-dynamic
+    cl_sys = ctl + sys
+    
+    cl_sys.x0 = np.array([2,1,0,0])
+    cl_sys.compute_trajectory()
+    cl_sys.plot_phase_plane_trajectory(0,2)
+    cl_sys.animate_simulation()
+        
