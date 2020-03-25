@@ -15,7 +15,7 @@ sys = WCRT()
 ctl  = nonlinear.ComputedTorqueController( sys )
 
 ctl.w0   = 1.5
-ctl.zeta = 0.5 
+ctl.zeta = 0.8
 ctl.rbar = np.array([0,0,0])
 
 # New cl-dynamic
@@ -23,7 +23,8 @@ cl_sys = ctl + sys
 
 # Simultation
 cl_sys.x0 = np.array([1,1,1,0,0,0])
-cl_sys.compute_trajectory( 10 , 10001, 'euler')
+cl_sys.compute_trajectory( 5 , 10001, 'euler')
 cl_sys.plot_trajectory('x')
 cl_sys.plot_trajectory('u')
 cl_sys.animate_simulation( is_3d = True )
+
