@@ -50,9 +50,9 @@ class WCRT( mechanical.MechanicalSystem ):
         
         self.gravity = 9.81
         
-        self.d1 = 0
-        self.d2 = 0
-        self.d3 = 0
+        self.d1 = 2
+        self.d2 = 2
+        self.d3 = 2
         
         
     ##############################
@@ -188,7 +188,7 @@ class WCRT( mechanical.MechanicalSystem ):
     def forward_kinematic_domain(self, q ):
         """ 
         """
-        l = 3
+        l = 2
         
         domain  = [ (-l,l) , (-l,l) , (-l,l) ]#  
                 
