@@ -11,7 +11,7 @@ from pyro.dynamic import mechanical
         
 ##############################################################################
         
-class B3DDL( mechanical.MechanicalSystem ):
+class WCRT( mechanical.MechanicalSystem ):
     """ 
 
     """
@@ -24,7 +24,7 @@ class B3DDL( mechanical.MechanicalSystem ):
         mechanical.MechanicalSystem.__init__(self, 3)
         
         # Name
-        self.name = 'B3DDL'
+        self.name = 'WCRT'
         
         # params
         self.setparams()
@@ -245,9 +245,6 @@ class B3DDL( mechanical.MechanicalSystem ):
         
 ##############################################################################
         
-
-        
-                
         
 '''
 #################################################################
@@ -258,22 +255,13 @@ class B3DDL( mechanical.MechanicalSystem ):
 
 if __name__ == "__main__":     
     """ MAIN TEST """
+
     
-    #sys  = SinglePendulum()
-    #x0   = np.array([0,1])
+    sys = WCRT()
     
-    #sys.plot_trajectory( x0 )
+    q = np.array([0.1,0.1,0.1])
+    sys.show3( q )
     
-    #sys.show( np.array([0]))
-    #sys.show3( np.array([0]))
-    
-    #sys.animate_sim()
-    
-    sys = DoublePendulum()
-    x0 = np.array([0.1,0.1,0,0])
-    
-    #sys.show(np.array([0.1,0.1]))
-    sys.show3(np.array([0.1,0.1]))
-    
-    sys.plot_trajectory( x0 , 20)
-    sys.animate_simulation()
+    sys.x0 = np.array([0.1,0.1,0,0,0,0])
+    sys.plot_trajectory()
+    sys.animate_simulation( is_3d = True )
