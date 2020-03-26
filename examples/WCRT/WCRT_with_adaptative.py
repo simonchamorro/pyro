@@ -26,7 +26,7 @@ ctl.Kd[0,0] = 5
 ctl.Kd[1,1] = 8
 ctl.Kd[1,1] = 5
 
-ctl.lam = 1.8
+ctl.lam = 1.2
 
 ctl.T[0,0] = 12
 ctl.T[1,1] = 12
