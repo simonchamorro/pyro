@@ -19,7 +19,7 @@ sys.m1 = 1
 ctl.A[0] = 0
 ctl.A[1] = 0
 
-ctl.Kd = 1
+ctl.Kd = 1.3
 ctl.lam = 1
 ctl.T[0,0] = 10
 ctl.T[1,1] = 10
@@ -32,8 +32,9 @@ cl_sys = ctl + sys
 #cl_sys = sys
 
 # Simultation
-cl_sys.x0  = np.array([1,1])
-cl_sys.compute_trajectory(tf = 5)
-cl_sys.plot_trajectory()
-cl_sys.plot_phase_plane_trajectory(0,1)
+cl_sys.x0  = np.array([0,0])
+tf = 10
+n = tf*1000 + 1
+cl_sys.compute_trajectory(tf, n, 'euler')
+cl_sys.plot_trajectory('xu')
 cl_sys.animate_simulation()
