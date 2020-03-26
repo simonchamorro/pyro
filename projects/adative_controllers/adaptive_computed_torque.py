@@ -89,16 +89,10 @@ class SinglePendulumAdaptativeController( nonlinear.ComputedTorqueController ):
         
         Y = np.zeros(2)
         dA = np.zeros(2)
-        #T = np.zeros((2,2))
-        #T[0,0] = 2
-        #T[1,1] = 4
-        
-        
+
         Y[0]=ddq_r
         Y[1]=np.sin(q)
         
-        #print(Y)
-        #print(s)
         b = Y * s
         dA=-1*np.dot( self.T , b )
         
