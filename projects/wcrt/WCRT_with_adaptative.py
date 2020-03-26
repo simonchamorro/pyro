@@ -29,12 +29,12 @@ ctl.Kd[1,1] = 5
 
 ctl.lam = 1.2
 
-ctl.T[0,0] = 12
-ctl.T[1,1] = 12
-ctl.T[2,2] = 12
-ctl.T[3,3] = 12
-ctl.T[4,4] = 12
-ctl.T[4,5] = 12
+ctl.T[0,0] = 8
+ctl.T[1,1] = 8
+ctl.T[2,2] = 8
+ctl.T[3,3] = 8
+ctl.T[4,4] = 8
+ctl.T[4,5] = 8
 
 # Set Point
 ctl.rbar = np.array([0,0,0])
