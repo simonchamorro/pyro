@@ -50,9 +50,9 @@ class B3DDL( mechanical.MechanicalSystem ):
         
         self.gravity = 9.81
         
-        self.d1 = 1
-        self.d2 = 1
-        self.d3 = 1
+        self.d1 = 0
+        self.d2 = 0
+        self.d3 = 0
         
         
     ##############################
