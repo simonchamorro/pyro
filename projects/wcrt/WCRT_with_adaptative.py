@@ -7,13 +7,12 @@ Created on Fri Nov 16 12:05:08 2018
 ###############################################################################
 import numpy as np
 ###############################################################################
-
-from pyro.dynamic import WCRT
-from pyro.control import nonlinear
+from wcrt import WCRT 
+from projects.adative_controllers import adaptive_computed_torque
 ###############################################################################
 
-sys = WCRT.B3DDL()
-ctl  = nonlinear.AdaptativeController_WCRT(sys)
+sys = WCRT()
+ctl  = adaptive_computed_torque.AdaptativeController_WCRT(sys)
 
 
 #Param adapt-control
@@ -24,7 +23,7 @@ ctl.A[3] = 31
 ctl.A[4] = 380
 ctl.A[5] = 31
 
-ctl.Kd[0,0] = 5
+ctl.Kd[0,0] = 2
 ctl.Kd[1,1] = 8
 ctl.Kd[1,1] = 5
 
