@@ -318,7 +318,6 @@ class SlidingModeController( ComputedTorqueController ):
         
         return u
 
-
     
 '''
 #################################################################
