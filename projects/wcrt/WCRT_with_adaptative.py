@@ -16,11 +16,11 @@ ctl  = adaptive_computed_torque.AdaptativeController_WCRT(sys)
 
 
 #Param adapt-control
-ctl.A[0] = 4
+ctl.A[0] = 5
 ctl.A[1] = 5
-ctl.A[2] = 3
-ctl.A[3] = -10
-ctl.A[4] = 6
+ctl.A[2] = 5
+ctl.A[3] = 0
+ctl.A[4] = 5
 ctl.A[5] = 20
 ctl.A[6] = 10
 
@@ -31,13 +31,13 @@ ctl.Kd[2,2] = 7
 
 ctl.lam = 1.5
 
-ctl.T[0,0] = 8
-ctl.T[1,1] = 8
-ctl.T[2,2] = 8
-ctl.T[3,3] = 8
-ctl.T[4,4] = 8
-ctl.T[5,5] = 8
-ctl.T[6,6] = 8
+ctl.T[0,0] = 10
+ctl.T[1,1] = 10
+ctl.T[2,2] = 10
+ctl.T[3,3] = 10
+ctl.T[4,4] = 10
+ctl.T[5,5] = 10
+ctl.T[6,6] = 10
 
 # Set Point
 ctl.rbar = np.array([0,0,0])
@@ -47,7 +47,7 @@ cl_sys = ctl + sys
 
 # Simultation
 
-cl_sys.x0  = np.array([1,1,0,0,0,0])
+cl_sys.x0 = np.array([1,1,0,0,2,0])
 tf = 12
 n = tf*1000 + 1
 cl_sys.compute_trajectory(tf, n, 'euler')
