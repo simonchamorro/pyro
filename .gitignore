@@ -27,3 +27,4 @@ output/
 .idea/other.xml
 *.html
 *.png
+build/
