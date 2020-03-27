@@ -11,9 +11,19 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize, rosen, rosen_der
 from pyro.dynamic import manipulator
 from pyro.planning import plan
+from pyro.analysis import costfunction
+from pyro.analysis import Trajectory
 '''
 ################################################################################
 '''
+
+
+#class TorqueSquaredCostFunction( costfunction.QuadraticCostFunction ):
+#    def __init__(self):
+#        costfunction.QuadraticCostFunction.__init__( self )
+#
+#cost_fun = TorqueSquaredCostFunction()
+
 x0 = [1.3, 0.7, 0.8, 1.9, 1.2]
 res = minimize(rosen, x0, method='Nelder-Mead', tol=1e-6)
 res.x
@@ -33,19 +43,89 @@ res3 = minimize(fun3, x0_0, method='SLSQP', bounds=bnds, constraints=cons,tol=1e
 '''
 ################################################################################
 '''
+# create system 
 sys = manipulator.TwoLinkManipulator()
-sys.f(np.array([1,2,3,4]),np.array([3,2])) # compute f
-sys.x0 =np.array([0.1,0.1,0,0])
+
+# PATCH : must compute trajectory before passing it to OpenLoopController() class constructor
+# create open-loop controller
 tf=4
 sys.compute_trajectory( tf )
 
 #ctl  = plan.OpenLoopController.load_from_file( 'double_pendulum_rrt.npy' )
 ctl = plan.OpenLoopController(sys.traj)
-ctl.trajectory.u=np.ones(sys.traj.u.shape)*10
+ctl.trajectory.u=np.ones(sys.traj.u.shape)*10 # create inputs
+
+
+sys.f(np.array([1,2,3,4]),np.array([3,2])) # compute f
+sys.x0 =np.array([np.pi/2,np.pi/2,0,0])
+
+
 # New cl-dynamic
 cl_sys = ctl + sys
+# cl_sys.m is 1 should be 2 ??
 
-#sys.traj.u=np.ones(sys.traj.t.shape)*10
 cl_sys.compute_trajectory( tf )
 cl_sys.plot_trajectory('xu')
-cl_sys.animate_simulation()
+cl_sys.cost_function.trajectory_evaluation(cl_sys.traj)
+#cl_sys.animate_simulation()
+
+# 
+'''
+Create optization problem
+'''
+
+# set cost function
+# minimize torque square is quadraic cost with Q and V set to 0
+#class TorqueSquaredCostFunction( costfunction.QuadraticCostFunction ): should implement this class
+cl_sys.cost_function.Q=np.zeros(cl_sys.cost_function.Q.shape)
+cl_sys.cost_function.V=np.zeros(cl_sys.cost_function.V.shape)
+cl_sys.cost_function.R=np.ones(sys.cost_function.R.shape) # # cl_sys.m is 1 should be 2 ??
+
+
+ngrid =50 # number of gridpoint
+
+######## set bounds ##########
+ub_t0 = 0 # bounds on t0 
+lb_t0 = 0
+
+ub_tf = 0 # bounds on tf 
+lb_tf = 0
+
+#ub_state = np.array([])
+#lb_state
+ub_x = sys.x_ub # bounds on x
+lb_x = sys.x_lb
+
+ub_u = sys.u_ub # bounds on inputs u
+lb_u = sys.u_lb
+
+ub_x0 = sys.x_ub # bounds on inputs u
+lb_x0 = sys.x_lb
+
+ub_x0 = sys.x_ub # bounds on inputs u
+lb_x0 = sys.x_lb
+
+ub_xF = sys.x_ub # bounds on inputs u
+lb_xF = sys.x_lb
+
+'''
+create initial guess
+
+'''
+######## set equality contraints (other than dynamics) ##########
+# sys.f contains the dynamics ! 
+'''
+Convert to non-linear program (direct collocation)
+
+'''
+
+#optim_traj = Trajectory(x_opt, u_opt, t_opt, dx_opt, y_opt)
+
+
+'''
+Solve non-linear program
+'''
+
+'''
+Interpolate solution in trajectory object
+'''
