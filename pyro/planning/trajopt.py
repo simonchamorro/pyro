@@ -66,7 +66,8 @@ cl_sys = ctl + sys
 
 cl_sys.compute_trajectory( tf )
 cl_sys.plot_trajectory('xu')
-cl_sys.cost_function.trajectory_evaluation(cl_sys.traj)
+
+sys.cost_function.trajectory_evaluation(sys.traj)
 #cl_sys.animate_simulation()
 
 # 
@@ -77,9 +78,9 @@ Create optization problem
 # set cost function
 # minimize torque square is quadraic cost with Q and V set to 0
 #class TorqueSquaredCostFunction( costfunction.QuadraticCostFunction ): should implement this class
-cl_sys.cost_function.Q=np.zeros(cl_sys.cost_function.Q.shape)
-cl_sys.cost_function.V=np.zeros(cl_sys.cost_function.V.shape)
-cl_sys.cost_function.R=np.ones(sys.cost_function.R.shape) # # cl_sys.m is 1 should be 2 ??
+sys.cost_function.Q=np.zeros(sys.cost_function.Q.shape)
+sys.cost_function.V=np.zeros(sys.cost_function.V.shape)
+sys.cost_function.R=np.ones(sys.cost_function.R.shape) # # cl_sys.m is 1 should be 2 ??
 
 
 ngrid =50 # number of gridpoint
@@ -88,8 +89,8 @@ ngrid =50 # number of gridpoint
 ub_t0 = 0 # bounds on t0 
 lb_t0 = 0
 
-ub_tf = 0 # bounds on tf 
-lb_tf = 0
+ub_tf = 4 # bounds on tf 
+lb_tf = 4
 
 #ub_state = np.array([])
 #lb_state
@@ -99,28 +100,34 @@ lb_x = sys.x_lb
 ub_u = sys.u_ub # bounds on inputs u
 lb_u = sys.u_lb
 
-ub_x0 = sys.x_ub # bounds on inputs u
-lb_x0 = sys.x_lb
+ub_x0 = [0,0,0,0] # bounds on inital state
+lb_x0 = [0,0,0,0]
 
-ub_x0 = sys.x_ub # bounds on inputs u
-lb_x0 = sys.x_lb
 
-ub_xF = sys.x_ub # bounds on inputs u
-lb_xF = sys.x_lb
+ub_xF = [np.pi/2,np.pi/2,0,0]#sys.x_ub # bounds on final state
+lb_xF = [np.pi/2,np.pi/2,0,0]
 
 '''
 create initial guess
 
 '''
+
+x_guess = np.linspace(ub_x0, ub_xF, ngrid)
+u_guess = np.ones([ngrid,sys.m])
+t_guess = np.linspace(ub_t0, ub_tf, ngrid)
+y_guess= x_guess
+
+#guess_traj = Trajectory(x_guess, u_guess, t_guess, dx_guess, y_guess)
+
 ######## set equality contraints (other than dynamics) ##########
 # sys.f contains the dynamics ! 
 '''
 Convert to non-linear program (direct collocation)
-
 '''
 
+#dec_var = # decision variables
 #optim_traj = Trajectory(x_opt, u_opt, t_opt, dx_opt, y_opt)
-
+#lb_dec_var = ub_x*ones(x.shape)
 
 '''
 Solve non-linear program
