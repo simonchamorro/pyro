@@ -16,12 +16,12 @@ from pyro.control import controller
 class kinematicInputs( controller.StaticController ) :
     """ 
     Simple proportionnal compensator
-    ---------------------------------------
+    ----------------------------------------
     r  : reference signal_proc vector  k x 1
     y  : sensor signal_proc vector     k x 1
-    u  : control inputs vector    k x 1
-    t  : time                     1 x 1
-    ---------------------------------------
+    u  : control inputs vector         k x 1
+    t  : time                          1 x 1
+    ----------------------------------------
     u = c( y , r , t ) = (r - y) * gain
 
     """
@@ -248,8 +248,6 @@ class fullDynTorqueInputs( controller.StaticController ) :
     ---------------------------------------
     u = c( y , r , t ) = (r - y) * gain
 
-<<<<<<< HEAD
-=======
     """
     
     ###########################################################################

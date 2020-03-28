@@ -528,15 +528,22 @@ class FullDynamicBicycleModelwithTorquesInputs( LateralDynamicBicycleModelwithSp
 if __name__ == "__main__":     
     """ MAIN TEST """
     
-    #sys = LateralDynamicBicycleModelwithSpeedInput()
-    #sys.ubar = np.array([1.1,10])
+    sys = LateralDynamicBicycleModelwithSpeedInput()
+    sys.ubar = np.array([1.1,10])
     
-    #sys      = LateralDynamicBicycleModelwithForceInputs()
-    #sys.ubar = np.array([0.8,000,200])
+    sys.plot_trajectory()
+    sys.animate_simulation()
+    
+    sys      = LateralDynamicBicycleModelwithForceInputs()
+    sys.ubar = np.array([0.8,000,200])
+    
+    sys.plot_trajectory()
+    sys.animate_simulation()
     
     sys      = FullDynamicBicycleModelwithTorquesInputs()
     sys.ubar = np.array([0.2,0,1000])
     
     sys.plot_trajectory()
     sys.animate_simulation()
+    
         
