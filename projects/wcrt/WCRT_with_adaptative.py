@@ -7,13 +7,12 @@ Created on Fri Nov 16 12:05:08 2018
 ###############################################################################
 import numpy as np
 ###############################################################################
-
-from wcrt import WCRT
-from pyro.control import nonlinear
+from wcrt import WCRT 
+from projects.adative_controllers import adaptive_computed_torque
 ###############################################################################
 
 sys = WCRT()
-ctl  = nonlinear.AdaptativeController_WCRT(sys)
+ctl  = adaptive_computed_torque.AdaptativeController_WCRT(sys)
 
 
 #Param adapt-control
