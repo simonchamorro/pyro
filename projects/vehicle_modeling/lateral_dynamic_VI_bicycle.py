@@ -7,25 +7,27 @@ Created on Fri Nov 16 12:01:07 2018
 
 ###############################################################################
 import numpy as np
-###############################################################################
-from pyro.dynamic  import vehicle
-from pyro.control  import linear
 import matplotlib.pyplot as plt
+###############################################################################
+import advanced_vehicles
+import test_vehicle_controllers
 ###############################################################################
 
 # "Fake" controller - Varying inputs (delta, Vx) throughout time (change in linear.py)
-ctl = linear.dynLongVelInputs()
+ctl = test_vehicle_controllers.dynLongVelInputs()
 # Vehicule dynamical system
-sys = vehicle.LateralDynamicBicycleModelVI()
+sys = advanced_vehicles.LateralDynamicBicycleModelwithSpeedInput()
+
 # Add the inputs to the dynamical system
 cl_sys = ctl+sys
 # Plot open-loop behavior (ex: np.array[intial_conditions], time_of_simulation)
-cl_sys.plot_trajectory( np.array([0,0,0,0,0]) , 10)
+cl_sys.x0 = np.array([0,0,0,0,0])
+cl_sys.plot_trajectory()
 
 # Rebuild x,u and t from simulation
-x = cl_sys.sim.x_sol
-u = cl_sys.sim.u_sol 
-t = cl_sys.sim.t    
+x = cl_sys.traj.x
+u = cl_sys.traj.u
+t = cl_sys.traj.t    
 
 # Recalculate lateral forces on both tires
 F_nf = sys.mass*sys.g*sys.b/(sys.b+sys.a)
@@ -120,8 +122,8 @@ plt.ylabel('Slipping angle (rad)')
 plt.show()
 
 # Plot inputs only
-cl_sys.sim.plot( plot='u' )
+cl_sys.plot_trajectory('u')
 # Plot states only
-cl_sys.sim.plot( plot='x' )
+cl_sys.plot_trajectory('x')
 # Animate the simulation
 cl_sys.animate_simulation()
