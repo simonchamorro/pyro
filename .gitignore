@@ -28,3 +28,4 @@ output/
 *.html
 *.png
 .idea/workspace.xml
+build/
