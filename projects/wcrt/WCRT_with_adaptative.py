@@ -8,11 +8,11 @@ Created on Fri Nov 16 12:05:08 2018
 import numpy as np
 ###############################################################################
 
-from pyro.dynamic import WCRT
+from wcrt import WCRT
 from pyro.control import nonlinear
 ###############################################################################
 
-sys = WCRT.B3DDL()
+sys = WCRT()
 ctl  = nonlinear.AdaptativeController_WCRT(sys)
 
 

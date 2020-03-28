@@ -262,9 +262,10 @@ if __name__ == "__main__":
     
     sys = WCRT()
     
-    q = np.array([0.1,0.1,0.1])
-    sys.show3( q )
+    # No damping
+    sys.d1 = 0
+    sys.d2 = 0
+    sys.d3 = 0
     
-    sys.x0 = np.array([0.1,0.1,0,0,0,0])
-    sys.plot_trajectory()
+    sys.x0 = np.array([0.,1.6,0.,0,0,0])
     sys.animate_simulation( is_3d = True )
