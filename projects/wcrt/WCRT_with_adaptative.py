@@ -8,34 +8,39 @@ Created on Fri Nov 16 12:05:08 2018
 import numpy as np
 ###############################################################################
 
-from wcrt import WCRT
-from pyro.control import nonlinear
+from wcrt import WCRT 
+from projects.adative_controllers import adaptive_computed_torque
 ###############################################################################
 
 sys = WCRT()
-ctl  = nonlinear.AdaptativeController_WCRT(sys)
+
+ctl  = adaptive_computed_torque.AdaptativeController_WCRT(sys)
+
 
 
 #Param adapt-control
-ctl.A[0] = 3
-ctl.A[1] = 60
-ctl.A[2] = 21
-ctl.A[3] = 31
-ctl.A[4] = 380
-ctl.A[5] = 31
+ctl.A[0] = 5
+ctl.A[1] = 5
+ctl.A[2] = 5
+ctl.A[3] = 0
+ctl.A[4] = 5
+ctl.A[5] = 20
+ctl.A[6] = 10
 
-ctl.Kd[0,0] = 5
-ctl.Kd[1,1] = 8
-ctl.Kd[1,1] = 5
 
-ctl.lam = 1.2
+ctl.Kd[0,0] = 7
+ctl.Kd[1,1] = 7
+ctl.Kd[2,2] = 7
 
-ctl.T[0,0] = 12
-ctl.T[1,1] = 12
-ctl.T[2,2] = 12
-ctl.T[3,3] = 12
-ctl.T[4,4] = 12
-ctl.T[4,5] = 12
+ctl.lam = 1.5
+
+ctl.T[0,0] = 8
+ctl.T[1,1] = 8
+ctl.T[2,2] = 8
+ctl.T[3,3] = 8
+ctl.T[4,4] = 8
+ctl.T[5,5] = 8
+ctl.T[6,6] = 8
 
 # Set Point
 ctl.rbar = np.array([0,0,0])
@@ -45,8 +50,8 @@ cl_sys = ctl + sys
 
 # Simultation
 
-cl_sys.x0  = np.array([0,1,0,0,0,0])
-tf = 12
+cl_sys.x0 = np.array([1,1,0,0,2,0])
+tf = 8
 n = tf*1000 + 1
 cl_sys.compute_trajectory(tf, n, 'euler')
 cl_sys.plot_trajectory()
