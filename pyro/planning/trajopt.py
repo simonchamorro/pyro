@@ -41,7 +41,7 @@ sys.cost_function.V=np.zeros(sys.cost_function.V.shape)
 sys.cost_function.R=np.ones(sys.cost_function.R.shape) #
 
 global ngrid
-ngrid =50 # number of gridpoint
+ngrid = 10 # number of gridpoint
 
 ######## set bounds ##########
 ub_t0 = 0 # bounds on t0 
@@ -56,6 +56,9 @@ lb_tf = 4
 sys.x_ub=[2*np.pi,2*np.pi,None,None]
 sys.x_lb=[-2*np.pi,-2*np.pi,None,None]
 
+sys.u_ub = [None,None]
+sys.u_lb = [None,None]
+
 ub_x = sys.x_ub # bounds on x
 lb_x = sys.x_lb
 
@@ -66,8 +69,8 @@ ub_x0 = [0,0,0,0] # bounds on inital state
 lb_x0 = [0,0,0,0]
 
 
-ub_xf = [np.pi/2,np.pi/2,0,0]#sys.x_ub # bounds on final state
-lb_xf = [np.pi/2,np.pi/2,0,0]
+ub_xf = [np.pi,np.pi,0,0]#sys.x_ub # bounds on final state
+lb_xf = [np.pi,np.pi,0,0]
 
 '''
 
@@ -203,9 +206,10 @@ def compute_cost(decision_variables):
 
 
 bnds = pack_bounds(lb_x,ub_x0,lb_x,ub_x0,lb_xf,ub_xf,lb_u,ub_u,lb_t0,lb_t0,lb_tf,lb_tf)
+
 cons_slsqp = ({'type': 'eq', 'fun': lambda x: dynamics_cstr(dec_var_2_traj( x ))  })
 
-cons=NonlinearConstraint(lambda x: dynamics_cstr(dec_var_2_traj( x )), 0, 0)#
+cons_trust=NonlinearConstraint(lambda x: dynamics_cstr(dec_var_2_traj( x )), 0, 0)#
 
 dec_var_guess = traj_2_dec_var(guess_traj)
 
@@ -214,8 +218,10 @@ dec_var_guess = traj_2_dec_var(guess_traj)
 '''
 Solve non-linear program
 '''
+#method='trust-constr'
+res4 = minimize(compute_cost, dec_var_guess,method='SLSQP' , bounds=bnds, constraints=cons_slsqp,tol=1e-6,options={'disp': True,'maxiter':1000})
 
-res4 = minimize(compute_cost, dec_var_guess, method='trust-constr', bounds=bnds, constraints=cons,tol=1e-6,jac='2-point',hess='cs',options={'disp': True})
+#res4 = minimize(compute_cost, dec_var_guess,method='trust-constr' , bounds=bnds, constraints=cons_trust,tol=1e-6,options={'disp': True})
 
 
 result_traj = dec_var_2_traj(res4.x)
@@ -230,7 +236,7 @@ cl_sys = ctl + sys
 #cl_sys.compute_trajectory( tf )
 sys.plot_trajectory('xu')
 #sys.cost_function.trajectory_evaluation(sys.traj)
-##cl_sys.animate_simulation()
+#cl_sys.animate_simulation()
 
 
 '''
