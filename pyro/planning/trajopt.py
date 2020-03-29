@@ -37,7 +37,12 @@ cons = ({'type': 'ineq', 'fun': lambda x:  x[0] - 2 * x[1] + 2},{'type': 'eq', '
 # see this for further examples on contrained optimization problems : https://docs.scipy.org/doc/scipy/reference/tutorial/optimize.html 
 
 x0_0 = [1.3, 0.7]
-bnds = ((0, None), (0, None))
+
+bnds_arr = np.array([[0,None],[0,None]])
+bnds=tuple(map(tuple, bnds_arr))
+#bnds = ((0, None), (0, None))
+
+
 res3 = minimize(fun3, x0_0, method='SLSQP', bounds=bnds, constraints=cons,tol=1e-6)
 
 '''
@@ -80,7 +85,7 @@ Create optization problem
 #class TorqueSquaredCostFunction( costfunction.QuadraticCostFunction ): should implement this class
 sys.cost_function.Q=np.zeros(sys.cost_function.Q.shape)
 sys.cost_function.V=np.zeros(sys.cost_function.V.shape)
-sys.cost_function.R=np.ones(sys.cost_function.R.shape) # # cl_sys.m is 1 should be 2 ??
+sys.cost_function.R=np.ones(sys.cost_function.R.shape) #
 
 
 ngrid =50 # number of gridpoint
@@ -94,6 +99,9 @@ lb_tf = 4
 
 #ub_state = np.array([])
 #lb_state
+sys.x_ub=[2*np.pi,2*np.pi,None,None]
+sys.x_lb=[-2*np.pi,-2*np.pi,None,None]
+
 ub_x = sys.x_ub # bounds on x
 lb_x = sys.x_lb
 
@@ -104,8 +112,8 @@ ub_x0 = [0,0,0,0] # bounds on inital state
 lb_x0 = [0,0,0,0]
 
 
-ub_xF = [np.pi/2,np.pi/2,0,0]#sys.x_ub # bounds on final state
-lb_xF = [np.pi/2,np.pi/2,0,0]
+ub_xf = [np.pi/2,np.pi/2,0,0]#sys.x_ub # bounds on final state
+lb_xf = [np.pi/2,np.pi/2,0,0]
 
 '''
 create initial guess
@@ -116,15 +124,47 @@ x_guess = np.linspace(ub_x0, ub_xF, ngrid)
 u_guess = np.ones([ngrid,sys.m])
 t_guess = np.linspace(ub_t0, ub_tf, ngrid)
 y_guess= x_guess
+dx_guess=np.zeros(x_guess.shape)
 
-#guess_traj = Trajectory(x_guess, u_guess, t_guess, dx_guess, y_guess)
+for i in range(ngrid):
+    dx_guess[i,] = sys.f(x_guess[i,],u_guess[i,]) # compute f
+
+guess_traj = Trajectory(x_guess, u_guess, t_guess, dx_guess, y_guess)
 
 ######## set equality contraints (other than dynamics) ##########
 # sys.f contains the dynamics ! 
+
 '''
 Convert to non-linear program (direct collocation)
+
+decision variables are ordered:
+    
+    x0[0],x0[1]...,x0[ngrid-1], x1[0],x1[1]...,x1[ngrid-1],...,...xn[0],xn[1]...,xn[ngrid-1]
+    u0[0],u0[1]...,u0[ngrid-1], u1[0],x1[1]...,u1[ngrid-1],...,...un[0],un[1]...,un[ngrid-1],
+    t0, tf
 '''
 
+#convert bounds in discete form, for all x(.),u(.),t(.)
+bnds = np.array([]).reshape(0,2) # initialize bounds
+for i in range(sys.n): # convert bounds on x
+    bnd_arr_to_add = np.concatenate([np.matlib.repmat(lb_x[i], ngrid, 1),np.matlib.repmat(ub_x[i], ngrid, 1)],axis=1)
+    bnd_arr_to_add[0,:]=np.array([lb_x0[i],ub_x0[i]])#enforce bound on initial value
+    bnd_arr_to_add[ngrid-1,:]=np.array([lb_xf[i],ub_xf[i]])#enforce bound on final value
+    bnds = np.append(bnds,bnd_arr_to_add,axis=0)
+
+for i in range(sys.m): # convert bounds on u
+    bnd_arr_to_add = np.concatenate([np.matlib.repmat(lb_u[i], ngrid, 1),np.matlib.repmat(ub_u[i], ngrid, 1)],axis=1)
+    bnds = np.append(bnds,bnd_arr_to_add,axis=0)
+
+# append bounds on t0 and tF
+bnds=np.append(bnds,np.array([lb_t0,lb_t0]).reshape(1,2),axis=0)
+bnds=np.append(bnds,np.array([lb_tf,lb_tf]).reshape(1,2),axis=0)
+bnds = tuple(map(tuple, bnds))#convert bnds np.array to tuple for input in NLP solver
+
+# equality contraint for dynamics
+#for i in range(ngrid):
+#    sys.f(np.array([1,2,3,4]),np.array([3,2])) # compute f
+    
 #dec_var = # decision variables
 #optim_traj = Trajectory(x_opt, u_opt, t_opt, dx_opt, y_opt)
 #lb_dec_var = ub_x*ones(x.shape)
