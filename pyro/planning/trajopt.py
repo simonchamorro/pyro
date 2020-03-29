@@ -118,6 +118,7 @@ ub_xf = [np.pi/2,np.pi/2,0,0]#sys.x_ub # bounds on final state
 lb_xf = [np.pi/2,np.pi/2,0,0]
 
 '''
+
 create initial guess
 
 '''
@@ -147,6 +148,8 @@ decision variables are ordered:
 '''
 
 #convert bounds in discete form, for all x(.),u(.),t(.)
+
+
 bnds = np.array([]).reshape(0,2) # initialize bounds
 for i in range(sys.n): # convert bounds on x
     bnd_arr_to_add = np.concatenate([np.matlib.repmat(lb_x[i], ngrid, 1),np.matlib.repmat(ub_x[i], ngrid, 1)],axis=1)
@@ -162,7 +165,7 @@ for i in range(sys.m): # convert bounds on u
 bnds=np.append(bnds,np.array([lb_t0,lb_t0]).reshape(1,2),axis=0)
 bnds=np.append(bnds,np.array([lb_tf,lb_tf]).reshape(1,2),axis=0)
 
-A = bnds[:,1].reshape(ngrid*(sys.n+sys.m)+2,1)
+#A = bnds[:,1].reshape(ngrid*(sys.n+sys.m)+2,1)
 
 bnds = tuple(map(tuple, bnds))#convert bnds np.array to tuple for input in NLP solver
 
