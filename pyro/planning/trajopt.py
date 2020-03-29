@@ -8,7 +8,7 @@ Created on Wed Jul 12 12:09:37 2017
 import numpy as np
 import matplotlib.pyplot as plt
 
-from scipy.optimize import minimize, rosen, rosen_der
+from scipy.optimize import minimize, rosen, rosen_der#, interpolate
 from pyro.dynamic import manipulator
 from pyro.planning import plan
 from pyro.analysis import costfunction
@@ -32,8 +32,11 @@ res2 = minimize(rosen, x0, method='SLSQP', bounds=None, constraints=())
 
 fun3 = lambda x: (x[0] - 1)**2 + (x[1] - 2.5)**2
 
+def f(x):
+    #return (x[0] - 1)**2 + (x[1] - 2.5)**2
+    return x[0] - 2 * x[1] + 2
 
-cons = ({'type': 'ineq', 'fun': lambda x:  x[0] - 2 * x[1] + 2},{'type': 'eq', 'fun': lambda x: -x[0] - 2 * x[1] + 6},{'type': 'ineq', 'fun': lambda x: -x[0] + 2 * x[1] + 2})
+cons = ({'type': 'eq', 'fun': f},{'type': 'ineq', 'fun': lambda x: -x[0] + 2 * x[1] + 2})
 # see this for further examples on contrained optimization problems : https://docs.scipy.org/doc/scipy/reference/tutorial/optimize.html 
 
 x0_0 = [1.3, 0.7]
@@ -44,7 +47,7 @@ bnds=tuple(map(tuple, bnds_arr))
 
 
 res3 = minimize(fun3, x0_0, method='SLSQP', bounds=bnds, constraints=cons,tol=1e-6)
-
+res3
 '''
 ################################################################################
 '''
@@ -87,7 +90,7 @@ sys.cost_function.Q=np.zeros(sys.cost_function.Q.shape)
 sys.cost_function.V=np.zeros(sys.cost_function.V.shape)
 sys.cost_function.R=np.ones(sys.cost_function.R.shape) #
 
-
+global ngrid
 ngrid =50 # number of gridpoint
 
 ######## set bounds ##########
@@ -96,6 +99,7 @@ lb_t0 = 0
 
 ub_tf = 4 # bounds on tf 
 lb_tf = 4
+# should implement an error message if tf is not >t0 and in t0<0
 
 #ub_state = np.array([])
 #lb_state
@@ -159,12 +163,52 @@ for i in range(sys.m): # convert bounds on u
 # append bounds on t0 and tF
 bnds=np.append(bnds,np.array([lb_t0,lb_t0]).reshape(1,2),axis=0)
 bnds=np.append(bnds,np.array([lb_tf,lb_tf]).reshape(1,2),axis=0)
+
+A = bnds[:,1].reshape(ngrid*(sys.n+sys.m)+2,1)
+
 bnds = tuple(map(tuple, bnds))#convert bnds np.array to tuple for input in NLP solver
 
 # equality contraint for dynamics
 #for i in range(ngrid):
-#    sys.f(np.array([1,2,3,4]),np.array([3,2])) # compute f
+
+
+def unpack_dec_var(decision_variables):
+    global ngrid 
+    x = np.zeros([ngrid,sys.n])
+    u = np.zeros([ngrid,sys.m])
+    # unpack decision variables into trajectory
+    for i in range(0,sys.n):
+        x[:,i] = decision_variables[i*ngrid:(i+1)*ngrid].reshape(ngrid)
+
+    for i in range(sys.n,sys.n+sys.m):
+        u[:,i-sys.n] = decision_variables[i*ngrid:(i+1)*ngrid].reshape(ngrid)
     
+    t0 = decision_variables[-2]
+    tf = decision_variables[-1]
+    return x,u,t0,tf
+
+def compute_dx(x,u,sys):
+    dx = np.zeros(x.shape)
+    global ngrid 
+    for i in range(ngrid):
+        dx[i,:]=sys.f(x[i,:],u[i,:])
+    
+    return dx
+    
+
+def dynamics_cstr(decision_variables):
+    global ngrid        
+    x,u,t0,tf = unpack_dec_var(decision_variables)
+    h = (tf-t0)/(ngrid-1) #step between each grid
+    dx = compute_dx(x,u,sys)
+    dyn_constr = np.diff(x,axis=0) - (dx[0:-1]+dx[1:])*h/2 # this must be = 0
+    return dyn_constr
+    
+#dynamics_cstr(A)
+#    sys.f(np.array([1,2,3,4]),np.array([3,2])) # compute f
+
+cons = ({'type': 'eq', 'fun': dynamics_cstr(x)})
+
 #dec_var = # decision variables
 #optim_traj = Trajectory(x_opt, u_opt, t_opt, dx_opt, y_opt)
 #lb_dec_var = ub_x*ones(x.shape)
@@ -173,6 +217,13 @@ bnds = tuple(map(tuple, bnds))#convert bnds np.array to tuple for input in NLP s
 Solve non-linear program
 '''
 
+res4 = minimize(fun3, x0_0, method='SLSQP', bounds=bnds, constraints=cons,tol=1e-6)
+
+
+
 '''
 Interpolate solution in trajectory object
 '''
+
+#sc.interpolate.interp1d(x, y, kind='linear')# linear interpolations
+#sc.interpolate.interp1d(x, y, kind='quadratic')# quadratic spline interpolations
