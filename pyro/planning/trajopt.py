@@ -41,7 +41,7 @@ sys.cost_function.V=np.zeros(sys.cost_function.V.shape)
 sys.cost_function.R=np.ones(sys.cost_function.R.shape) #
 
 global ngrid
-ngrid = 10 # number of gridpoint
+ngrid = 50 # number of gridpoint
 
 ######## set bounds ##########
 ub_t0 = 0 # bounds on t0 
@@ -234,7 +234,7 @@ sys.traj=result_traj
 cl_sys = ctl + sys
 #
 #cl_sys.compute_trajectory( tf )
-sys.plot_trajectory('xu')
+cl_sys.plot_trajectory('xu')
 #sys.cost_function.trajectory_evaluation(sys.traj)
 #cl_sys.animate_simulation()
 
