@@ -171,11 +171,25 @@ def pack_bounds(lb_x,ub_x,lb_x0,ub_x0,lb_xf,ub_xf,lb_u,ub_u,lb_t0,ub_t0,lb_tf,ub
     
     return bnds
 
+def traj_2_dec_var(traj):
+    
+    dec_vars = np.array([]).reshape(0,1) # initialize dec_vars array
+    
+    for i in range(sys.n): # append states x
+        arr_to_add = traj.x[:,i].reshape(ngrid,1)
+        dec_vars = np.append(dec_vars,arr_to_add,axis=0)
+    
+    for i in range(sys.m): # append inputs u
+        arr_to_add = traj.u[:,i].reshape(ngrid,1)
+        dec_vars = np.append(dec_vars,arr_to_add,axis=0)
+    
+    # append t0 and tF
+    dec_vars=np.append(dec_vars,np.array(traj.t[0]).reshape(1,1),axis=0)
+    dec_vars=np.append(dec_vars,traj.t[-1].reshape(1,1),axis=0)
+    
+    return dec_vars
 
-bnds = tuple(map(tuple, bnds))#convert bnds np.array to tuple for input in NLP solver
 
-# equality contraint for dynamics
-#for i in range(ngrid):
 
 
 def unpack_dec_var(decision_variables):
