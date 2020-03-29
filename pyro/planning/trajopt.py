@@ -258,23 +258,21 @@ yo = dynamics_cstr(dec_var_2_traj(dec_vars))
 #dynamics_cstr(A)
 #    sys.f(np.array([1,2,3,4]),np.array([3,2])) # compute f
 
+bnds = pack_bounds(lb_x,ub_x0,lb_x,ub_x0,lb_xf,ub_xf,lb_u,ub_u,lb_t0,lb_t0,lb_tf,lb_tf)
 cons = ({'type': 'eq', 'fun': lambda x: dynamics_cstr(dec_var_2_traj(x))})
 
+dec_var_guess = traj_2_dec_var(guess_traj)
 
 #dec_var = # decision variables
 #optim_traj = Trajectory(x_opt, u_opt, t_opt, dx_opt, y_opt)
 #lb_dec_var = ub_x*ones(x.shape)
 
-def compute_cost(decision_variables):
-    traj_opt = dec_var_2_traj(dec_vars) #get trajectorty
-    traj_opt = sys.cost_function.trajectory_evaluation(traj_opt)#compute cost fcn
-    cost_function = traj_opt.J[-1]# traj_opt.J is the cumulated cost from integral, we take only the last value
-    return cost_function
+
 '''
 Solve non-linear program
 '''
 
-res4 = minimize(compute_cost, x0_0, method='SLSQP', bounds=bnds, constraints=cons,tol=1e-6)
+res4 = minimize(compute_cost, dec_var_guess, method='SLSQP', bounds=bnds, constraints=cons,tol=1e-6)
 
 
 
