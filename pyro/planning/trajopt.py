@@ -242,6 +242,12 @@ def dynamics_cstr(traj):
     
     return dyn_constr
 
+def compute_cost(decision_variables):
+    traj_opt = dec_var_2_traj(dec_vars) #get trajectorty
+    traj_opt = sys.cost_function.trajectory_evaluation(traj_opt)#compute cost fcn
+    cost_function = traj_opt.J[-1]# traj_opt.J is the cumulated cost from integral, we take only the last value
+    return cost_function
+
 
 dec_vars = np.linspace(0,301,302)
 
