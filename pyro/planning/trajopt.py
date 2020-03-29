@@ -149,23 +149,28 @@ decision variables are ordered:
 
 #convert bounds in discete form, for all x(.),u(.),t(.)
 
+def pack_bounds(lb_x,ub_x,lb_x0,ub_x0,lb_xf,ub_xf,lb_u,ub_u,lb_t0,ub_t0,lb_tf,ub_tf):
+    
+    bnds = np.array([]).reshape(0,2) # initialize bounds np.array to append to
+    
+    for i in range(sys.n): # convert bounds on x
+        bnd_arr_to_add = np.concatenate([np.matlib.repmat(lb_x[i], ngrid, 1),np.matlib.repmat(ub_x[i], ngrid, 1)],axis=1)
+        bnd_arr_to_add[0,:]=np.array([lb_x0[i],ub_x0[i]])#enforce bound on initial value
+        bnd_arr_to_add[ngrid-1,:]=np.array([lb_xf[i],ub_xf[i]])#enforce bound on final value
+        bnds = np.append(bnds,bnd_arr_to_add,axis=0)
+    
+    for i in range(sys.m): # convert bounds on u
+        bnd_arr_to_add = np.concatenate([np.matlib.repmat(lb_u[i], ngrid, 1),np.matlib.repmat(ub_u[i], ngrid, 1)],axis=1)
+        bnds = np.append(bnds,bnd_arr_to_add,axis=0)
+    
+    # append bounds on t0 and tF
+    bnds=np.append(bnds,np.array([lb_t0,lb_t0]).reshape(1,2),axis=0)
+    bnds=np.append(bnds,np.array([lb_tf,lb_tf]).reshape(1,2),axis=0)
+    
+    bnds = tuple(map(tuple, bnds))#convert bnds np.array to tuple for input in NLP solver
+    
+    return bnds
 
-bnds = np.array([]).reshape(0,2) # initialize bounds
-for i in range(sys.n): # convert bounds on x
-    bnd_arr_to_add = np.concatenate([np.matlib.repmat(lb_x[i], ngrid, 1),np.matlib.repmat(ub_x[i], ngrid, 1)],axis=1)
-    bnd_arr_to_add[0,:]=np.array([lb_x0[i],ub_x0[i]])#enforce bound on initial value
-    bnd_arr_to_add[ngrid-1,:]=np.array([lb_xf[i],ub_xf[i]])#enforce bound on final value
-    bnds = np.append(bnds,bnd_arr_to_add,axis=0)
-
-for i in range(sys.m): # convert bounds on u
-    bnd_arr_to_add = np.concatenate([np.matlib.repmat(lb_u[i], ngrid, 1),np.matlib.repmat(ub_u[i], ngrid, 1)],axis=1)
-    bnds = np.append(bnds,bnd_arr_to_add,axis=0)
-
-# append bounds on t0 and tF
-bnds=np.append(bnds,np.array([lb_t0,lb_t0]).reshape(1,2),axis=0)
-bnds=np.append(bnds,np.array([lb_tf,lb_tf]).reshape(1,2),axis=0)
-
-#A = bnds[:,1].reshape(ngrid*(sys.n+sys.m)+2,1)
 
 bnds = tuple(map(tuple, bnds))#convert bnds np.array to tuple for input in NLP solver
 
