@@ -207,8 +207,8 @@ def compute_cost(decision_variables):
 
 def interp_traj(traj,ngrid):
         
-    f_x = interp1d(traj.t, traj.x, kind='quadratic',axis=0)
-    f_u = interp1d(traj.t, traj.u, kind='linear',axis=0)
+    f_x = interp1d(traj.t, traj.x, kind='cubic',axis=0)
+    f_u = interp1d(traj.t, traj.u, kind='quadratic',axis=0)
     
     t_interp = np.linspace(traj.t[0],traj.t[-1],ngrid)
     x_interp = f_x(t_interp)
