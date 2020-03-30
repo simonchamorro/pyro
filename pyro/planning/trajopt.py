@@ -8,7 +8,7 @@ Created on Wed Jul 12 12:09:37 2017
 import numpy as np
 import matplotlib.pyplot as plt
 
-from scipy.optimize import minimize, NonlinearConstraint, rosen, rosen_der#, interpolate
+from scipy.optimize import minimize, NonlinearConstraint, rosen, rosen_der,HessianUpdateStrategy,BFGS#, interpolate
 from pyro.dynamic import manipulator
 from pyro.planning import plan
 from pyro.analysis import costfunction
@@ -65,17 +65,15 @@ lb_x = sys.x_lb
 ub_u = sys.u_ub # bounds on inputs u
 lb_u = sys.u_lb
 
-ub_x0 = [0,0,0,0] # bounds on inital state
-lb_x0 = [0,0,0,0]
+ub_x0 = [np.pi,np.pi,0,0] # bounds on inital state
+lb_x0 = [np.pi,np.pi,0,0]
 
 
-ub_xf = [np.pi,np.pi,0,0]#sys.x_ub # bounds on final state
-lb_xf = [np.pi,np.pi,0,0]
+ub_xf = [0,0,0,0] #sys.x_ub # bounds on final state
+lb_xf = [0,0,0,0]
 
 '''
-
 create initial guess
-
 '''
 
 x_guess = np.linspace(ub_x0, ub_xf, ngrid)
@@ -142,7 +140,7 @@ def traj_2_dec_var(traj):
     # append t0 and tF
     dec_vars=np.append(dec_vars,np.array(traj.t[0]).reshape(1,1),axis=0)
     dec_vars=np.append(dec_vars,traj.t[-1].reshape(1,1),axis=0)
-    
+    dec_vars=dec_vars.reshape(ngrid*(sys.n+sys.m)+2,)
     return dec_vars
 
 
@@ -178,7 +176,7 @@ def dec_var_2_traj(decision_variables):
     
     dx = compute_dx(x,u,sys)
     
-    t = np.linspace(t0, tf, ngrid)
+    t = np.linspace(t0, tf, ngrid).reshape(ngrid,)
     
     y=x # find proper fct evaluation later from sys object
     
@@ -219,10 +217,10 @@ dec_var_guess = traj_2_dec_var(guess_traj)
 Solve non-linear program
 '''
 #method='trust-constr'
-res4 = minimize(compute_cost, dec_var_guess,method='SLSQP' , bounds=bnds, constraints=cons_slsqp,tol=1e-6,options={'disp': True,'maxiter':1000})
+#res4 = minimize(compute_cost, dec_var_guess,method='SLSQP' , bounds=bnds, constraints=cons_slsqp,tol=1e-6,options={'disp': True,'maxiter':1000})
 
-#res4 = minimize(compute_cost, dec_var_guess,method='trust-constr' , bounds=bnds, constraints=cons_trust,tol=1e-6,options={'disp': True})
-
+res4 = minimize(compute_cost, dec_var_guess,method='trust-constr' , bounds=bnds, constraints=cons_trust,tol=1e-6,options={'disp': True,'maxiter':1000},jac='2-point',hess=BFGS())
+# 
 
 result_traj = dec_var_2_traj(res4.x)
 
@@ -234,7 +232,7 @@ sys.traj=result_traj
 cl_sys = ctl + sys
 #
 #cl_sys.compute_trajectory( tf )
-cl_sys.plot_trajectory('xu')
+sys.plot_trajectory('xu')
 #sys.cost_function.trajectory_evaluation(sys.traj)
 #cl_sys.animate_simulation()
 
