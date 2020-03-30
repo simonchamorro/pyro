@@ -219,7 +219,11 @@ Solve non-linear program
 #method='trust-constr'
 #res4 = minimize(compute_cost, dec_var_guess,method='SLSQP' , bounds=bnds, constraints=cons_slsqp,tol=1e-6,options={'disp': True,'maxiter':1000})
 
-res4 = minimize(compute_cost, dec_var_guess,method='trust-constr' , bounds=bnds, constraints=cons_trust,tol=1e-6,options={'disp': True,'maxiter':1000},jac='2-point',hess=BFGS())
+
+
+dec_var_guess = np.load('C:\Users\Charles Khazoom\Documents\git\pyro\trajresults\solution_with_trust_const.npy')
+
+res4 = minimize(compute_cost, dec_var_guess,method='trust-constr' , bounds=bnds, constraints=cons_trust,tol=1e-6,options={'disp': True,'maxiter':200},jac='2-point',hess=BFGS())
 # 
 
 result_traj = dec_var_2_traj(res4.x)
