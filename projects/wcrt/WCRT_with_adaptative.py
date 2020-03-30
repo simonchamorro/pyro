@@ -24,7 +24,6 @@ ctl.A[4] = 5
 ctl.A[5] = 20
 ctl.A[6] = 10
 
-
 ctl.Kd[0,0] = 7
 ctl.Kd[1,1] = 7
 ctl.Kd[2,2] = 7
@@ -47,7 +46,7 @@ cl_sys = ctl + sys
 
 # Simultation
 
-cl_sys.x0 = np.array([1,1,0,0,2,0])
+cl_sys.x0  = np.array([1,1,0,0,0,0])
 tf = 8
 n = tf*1000 + 1
 cl_sys.compute_trajectory(tf, n, 'euler')
