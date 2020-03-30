@@ -18,8 +18,6 @@ sys  = pendulum.SinglePendulum()
 # Discrete world 
 grid_sys = discretizer.GridDynamicSystem( sys )
 
-print(sys.cost_function)
-
 # Cost Function
 qcf = sys.cost_function
 
@@ -27,18 +25,18 @@ qcf.xbar = np.array([ -3.14 , 0 ]) # target
 qcf.INF  = 10000
 
 # VI algo
-vi = valueiteration.ValueIteration_ND( grid_sys , qcf )
+vi = valueiteration.ValueIteration_ND(grid_sys, qcf, interpolation='custom')
 
 vi.initialize()
 # vi.load_data('simple_pendulum_vi')
-vi.compute_steps(200, plot=True)
+vi.compute_steps(200, plot=True, maxJ=5000)
 vi.assign_interpol_controller()
 vi.plot_policy(0)
 vi.plot_cost2go()
 # vi.save_data('simple_pendulum_vi')
 
 #asign controller
-cl_sys = controller.ClosedLoopSystem( sys , vi.ctl )
+cl_sys = controller.ClosedLoopSystem(sys, vi.ctl)
 
 # Simulation and animation
 cl_sys.x0   = np.array([0,0])

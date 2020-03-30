@@ -11,6 +11,7 @@ from ctypes import c_float
 
 import numpy as np
 import matplotlib.pyplot as plt
+from interpolation import Interpolation2D
 from scipy.interpolate import RectBivariateSpline as interpol2D
 from scipy.interpolate import RegularGridInterpolator as rgi
 
@@ -357,7 +358,7 @@ class ValueIteration_ND:
     """ Dynamic programming for 2D continous dynamic system, one continuous input u """
 
     ############################
-    def __init__(self, grid_sys, cost_function):
+    def __init__(self, grid_sys, cost_function, interpolation='scipy'):
 
         # Dynamic system
         self.grid_sys = grid_sys  # Discretized Dynamic system class
@@ -374,6 +375,9 @@ class ValueIteration_ND:
 
         # Print params
         self.fontsize = 10
+
+        # Interpolation settings
+        self.interpolation = interpolation
 
         # Options
         self.uselookuptable = True
@@ -408,15 +412,19 @@ class ValueIteration_ND:
         """ One step of value iteration """
 
         # Get interpolation of current cost space
-        if self.n_dim == 2:
-            J_interpol = interpol2D(self.grid_sys.xd[0], self.grid_sys.xd[1],
-                                    self.J, bbox=[None, None, None, None], kx=1, ky=1)
-        elif self.n_dim == 3:
-            # call function for random shape
-            J_interpol = rgi([self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]], self.J)
-        else:
-            points = tuple(self.grid_sys.xd[i] for i in range(self.n_dim))
-            J_interpol = rgi(points, self.J)
+        if self.interpolation == 'scipy':
+            if self.n_dim == 2:
+                J_interpol = interpol2D(self.grid_sys.xd[0], self.grid_sys.xd[1],
+                                        self.J, bbox=[None, None, None, None], kx=1, ky=1)
+            elif self.n_dim == 3:
+                # call function for random shape
+                J_interpol = rgi([self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]], self.J)
+            else:
+                points = tuple(self.grid_sys.xd[i] for i in range(self.n_dim))
+                J_interpol = rgi(points, self.J)
+        elif self.interpolation == 'custom':
+            if self.n_dim == 2:
+                J_interpol = Interpolation2D(self.sys, self.grid_sys, self.J)
 
         # For all state nodes
         for node in range(self.grid_sys.nodes_n):
@@ -447,7 +455,7 @@ class ValueIteration_ND:
 
         # For all control actions
         for action in range(self.grid_sys.actions_n):
-            self.compute_action(Q, action, node, J_interpol, x)
+            self.compute_action(Q, action, node, J_interpol, x, indices)
 
         self.Jnew[indices] = Q.min()
         self.action_policy[indices] = Q.argmin()
@@ -458,7 +466,7 @@ class ValueIteration_ND:
 
 
     #############################
-    def compute_action(self, Q, action, node, J_interpol, x):
+    def compute_action(self, Q, action, node, J_interpol, x, indices):
         u = self.grid_sys.actions_input[action, :]
 
         # Compute next state and validity of the action
@@ -477,16 +485,21 @@ class ValueIteration_ND:
 
         # If the current option is allowable
         if action_isok:
-            if self.n_dim == 2:
-                J_next = J_interpol(x_next[0], x_next[1])
-            elif self.n_dim == 3:
-                J_next = J_interpol([x_next[0], x_next[1], x_next[2]])
-            else:
-                J_next = J_interpol([x_next[0], x_next[1], x_next[2], x_next[3]])
+            if self.interpolation == 'scipy':
+                if self.n_dim == 2:
+                    J_next = J_interpol(x_next[0], x_next[1])
+                elif self.n_dim == 3:
+                    J_next = J_interpol([x_next[0], x_next[1], x_next[2]])
+                else:
+                    J_next = J_interpol([x_next[0], x_next[1], x_next[2], x_next[3]])
+            elif self.interpolation == 'custom':
+                J_next = J_interpol.nearest_neighbor(x_next)
+
+            print(x_next, J_next)
 
             # Cost-to-go of a given action
             y = self.sys.h(x, u, 0)
-            if self.n_dim == 2:
+            if self.n_dim == 2 and self.interpolation == 'scipy':
                 Q[action] = self.cf.g(x, u, y, 0) + J_next[0, 0]
             else:
                 Q[action] = self.cf.g(x, u, y, 0) + J_next
@@ -528,23 +541,24 @@ class ValueIteration_ND:
         self.interpol_functions = []
 
         # for all inputs
-        for k in range(self.sys.m):
-            if self.n_dim == 2:
-                self.interpol_functions.append(
-                    interpol2D(self.grid_sys.xd[0],
-                               self.grid_sys.xd[1],
-                               self.u_policy_grid[k],
-                               bbox=[None, None, None, None],
-                               kx=1, ky=1, ))
-            elif self.n_dim == 3:
-                self.interpol_functions.append(
-                    rgi([self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]], self.u_policy_grid[k]))
-            else:
-                points = tuple(self.grid_sys.xd[i] for i in range(self.n_dim))
-                self.interpol_functions.append(
-                    rgi(points,
-                                            self.u_policy_grid[k],
-                                            method='linear'))
+        if self.interpolation == 'scipy' or self.interpolation == 'custom':
+            for k in range(self.sys.m):
+                if self.n_dim == 2:
+                    self.interpol_functions.append(
+                        interpol2D(self.grid_sys.xd[0],
+                                   self.grid_sys.xd[1],
+                                   self.u_policy_grid[k],
+                                   bbox=[None, None, None, None],
+                                   kx=1, ky=1, ))
+                elif self.n_dim == 3:
+                    self.interpol_functions.append(
+                        rgi([self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]], self.u_policy_grid[k]))
+                else:
+                    points = tuple(self.grid_sys.xd[i] for i in range(self.n_dim))
+                    self.interpol_functions.append(
+                        rgi(points,
+                                                self.u_policy_grid[k],
+                                                method='linear'))
 
         # Asign Controller
         self.ctl.vi_law = self.vi_law

@@ -47,8 +47,8 @@ vi.uselookuptable = True
 vi.initialize()
 
 #if load_data:
-vi.load_data('car_vi')
-# vi.compute_steps(100, plot=True, maxJ=100)
+# vi.load_data('car_vi')
+vi.compute_steps(100, plot=True, maxJ=100)
 #if save_data:
 # vi.save_data('car_vi_racecar_proto_scale_8')
 
