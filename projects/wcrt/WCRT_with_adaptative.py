@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Nov 16 12:05:08 2018
+Created on March 20 2020
 
-@author: Alexandre
+@author: Pierre
 """
 ###############################################################################
 import numpy as np
@@ -17,10 +17,11 @@ sys = WCRT()
 ctl  = adaptive_computed_torque.AdaptativeController_WCRT(sys)
 
 #Param Wcrt
-sys.d1 = 1
-sys.d2 = 1
-sys.d3 = 1
+sys.d1 = 0
+sys.d2 = 0
+sys.d3 = 0
 sys.m3 = 1.5
+sys.lc2 = 0.8
 
 #Param adapt-control
 ctl.A[0] = 5
