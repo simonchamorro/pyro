@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from scipy.optimize import minimize, NonlinearConstraint, rosen, rosen_der,HessianUpdateStrategy,BFGS#, interpolate
+from scipy.interpolate import interp1d
 from pyro.dynamic import manipulator
 from pyro.planning import plan
 from pyro.analysis import costfunction
@@ -26,7 +27,7 @@ from pyro.analysis import Trajectory
 ################################################################################
 '''
 # create system 
-sys = manipulator.TwoLinkManipulator()
+sys = manipulator.OneLinkManipulator()
 
 
 '''
@@ -41,23 +42,23 @@ sys.cost_function.V=np.zeros(sys.cost_function.V.shape)
 sys.cost_function.R=np.ones(sys.cost_function.R.shape) #
 
 global ngrid
-ngrid = 50 # number of gridpoint
+ngrid = 30 # number of gridpoint
 
 ######## set bounds ##########
 ub_t0 = 0 # bounds on t0 
 lb_t0 = 0
 
-ub_tf = 4 # bounds on tf 
-lb_tf = 4
+ub_tf = 2 # bounds on tf 
+lb_tf = 2
 # should implement an error message if tf is not >t0 and in t0<0
 
 #ub_state = np.array([])
 #lb_state
-sys.x_ub=[2*np.pi,2*np.pi,None,None]
-sys.x_lb=[-2*np.pi,-2*np.pi,None,None]
+sys.x_ub=[2*np.pi,None]
+sys.x_lb=[-2*np.pi,None]
 
-sys.u_ub = [None,None]
-sys.u_lb = [None,None]
+sys.u_ub = [None]
+sys.u_lb = [None]
 
 ub_x = sys.x_ub # bounds on x
 lb_x = sys.x_lb
@@ -65,27 +66,29 @@ lb_x = sys.x_lb
 ub_u = sys.u_ub # bounds on inputs u
 lb_u = sys.u_lb
 
-ub_x0 = [np.pi,np.pi,0,0] # bounds on inital state
-lb_x0 = [np.pi,np.pi,0,0]
+ub_x0 = [np.pi,0] # bounds on inital state
+lb_x0 = [np.pi,0]
 
 
-ub_xf = [0,0,0,0] #sys.x_ub # bounds on final state
-lb_xf = [0,0,0,0]
+ub_xf = [0,0] #sys.x_ub # bounds on final state
+lb_xf = [0,0]
 
 '''
 create initial guess
 '''
 
-x_guess = np.linspace(ub_x0, ub_xf, ngrid)
-u_guess = np.ones([ngrid,sys.m])
-t_guess = np.linspace(ub_t0, ub_tf, ngrid)
-y_guess= x_guess
-dx_guess=np.zeros(x_guess.shape)
+#x_guess = np.linspace(ub_x0, ub_xf, ngrid)
+#u_guess = np.ones([ngrid,sys.m])
+#t_guess = np.linspace(ub_t0, ub_tf, ngrid)
+#y_guess= x_guess
+#dx_guess=np.zeros(x_guess.shape)
+#
+#for i in range(ngrid):
+#    dx_guess[i,] = sys.f(x_guess[i,],u_guess[i,]) # compute f
+#
+#guess_traj = Trajectory(x_guess, u_guess, t_guess, dx_guess, y_guess)
 
-for i in range(ngrid):
-    dx_guess[i,] = sys.f(x_guess[i,],u_guess[i,]) # compute f
 
-guess_traj = Trajectory(x_guess, u_guess, t_guess, dx_guess, y_guess)
 
 ######## set equality contraints (other than dynamics) ##########
 # sys.f contains the dynamics ! 
@@ -170,7 +173,7 @@ def compute_dx(x,u,sys):
     
 
 def dec_var_2_traj(decision_variables):
-    global ngrid        
+    global ngrid     
     
     x,u,t0,tf = unpack_dec_var(decision_variables)
     
@@ -202,13 +205,35 @@ def compute_cost(decision_variables):
     cost_function = traj_opt.J[-1]# traj_opt.J is the cumulated cost from integral, we take only the last value
     return cost_function
 
+def interp_traj(traj,ngrid):
+        
+    f_x = interp1d(traj.t, traj.x, kind='quadratic',axis=0)
+    f_u = interp1d(traj.t, traj.u, kind='linear',axis=0)
+    
+    t_interp = np.linspace(traj.t[0],traj.t[-1],ngrid)
+    x_interp = f_x(t_interp)
+    u_interp = f_u(t_interp)
+    dx_interp=compute_dx(x_interp,u_interp,sys)
+    y_interp = x_interp
+    traj_interp = Trajectory(x_interp, u_interp, t_interp, dx_interp, y_interp)
+    return traj_interp 
 
+A = np.load(r'C:\Users\Charles Khazoom\Documents\git\pyro\trajresults\solution_with_slsqp_onelink.npy')
+ngrid=30
+loaded_traj = dec_var_2_traj(A)
+ngrid=100
 bnds = pack_bounds(lb_x,ub_x0,lb_x,ub_x0,lb_xf,ub_xf,lb_u,ub_u,lb_t0,lb_t0,lb_tf,lb_tf)
 
 cons_slsqp = ({'type': 'eq', 'fun': lambda x: dynamics_cstr(dec_var_2_traj( x ))  })
 
 cons_trust=NonlinearConstraint(lambda x: dynamics_cstr(dec_var_2_traj( x )), 0, 0)#
 
+
+
+
+
+
+guess_traj = interp_traj(loaded_traj,ngrid)
 dec_var_guess = traj_2_dec_var(guess_traj)
 
 
@@ -217,13 +242,13 @@ dec_var_guess = traj_2_dec_var(guess_traj)
 Solve non-linear program
 '''
 #method='trust-constr'
-#res4 = minimize(compute_cost, dec_var_guess,method='SLSQP' , bounds=bnds, constraints=cons_slsqp,tol=1e-6,options={'disp': True,'maxiter':1000})
+res4 = minimize(compute_cost, dec_var_guess,method='SLSQP' , bounds=bnds, constraints=cons_slsqp,tol=1e-6,options={'disp': True,'maxiter':1000})
 
 
 
 #dec_var_guess = np.load('C:\Users\Charles Khazoom\Documents\git\pyro\trajresults\solution_with_trust_const.npy')
 
-#res4 = minimize(compute_cost, dec_var_guess,method='trust-constr' , bounds=bnds, constraints=cons_trust,tol=1e-6,options={'disp': True,'maxiter':200},jac='2-point',hess=BFGS())
+#res4 = minimize(compute_cost, dec_var_guess,method='trust-constr' , bounds=bnds, constraints=cons_trust,tol=1e-6,options={'disp': True,'maxiter':1000},jac='2-point',hess=BFGS())
 # 
 
 result_traj = dec_var_2_traj(res4.x)
