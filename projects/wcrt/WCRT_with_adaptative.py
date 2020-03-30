@@ -6,14 +6,20 @@ Created on Fri Nov 16 12:05:08 2018
 """
 ###############################################################################
 import numpy as np
+import math
 ###############################################################################
 from wcrt import WCRT 
 from projects.adative_controllers import adaptive_computed_torque
 ###############################################################################
+pi = math.pi
 
 sys = WCRT()
 ctl  = adaptive_computed_torque.AdaptativeController_WCRT(sys)
 
+#Param Wcrt
+sys.d1 = 1
+sys.d2 = 1
+sys.d3 = 1
 
 #Param adapt-control
 ctl.A[0] = 5
@@ -39,15 +45,15 @@ ctl.T[5,5] = 8
 ctl.T[6,6] = 8
 
 # Set Point
-ctl.rbar = np.array([0,0,0])
+ctl.rbar = np.array([0,0,pi/4])
 
 # New cl-dynamic
 cl_sys = ctl + sys
 
 # Simultation
 
-cl_sys.x0  = np.array([1,1,0,0,0,0])
-tf = 8
+cl_sys.x0  = np.array([pi/3,1,0,0,0,0])
+tf = 5
 n = tf*1000 + 1
 cl_sys.compute_trajectory(tf, n, 'euler')
 cl_sys.plot_trajectory()
