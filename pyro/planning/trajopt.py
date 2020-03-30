@@ -218,10 +218,10 @@ def interp_traj(traj,ngrid):
     traj_interp = Trajectory(x_interp, u_interp, t_interp, dx_interp, y_interp)
     return traj_interp 
 
-A = np.load(r'C:\Users\Charles Khazoom\Documents\git\pyro\trajresults\solution_with_slsqp_onelink.npy')
-ngrid=30
+A = np.load(r'C:\Users\Charles Khazoom\Documents\git\pyro\trajresults\solution_with_slsqp_onelink_200.npy')
+ngrid=200
 loaded_traj = dec_var_2_traj(A)
-ngrid=100
+ngrid=250
 bnds = pack_bounds(lb_x,ub_x0,lb_x,ub_x0,lb_xf,ub_xf,lb_u,ub_u,lb_t0,lb_t0,lb_tf,lb_tf)
 
 cons_slsqp = ({'type': 'eq', 'fun': lambda x: dynamics_cstr(dec_var_2_traj( x ))  })
@@ -251,24 +251,28 @@ res4 = minimize(compute_cost, dec_var_guess,method='SLSQP' , bounds=bnds, constr
 #res4 = minimize(compute_cost, dec_var_guess,method='trust-constr' , bounds=bnds, constraints=cons_trust,tol=1e-6,options={'disp': True,'maxiter':1000},jac='2-point',hess=BFGS())
 # 
 
-result_traj = dec_var_2_traj(res4.x)
 
-ctl = plan.OpenLoopController(result_traj)
-#
-sys.traj=result_traj
-
-## New cl-dynamic
-cl_sys = ctl + sys
-#
-#cl_sys.compute_trajectory( tf )
-sys.plot_trajectory('xu')
-#sys.cost_function.trajectory_evaluation(sys.traj)
-#cl_sys.animate_simulation()
 
 
 '''
 Interpolate solution in trajectory object
 '''
 
-#sc.interpolate.interp1d(x, y, kind='linear')# linear interpolations
-#sc.interpolate.interp1d(x, y, kind='quadratic')# quadratic spline interpolations
+result_traj = dec_var_2_traj(res4.x)
+
+interp_value = 1000
+result_traj_int = interp_traj(result_traj,interp_value)
+
+sys.traj = result_traj_int
+sys.x0=sys.traj.x[0,:]
+#sys.plot_trajectory('xu')
+ctl = plan.OpenLoopController(result_traj_int)
+#
+
+## New cl-dynamic
+cl_sys = ctl + sys
+#
+cl_sys.compute_trajectory( sys.traj.t[-1] ,interp_value )
+cl_sys.plot_trajectory('xu')
+#sys.cost_function.trajectory_evaluation(sys.traj)
+#cl_sys.animate_simulation()
