@@ -11,7 +11,7 @@ from ctypes import c_float
 
 import numpy as np
 import matplotlib.pyplot as plt
-from interpolation import Interpolation2D
+from interpolation import Interpolation2D, nearest_neighbor_2D
 from scipy.interpolate import RectBivariateSpline as interpol2D
 from scipy.interpolate import RegularGridInterpolator as rgi
 
@@ -439,6 +439,8 @@ class ValueIteration_ND:
 
         self.J = self.Jnew.copy()
 
+        # print(self.J)
+
         # TODO: Combine deltas? Check if delta_min or max changes
         return delta_min
 
@@ -493,9 +495,10 @@ class ValueIteration_ND:
                 else:
                     J_next = J_interpol([x_next[0], x_next[1], x_next[2], x_next[3]])
             elif self.interpolation == 'custom':
-                J_next = J_interpol.nearest_neighbor(x_next)
+                nearest_neighbor_2D(x_next, self.grid_sys.nodes_state, self.grid_sys.nodes_index,
+                                    self.grid_sys.xgriddim, self.J)
 
-            print(x_next, J_next)
+            # print(x_next, J_next)
 
             # Cost-to-go of a given action
             y = self.sys.h(x, u, 0)
