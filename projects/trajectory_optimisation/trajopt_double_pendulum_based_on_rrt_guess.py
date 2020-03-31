@@ -20,7 +20,7 @@ from pyro.control  import nonlinear
 from pyro.analysis import simulation
 
 '''
-################################################################################
+##############################################################################
 '''
 
 
@@ -29,14 +29,14 @@ from pyro.analysis import simulation
 #        costfunction.QuadraticCostFunction.__init__( self )
 
 '''
-################################################################################
+##############################################################################
 '''
 # create system 
 #sys = manipulator.OneLinkManipulator()
 
 from pyro.dynamic  import pendulum
 
-sys  = pendulum.SinglePendulum()
+sys  = pendulum.DoublePendulum()
 
 '''
 Create optization problem
@@ -45,9 +45,13 @@ Create optization problem
 # set cost function
 # minimize torque square is quadraic cost with Q and V set to 0
 #class TorqueSquaredCostFunction( costfunction.QuadraticCostFunction ): should implement this class
-sys.cost_function.Q=np.zeros(sys.cost_function.Q.shape)
-sys.cost_function.V=np.zeros(sys.cost_function.V.shape)
-sys.cost_function.R=np.ones(sys.cost_function.R.shape) #
+#sys.cost_function.Q=np.zeros(sys.cost_function.Q.shape)
+#sys.cost_function.V=np.zeros(sys.cost_function.V.shape)
+sys.cost_function.Q[0,0] = 1
+sys.cost_function.Q[1,1] = 1
+sys.cost_function.R[0,0] = 1
+sys.cost_function.R[1,1] = 1
+sys.cost_function.xbar = np.array([0,0,0,0])
 
 global ngrid
 ngrid = 30 # number of gridpoint
@@ -62,11 +66,11 @@ lb_tf = 7
 
 #ub_state = np.array([])
 #lb_state
-sys.x_ub=[2*np.pi,None]
-sys.x_lb=[-2*np.pi,None]
+sys.x_ub=[+2*np.pi,+2*np.pi,0,0]
+sys.x_lb=[-2*np.pi,-2*np.pi,0,0]
 
-sys.u_ub = [6.0]
-sys.u_lb = [-6.0]
+sys.u_ub = [+50.0,+50.0]
+sys.u_lb = [-50.0,-50.0]
 
 ub_x = sys.x_ub # bounds on x
 lb_x = sys.x_lb
@@ -74,12 +78,12 @@ lb_x = sys.x_lb
 ub_u = sys.u_ub # bounds on inputs u
 lb_u = sys.u_lb
 
-ub_x0 = [0.1,0] # bounds on inital state
-lb_x0 = [-0.1,0]
+ub_x0 = [-3.14,0,0,0] # bounds on inital state
+lb_x0 = [-3.14,0,0,0]
 
 
-ub_xf = [-3.1,0] #sys.x_ub # bounds on final state
-lb_xf = [-3.2,0]
+ub_xf = [0,0,0,0] #sys.x_ub # bounds on final state
+lb_xf = [0,0,0,0]
 
 '''
 create initial guess
@@ -210,8 +214,8 @@ def dynamics_cstr(traj):
 def compute_cost(decision_variables):
     traj_opt = dec_var_2_traj(decision_variables) #get trajectorty
     traj_opt = sys.cost_function.trajectory_evaluation(traj_opt)#compute cost fcn
-    cost_function = traj_opt.J[-1]# traj_opt.J is the cumulated cost from integral, we take only the last value
-    return cost_function
+    cost = traj_opt.J[-1]# traj_opt.J is the cumulated cost from integral, we take only the last value
+    return cost
 
 def interp_traj(traj,ngrid):
         
@@ -231,12 +235,13 @@ def interp_traj(traj,ngrid):
 
 
 
-loaded_traj = simulation.Trajectory.load('pendulum_rrt.npy')
+# Guess traj based from RRT solution
+loaded_traj = simulation.Trajectory.load('double_pendulum_rrt.npy')
+ngrid       = loaded_traj.time_steps * 10
 
-loaded_traj = simulation.Trajectory.load('test.npy')
 
+#
 
-ngrid=300
 bnds = pack_bounds(lb_x,ub_x0,lb_x,ub_x0,lb_xf,ub_xf,lb_u,ub_u,lb_t0,lb_t0,lb_tf,lb_tf)
 
 cons_slsqp = ({'type': 'eq', 'fun': lambda x: dynamics_cstr(dec_var_2_traj( x ))  })
@@ -244,12 +249,8 @@ cons_slsqp = ({'type': 'eq', 'fun': lambda x: dynamics_cstr(dec_var_2_traj( x ))
 cons_trust=NonlinearConstraint(lambda x: dynamics_cstr(dec_var_2_traj( x )), 0, 0)#
 
 
-
-
-
-
-guess_traj = interp_traj(loaded_traj,ngrid)
-dec_var_guess = traj_2_dec_var(guess_traj)
+guess_traj    = interp_traj( loaded_traj , ngrid )
+dec_var_guess = traj_2_dec_var( guess_traj )
 
 
 
@@ -268,33 +269,36 @@ res4 = minimize(compute_cost, dec_var_guess,method='SLSQP' , bounds=bnds, constr
 
 
 
+'''
+Analyze results
+'''
 
-'''
-Interpolate solution in trajectory object
-'''
 
 result_traj = dec_var_2_traj(res4.x)
 
-result_traj.save('test.npy')
+result_traj.save('double_pendulum_rrt_optimised.npy')
 
-interp_value = 1000
-result_traj_int = interp_traj(result_traj,interp_value)
 
-sys.traj = result_traj_int
-sys.x0=sys.traj.x[0,:]
+#show solution vs initial guess
+sys.traj = loaded_traj
 sys.plot_trajectory('xu')
-sys.animate_simulation()
+sys.traj = result_traj
+sys.plot_trajectory('xu')
+#sys.animate_simulation()
 
-# CLosed-loop
-ctl = plan.OpenLoopController(result_traj_int)
-
-ctl2 = nonlinear.ComputedTorqueController( sys , result_traj )
-#
+# CLosed-loop controller
+ctl = nonlinear.ComputedTorqueController( sys , result_traj )
+ctl.rbar = np.array([0,0])
 
 ## New cl-dynamic
 cl_sys = ctl + sys
-#
-cl_sys.compute_trajectory( sys.traj.t[-1] ,interp_value )
+
+cl_sys.x0 = np.array([-3.14,0,0,0])
+cl_sys.compute_trajectory( 10 )
 cl_sys.plot_trajectory('xu')
-#sys.cost_function.trajectory_evaluation(sys.traj)
 cl_sys.animate_simulation()
+
+
+print(sys.cost_function.trajectory_evaluation( guess_traj ).J[-1])
+print(sys.cost_function.trajectory_evaluation( result_traj ).J[-1])
+print(sys.cost_function.trajectory_evaluation( cl_sys.traj ).J[-1])
