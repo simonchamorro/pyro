@@ -236,7 +236,7 @@ def interp_traj(traj,ngrid):
 
 # Guess traj based from RRT solution
 loaded_traj = simulation.Trajectory.load('pendulum_rrt.npy')
-ngrid       = loaded_traj.time_steps 
+ngrid       = loaded_traj.time_steps
 
 
 #
