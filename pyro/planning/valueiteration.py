@@ -162,7 +162,7 @@ class ValueIteration_2D:
                         
                         # Cost-to-go of a given action
                         y = self.sys.h(x, u, 0)
-                        Q[action] = self.cf.g(x, u, y, 0) + J_next[0,0]
+                        Q[action] = self.cf.g(x, u, y, 0) * self.grid_sys.dt + J_next[0,0]
                         
                     else:
                         # Not allowable states or inputs/states combinations
@@ -500,9 +500,9 @@ class ValueIteration_ND:
             # Cost-to-go of a given action
             y = self.sys.h(x, u, 0)
             if self.n_dim == 2 and self.interpolation == 'scipy':
-                Q[action] = self.cf.g(x, u, y, 0) + J_next[0, 0]
+                Q[action] = self.cf.g(x, u, y, 0) * self.grid_sys.dt + J_next[0, 0]
             else:
-                Q[action] = self.cf.g(x, u, y, 0) + J_next
+                Q[action] = self.cf.g(x, u, y, 0) * self.grid_sys.dt + J_next
 
         else:
             # Not allowable states or inputs/states combinations
