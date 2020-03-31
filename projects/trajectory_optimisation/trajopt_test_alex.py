@@ -6,6 +6,7 @@ Created on Wed Jul 12 12:09:37 2017
 """
 
 import numpy as np
+import numpy.matlib as mb
 import matplotlib.pyplot as plt
 
 from scipy.optimize import minimize, NonlinearConstraint, rosen, rosen_der,HessianUpdateStrategy,BFGS#, interpolate
@@ -14,6 +15,10 @@ from pyro.dynamic import manipulator
 from pyro.planning import plan
 from pyro.analysis import costfunction
 from pyro.analysis import Trajectory
+
+from pyro.control  import nonlinear
+from pyro.analysis import simulation
+
 '''
 ################################################################################
 '''
@@ -27,8 +32,11 @@ from pyro.analysis import Trajectory
 ################################################################################
 '''
 # create system 
-sys = manipulator.OneLinkManipulator()
+#sys = manipulator.OneLinkManipulator()
 
+from pyro.dynamic  import pendulum
+
+sys  = pendulum.SinglePendulum()
 
 '''
 Create optization problem
@@ -48,8 +56,8 @@ ngrid = 30 # number of gridpoint
 ub_t0 = 0 # bounds on t0 
 lb_t0 = 0
 
-ub_tf = 2 # bounds on tf 
-lb_tf = 2
+ub_tf = 8 # bounds on tf 
+lb_tf = 7
 # should implement an error message if tf is not >t0 and in t0<0
 
 #ub_state = np.array([])
@@ -57,8 +65,8 @@ lb_tf = 2
 sys.x_ub=[2*np.pi,None]
 sys.x_lb=[-2*np.pi,None]
 
-sys.u_ub = [None]
-sys.u_lb = [None]
+sys.u_ub = [6.0]
+sys.u_lb = [-6.0]
 
 ub_x = sys.x_ub # bounds on x
 lb_x = sys.x_lb
@@ -66,12 +74,12 @@ lb_x = sys.x_lb
 ub_u = sys.u_ub # bounds on inputs u
 lb_u = sys.u_lb
 
-ub_x0 = [np.pi,0] # bounds on inital state
-lb_x0 = [np.pi,0]
+ub_x0 = [0.1,0] # bounds on inital state
+lb_x0 = [-0.1,0]
 
 
-ub_xf = [0,0] #sys.x_ub # bounds on final state
-lb_xf = [0,0]
+ub_xf = [-3.1,0] #sys.x_ub # bounds on final state
+lb_xf = [-3.2,0]
 
 '''
 create initial guess
@@ -110,13 +118,13 @@ def pack_bounds(lb_x,ub_x,lb_x0,ub_x0,lb_xf,ub_xf,lb_u,ub_u,lb_t0,ub_t0,lb_tf,ub
     bnds = np.array([]).reshape(0,2) # initialize bounds np.array to append to
     
     for i in range(sys.n): # convert bounds on x
-        bnd_arr_to_add = np.concatenate([np.matlib.repmat(lb_x[i], ngrid, 1),np.matlib.repmat(ub_x[i], ngrid, 1)],axis=1)
+        bnd_arr_to_add = np.concatenate([mb.repmat(lb_x[i], ngrid, 1),mb.repmat(ub_x[i], ngrid, 1)],axis=1)
         bnd_arr_to_add[0,:]=np.array([lb_x0[i],ub_x0[i]])#enforce bound on initial value
         bnd_arr_to_add[ngrid-1,:]=np.array([lb_xf[i],ub_xf[i]])#enforce bound on final value
         bnds = np.append(bnds,bnd_arr_to_add,axis=0)
     
     for i in range(sys.m): # convert bounds on u
-        bnd_arr_to_add = np.concatenate([np.matlib.repmat(lb_u[i], ngrid, 1),np.matlib.repmat(ub_u[i], ngrid, 1)],axis=1)
+        bnd_arr_to_add = np.concatenate([mb.repmat(lb_u[i], ngrid, 1),mb.repmat(ub_u[i], ngrid, 1)],axis=1)
         bnds = np.append(bnds,bnd_arr_to_add,axis=0)
     
     # append bounds on t0 and tF
@@ -218,10 +226,17 @@ def interp_traj(traj,ngrid):
     traj_interp = Trajectory(x_interp, u_interp, t_interp, dx_interp, y_interp)
     return traj_interp 
 
-A = np.load(r'C:\Users\Charles Khazoom\Documents\git\pyro\trajresults\solution_with_slsqp_onelink_200.npy')
-ngrid=200
-loaded_traj = dec_var_2_traj(A)
-ngrid=250
+
+
+
+
+
+loaded_traj = simulation.Trajectory.load('pendulum_rrt.npy')
+
+loaded_traj = simulation.Trajectory.load('test.npy')
+
+
+ngrid=300
 bnds = pack_bounds(lb_x,ub_x0,lb_x,ub_x0,lb_xf,ub_xf,lb_u,ub_u,lb_t0,lb_t0,lb_tf,lb_tf)
 
 cons_slsqp = ({'type': 'eq', 'fun': lambda x: dynamics_cstr(dec_var_2_traj( x ))  })
@@ -260,13 +275,20 @@ Interpolate solution in trajectory object
 
 result_traj = dec_var_2_traj(res4.x)
 
+result_traj.save('test.npy')
+
 interp_value = 1000
 result_traj_int = interp_traj(result_traj,interp_value)
 
 sys.traj = result_traj_int
 sys.x0=sys.traj.x[0,:]
-#sys.plot_trajectory('xu')
+sys.plot_trajectory('xu')
+sys.animate_simulation()
+
+# CLosed-loop
 ctl = plan.OpenLoopController(result_traj_int)
+
+ctl2 = nonlinear.ComputedTorqueController( sys , result_traj )
 #
 
 ## New cl-dynamic
@@ -275,4 +297,4 @@ cl_sys = ctl + sys
 cl_sys.compute_trajectory( sys.traj.t[-1] ,interp_value )
 cl_sys.plot_trajectory('xu')
 #sys.cost_function.trajectory_evaluation(sys.traj)
-#cl_sys.animate_simulation()
+cl_sys.animate_simulation()
