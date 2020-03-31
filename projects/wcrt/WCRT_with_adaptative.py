@@ -30,7 +30,7 @@ sys.lc2 = 0.8
 ctl.A[0] = 5
 ctl.A[1] = 5
 ctl.A[2] = 5
-ctl.A[3] = -5
+ctl.A[3] = 0
 ctl.A[4] = 5
 ctl.A[5] = 20
 ctl.A[6] = 10
@@ -54,11 +54,12 @@ ctl.rbar = np.array([0,-pi/4,pi/2])
 
 # New cl-dynamic
 cl_sys = ctl + sys
+#cl_sys = sys
 
 # Simultation
 
 cl_sys.x0  = np.array([pi/3,1,0,0,0,0])
-tf = 10
+tf = 8
 n = tf*1000 + 1
 cl_sys.compute_trajectory(tf, n, 'euler')
 cl_sys.plot_trajectory()
