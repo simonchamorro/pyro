@@ -23,8 +23,17 @@ ctl  = adaptive_computed_torque.AdaptativeController_WCRT(sys)
 sys.d1 = 0
 sys.d2 = 0
 sys.d3 = 0
+
+sys.m1 = 2
+sys.m1 = 1
 sys.m3 = 1.5
-sys.lc2 = 0.8
+
+sys.l1  = 0.5 
+sys.l2  = 0.8
+sys.l3  = 0.8
+sys.lc1 = 0.4
+sys.lc2 = 0.5
+sys.lc3 = 0.7
 
 #Param adapt-control
 ctl.A[0] = 5
