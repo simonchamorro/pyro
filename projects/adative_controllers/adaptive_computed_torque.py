@@ -286,7 +286,7 @@ class AdaptativeController_WCRT( nonlinear.ComputedTorqueController ):
         
         
     ############################
-    def Adaptative_torque( self , Y , s , q , t ):
+    def adaptative_torque( self , Y , s , q , t ):
         """ 
         
         Given actual state, compute torque necessarly to guarantee convergence
@@ -351,7 +351,7 @@ class AdaptativeController_WCRT( nonlinear.ComputedTorqueController ):
         self.A=self.A+dA*self.dt
         print(self.A)
                 
-        u                     = self.Adaptative_torque( Y , s  , q , t )
+        u                     = self.adaptative_torque( Y , s  , q , t )
         
         return u
         

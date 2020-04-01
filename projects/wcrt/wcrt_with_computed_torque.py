@@ -11,7 +11,7 @@ from wcrt import WCRT
 from pyro.control import nonlinear
 ###############################################################################
 
-sys = WCRT()
+sys  = WCRT()
 ctl  = nonlinear.ComputedTorqueController( sys )
 
 ctl.w0   = 1.5

@@ -16,12 +16,12 @@ from pyro.control import controller
 class kinematicInputs( controller.StaticController ) :
     """ 
     Simple proportionnal compensator
-    ---------------------------------------
+    ----------------------------------------
     r  : reference signal_proc vector  k x 1
     y  : sensor signal_proc vector     k x 1
-    u  : control inputs vector    k x 1
-    t  : time                     1 x 1
-    ---------------------------------------
+    u  : control inputs vector         k x 1
+    t  : time                          1 x 1
+    ----------------------------------------
     u = c( y , r , t ) = (r - y) * gain
 
     """
@@ -248,8 +248,6 @@ class fullDynTorqueInputs( controller.StaticController ) :
     ---------------------------------------
     u = c( y , r , t ) = (r - y) * gain
 
-<<<<<<< HEAD
-=======
     """
     
     ###########################################################################
@@ -312,6 +310,86 @@ class fullDynTorqueInputs( controller.StaticController ) :
             u[0] = 0
             u[2] = -torque_max
         u[1] = 0
+        
+        
+        return u
+    
+class fullDynVoltInputs( controller.StaticController ) :
+    """ 
+    Simple proportionnal compensator
+    ---------------------------------------
+    r  : reference signal_proc vector  k x 1
+    y  : sensor signal_proc vector     k x 1
+    u  : control inputs vector    k x 1
+    t  : time                     1 x 1
+    ---------------------------------------
+    u = c( y , r , t ) = (r - y) * gain
+
+    """
+    
+    ###########################################################################
+    # The two following functions needs to be implemented by child classes
+    ###########################################################################
+    
+    
+    ############################
+    def __init__(self, k = 1):
+        """ """
+        
+        # Dimensions
+        self.k = 7  
+        self.m = 2   
+        self.p = 7
+        
+        controller.StaticController.__init__(self, self.k, self.m, self.p)
+        
+        # Label
+        self.name = 'Proportionnal Controller'
+        
+        # Gains
+        self.gain = 1
+        
+    
+    #############################
+    def c( self , y , r , t = 0 ):
+        """ 
+        Feedback static computation u = c(y,r,t)
+        
+        INPUTS
+        y  : sensor signal_proc vector     p x 1
+        r  : reference signal_proc vector  k x 1
+        t  : time                     1 x 1
+        
+        OUPUTS
+        u  : control inputs vector    m x 1
+        
+        """
+        
+        u = np.zeros(self.m) # State derivative vector
+        #steer_max = 0.3
+        volt_max = 8
+        steer_max = 0.3
+        if t<10:
+            u[0] = 0
+            #u[1] = 0
+            u[1] = 5
+        elif(t>=10 and t<20):
+            u[0] = steer_max/10.000*(t-10)
+            #u[1] = volt_max/10.000*(t-10)
+            u[1] = 5
+        elif(t>=20 and t<25):
+            u[0] = steer_max
+            #u[1] = volt_max
+            u[1] = 5
+        elif(t>=25 and t<35):
+            u[0] = steer_max-steer_max/10.0000*(t-25)
+            #u[1] = volt_max-volt_max/10.0000*(t-25)
+            u[1] = 5
+        else:
+            u[0] = 0
+            #u[1] = -volt_max
+            u[1] = 5
+
         
         
         return u

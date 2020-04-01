@@ -134,10 +134,10 @@ class ComputedTorqueController( controller.StaticController ) :
         
         self.trajectory = traj
         
-        q   = traj.x_sol[ :,    0           :     self.model.dof ]
-        dq  = traj.x_sol[ :, self.model.dof : 2 * self.model.dof ]
-        ddq = traj.dx_sol[:, self.model.dof : 2 * self.model.dof ]
-        t   = traj.t_sol
+        q   = traj.x[ :,    0           :     self.model.dof ]
+        dq  = traj.x[ :, self.model.dof : 2 * self.model.dof ]
+        ddq = traj.dx[:, self.model.dof : 2 * self.model.dof ]
+        t   = traj.t
         
         # Create interpol functions
         self.q   = interp1d(t,q.T)

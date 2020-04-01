@@ -20,7 +20,7 @@ torque_controlled_robot.plot_trajectory('xu')
 torque_controlled_robot.animate_simulation()
 
 
-speed_controlled_robot      = manipulator.SpeedControlledManipulator( 
+speed_controlled_robot      = manipulator.SpeedControlledManipulator.from_manipulator( 
                                              torque_controlled_robot )
 speed_controlled_robot.ubar = np.array([2,0.8]) # constant inputs
 speed_controlled_robot.x0   = np.array([0,1])
