@@ -22,13 +22,17 @@ sys = WCRT()
 ctl  = adaptive_computed_torque.AdaptativeController_WCRT(sys)
 
 #Param Wcrt
-sys.d1 = 0
-sys.d2 = 0
-sys.d3 = 0
+sys.d1 = 3
+sys.d2 = 2
+sys.d3 = 2
+
+sys.k1 = 10
+sys.k2 = 10
+sys.k3 = 10
 
 sys.m1 = 2
 sys.m1 = 1
-sys.m3 = 1.5
+sys.m3 = 1
 
 sys.l1  = 0.5 
 sys.l2  = 0.8
@@ -64,13 +68,13 @@ ctl.T[6,6] = 8
 ctl.rbar = np.array([0,-pi/4,pi/2])
 
 # New cl-dynamic
-cl_sys = ctl + sys
-#cl_sys = sys
+#cl_sys = ctl + sys
+cl_sys = sys
 
 # Simultation
 
 cl_sys.x0  = np.array([pi/3,1,0,0,0,0])
-tf = 8
+tf = 12
 n = tf*1000 + 1
 cl_sys.compute_trajectory(tf, n, 'euler')
 cl_sys.plot_trajectory()
