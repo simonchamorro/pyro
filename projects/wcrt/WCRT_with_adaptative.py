@@ -49,6 +49,7 @@ ctl.A[3] = 0
 ctl.A[4] = 5
 ctl.A[5] = 20
 ctl.A[6] = 10
+ctl.A[7] = 0
 
 ctl.Kd[0,0] = 7
 ctl.Kd[1,1] = 7
@@ -63,13 +64,15 @@ ctl.T[3,3] = 8
 ctl.T[4,4] = 8
 ctl.T[5,5] = 8
 ctl.T[6,6] = 8
+ctl.T[7,7] = 8
+
 
 # Set Point
 ctl.rbar = np.array([0,-pi/4,pi/2])
 
 # New cl-dynamic
-#cl_sys = ctl + sys
-cl_sys = sys
+cl_sys = ctl + sys
+#cl_sys = sys
 
 # Simultation
 

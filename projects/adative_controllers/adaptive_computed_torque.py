@@ -241,8 +241,8 @@ class AdaptativeController_WCRT( nonlinear.ComputedTorqueController ):
         
         # Params
         self.dt = 0.001
-        self.A = np.zeros(7)
-        self.T=np.eye(7)
+        self.A = np.zeros(8)
+        self.T=np.eye(8)
         self.Kd = np.eye(3)
         self.lam  = 1   # Sliding surface slope
         
@@ -320,7 +320,7 @@ class AdaptativeController_WCRT( nonlinear.ComputedTorqueController ):
                                                            q_d , dq , q )
         [c1,s1,c2,s2,c3,s3,c23,s23] = self.trig( q )
         
-        Y = np.zeros((3,7))
+        Y = np.zeros((3,8))
         dA = np.zeros(5)
                 
         Y[0,0]=ddq_r[0]
@@ -330,6 +330,7 @@ class AdaptativeController_WCRT( nonlinear.ComputedTorqueController ):
         Y[0,4]=(dq[2]+dq[1])*c23*dq_r[2]
         Y[0,5]=0
         Y[0,6]=0
+        Y[0,7]=q[0]
         Y[1,0]=ddq_r[0]*(s2+s2*c3)
         Y[1,1]=ddq_r[1]*(1+c3+c3**2)
         Y[1,2]=ddq_r[2]*(c3+c3**2)
@@ -337,6 +338,7 @@ class AdaptativeController_WCRT( nonlinear.ComputedTorqueController ):
         Y[1,4]=(dq[2]*(s3+s3*c3)+dq[1]*(s3+s3*c3)+dq[0]*(c2*c3))*dq_r[2]
         Y[1,5]=c2
         Y[1,6]=c23
+        Y[1,7]=q[1]
         Y[2,0]=ddq_r[0]*s23
         Y[2,1]=ddq_r[1]*(c3+c3**2)
         Y[2,2]=ddq_r[2]
@@ -344,6 +346,7 @@ class AdaptativeController_WCRT( nonlinear.ComputedTorqueController ):
         Y[2,4]=0
         Y[2,5]=0
         Y[2,6]=c23
+        Y[2,7]=q[2]
         
         b = np.dot(Y.T,s)
         dA=-1*np.dot( self.T , b )
