@@ -20,11 +20,7 @@ if __name__ == "__main__":
     grid_sys = discretizer.GridDynamicSystem(sys)
 
     # Cost Function
-    qcf = costfunction.QuadraticCostFunction(
-        np.ones(sys.n),
-        np.ones(sys.m),
-        np.zeros(sys.p)
-    )
+    qcf = sys.cost_function
 
     qcf.xbar = np.array([-3.14, 0])  # target
     qcf.INF = 10000
@@ -37,7 +33,7 @@ if __name__ == "__main__":
 
     vi.initialize()
     # vi.load_data('simple_pendulum_vi')
-    vi.compute_steps_multi(200, plot=True)
+    vi.compute_steps_multi(200, plot=False)
     vi.assign_interpol_controller()
     vi.plot_policy(0)
     vi.plot_cost2go()

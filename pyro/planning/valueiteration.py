@@ -11,7 +11,7 @@ from ctypes import c_float
 
 import numpy as np
 import matplotlib.pyplot as plt
-from interpolation import Interpolation2D, nearest_neighbor_2D
+from interpolation import Interpolation2D, nearest_neighbor_2D, Interpolation3D, nearest_neighbor_3D
 from scipy.interpolate import RectBivariateSpline as interpol2D
 from scipy.interpolate import RegularGridInterpolator as rgi
 
@@ -395,6 +395,14 @@ class ValueIteration_ND:
         self.Jnew = self.J.copy()
         self.Jplot = self.J.copy()
 
+        # Get interpolation of current cost space
+
+        # elif self.interpolation == 'custom':
+        #    if self.n_dim == 2:
+        #        self.J_interpol = Interpolation2D(self.sys, self.grid_sys, self.J)
+        #    elif self.n_dim == 3:
+        #        self.J_interpol = Interpolation3D(self.sys, self.grid_sys, self.J)
+
         # For all state nodes
         for node in range(self.grid_sys.nodes_n):
             x = self.grid_sys.nodes_state[node, :]
@@ -415,16 +423,19 @@ class ValueIteration_ND:
         if self.interpolation == 'scipy':
             if self.n_dim == 2:
                 J_interpol = interpol2D(self.grid_sys.xd[0], self.grid_sys.xd[1],
-                                        self.J, bbox=[None, None, None, None], kx=1, ky=1)
+                                             self.J, bbox=[None, None, None, None], kx=1, ky=1)
             elif self.n_dim == 3:
                 # call function for random shape
-                J_interpol = rgi([self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]], self.J)
+                J_interpol = rgi([self.grid_sys.xd[0], self.grid_sys.xd[1], self.grid_sys.xd[2]],
+                                 self.J, method='nearest')
             else:
                 points = tuple(self.grid_sys.xd[i] for i in range(self.n_dim))
-                J_interpol = rgi(points, self.J)
+                J_interpol = rgi(points, self.J, method='nearest')
         elif self.interpolation == 'custom':
             if self.n_dim == 2:
                 J_interpol = Interpolation2D(self.sys, self.grid_sys, self.J)
+            elif self.n_dim == 3:
+                J_interpol = Interpolation3D(self.sys, self.grid_sys, self.J)
 
         # For all state nodes
         for node in range(self.grid_sys.nodes_n):
@@ -439,9 +450,6 @@ class ValueIteration_ND:
 
         self.J = self.Jnew.copy()
 
-        # print(self.J)
-
-        # TODO: Combine deltas? Check if delta_min or max changes
         return delta_min
 
 
@@ -457,7 +465,7 @@ class ValueIteration_ND:
 
         # For all control actions
         for action in range(self.grid_sys.actions_n):
-            self.compute_action(Q, action, node, J_interpol, x, indices)
+            self.compute_action(Q, action, node, J_interpol, x)
 
         self.Jnew[indices] = Q.min()
         self.action_policy[indices] = Q.argmin()
@@ -468,22 +476,18 @@ class ValueIteration_ND:
 
 
     #############################
-    def compute_action(self, Q, action, node, J_interpol, x, indices):
+    def compute_action(self, Q, action, node, J_interpol, x):
+
         u = self.grid_sys.actions_input[action, :]
 
         # Compute next state and validity of the action
 
         if self.uselookuptable:
-    
             x_next = self.grid_sys.x_next[node, action, :]
             action_isok = self.grid_sys.action_isok[node, action]
-
         else:
-
             x_next = self.sys.f(x, u) * self.grid_sys.dt + x
-            x_ok = self.sys.isavalidstate(x_next)
-            u_ok = self.sys.isavalidinput(x, u)
-            action_isok = (u_ok & x_ok)
+            action_isok = (self.sys.isavalidstate(x_next) & self.sys.isavalidinput(x, u))
 
         # If the current option is allowable
         if action_isok:
@@ -495,10 +499,12 @@ class ValueIteration_ND:
                 else:
                     J_next = J_interpol([x_next[0], x_next[1], x_next[2], x_next[3]])
             elif self.interpolation == 'custom':
-                nearest_neighbor_2D(x_next, self.grid_sys.nodes_state, self.grid_sys.nodes_index,
+                if self.n_dim == 2:
+                    J_next = nearest_neighbor_2D(x_next, self.grid_sys.nodes_state, self.grid_sys.nodes_index,
                                     self.grid_sys.xgriddim, self.J)
-
-            # print(x_next, J_next)
+                elif self.n_dim == 3:
+                    J_next = nearest_neighbor_3D(x_next, self.grid_sys.nodes_state, self.grid_sys.nodes_index,
+                                                 self.grid_sys.xgriddim, self.J)
 
             # Cost-to-go of a given action
             y = self.sys.h(x, u, 0)
@@ -544,7 +550,7 @@ class ValueIteration_ND:
         self.interpol_functions = []
 
         # for all inputs
-        if self.interpolation == 'scipy' or self.interpolation == 'custom':
+        if self.interpolation == 'scipy':
             for k in range(self.sys.m):
                 if self.n_dim == 2:
                     self.interpol_functions.append(
@@ -651,6 +657,7 @@ class ValueIteration_ND:
         # Parallel CPU
         cpu_cores = mp.cpu_count()
         pool = mp.Pool(processes=cpu_cores)
+        j_mp_array = mp.Array();
         manager = mp.Manager()
         im_j = self.J.copy()
 
@@ -678,6 +685,8 @@ class ValueIteration_ND:
 
         pool.close()
         pool.join()
+
+        print(im_j)
 
         self.J = np.array(im_j)
         self.Jnew = np.array(im_arr)
@@ -707,6 +716,8 @@ class ValueIteration_ND:
 
             for action in np.arange(self.grid_sys.actions_n):
                 self.compute_action_multi(Q, action, node, J_interpol, x)
+
+            print(Q)
 
             if self.n_dim == 2:
                 im_arr[indices[0]][indices[1]] = Q.min()

@@ -25,7 +25,7 @@ qcf.xbar = np.array([ -3.14 , 0 ]) # target
 qcf.INF  = 10000
 
 # VI algo
-vi = valueiteration.ValueIteration_ND(grid_sys, qcf, interpolation='custom')
+vi = valueiteration.ValueIteration_ND(grid_sys, qcf, interpolation='scipy')
 
 vi.initialize()
 # vi.load_data('simple_pendulum_vi')

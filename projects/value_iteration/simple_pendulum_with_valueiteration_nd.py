@@ -21,17 +21,13 @@ sys  = pendulum.SinglePendulum()
 grid_sys = discretizer.GridDynamicSystem( sys )
 
 # Cost Function
-qcf = costfunction.QuadraticCostFunction(
-    np.ones(sys.n),
-    np.ones(sys.m),
-    np.zeros(sys.p)
-)
+qcf = sys.cost_function
 
 qcf.xbar = np.array([ -3.14 , 0 ]) # target
 qcf.INF  = 10000
 
 # VI algo
-vi = valueiteration.ValueIteration_ND( grid_sys , qcf )
+vi = valueiteration.ValueIteration_ND(grid_sys, qcf, interpolation='scipy')
 
 # Timer
 timer = stopwatch.Stopwatch()
@@ -39,7 +35,7 @@ timer = stopwatch.Stopwatch()
 vi.initialize()
 # vi.load_data('simple_pendulum_vi')
 
-profile.run('vi.compute_steps(200, plot=False)', 'profile')
+profile.run('vi.compute_steps(200, plot=True)', 'profile')
 print('Profiling finished')
 p = pstats.Stats('profile')
 p.strip_dirs().sort_stats(-1).print_stats()

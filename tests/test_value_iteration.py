@@ -27,7 +27,7 @@ import inspect
 from matplotlib import pyplot as plt
 
 _all_examples = [
-    "./simple_pendulum/simple_pendulum_with_valueiteration_nd.py",
+    "./simple_pendulum/multi_simple_pendulum_with_valueiteration_nd.py",
     "./holonomic_mobile_robot/holonomic_mobile_robot_with_valueiteration_nd.py",
 ]
 

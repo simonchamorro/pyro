@@ -33,12 +33,12 @@ cf.R    = np.array([[0.01,0],[0,0]])
 
 # VI algo
 
-vi = valueiteration.ValueIteration_ND( grid_sys , cf )
+vi = valueiteration.ValueIteration_ND(grid_sys, cf, interpolation='scipy')
 
 vi.uselookuptable = True
 vi.initialize()
-vi.load_data('bicycle_parking_vi')
-#vi.compute_steps(100, maxJ=args.maxJ, plot=has_dynamic_plot)
+# vi.load_data('bicycle_parking_vi')
+vi.compute_steps(200, maxJ=100, plot=True)
 #vi.save_data('bicycle_parking_vi')
 
 vi.assign_interpol_controller()
