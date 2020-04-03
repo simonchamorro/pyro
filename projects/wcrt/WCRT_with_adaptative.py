@@ -75,7 +75,6 @@ cl_sys = ctl + sys
 #cl_sys = sys
 
 # Simultation
-
 cl_sys.x0  = np.array([pi/3,1,0,0,0,0])
 tf = 12
 n = tf*1000 + 1
