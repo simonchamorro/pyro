@@ -8,7 +8,6 @@ Created on March 20 2020
 import numpy as np
 import math
 ###############################################################################
-
 from wcrt import WCRT 
 from projects.adative_controllers import adaptive_computed_torque
 
@@ -17,8 +16,6 @@ from projects.adative_controllers import adaptive_computed_torque
 pi = math.pi
 
 sys = WCRT()
-
-
 ctl  = adaptive_computed_torque.AdaptativeController_WCRT(sys)
 
 #Param Wcrt
