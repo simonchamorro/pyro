@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
     vi.initialize()
     # vi.load_data('simple_pendulum_vi')
-    vi.compute_steps_multi(200, plot=False)
+    vi.compute_steps_multi(200, plot=True)
     vi.assign_interpol_controller()
     vi.plot_policy(0)
     vi.plot_cost2go()

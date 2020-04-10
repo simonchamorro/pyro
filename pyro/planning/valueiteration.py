@@ -4,7 +4,7 @@ Created on Wed Jul 12 12:09:37 2017
 
 @author: alxgr
 """
-
+import itertools
 import sys
 import os
 from ctypes import c_float
@@ -22,6 +22,30 @@ from pyro.analysis import stopwatch
 from mpl_toolkits.mplot3d import Axes3D
 
 from pyro.control import controller
+
+'''
+Global variable for multiprocessing initialization
+'''
+multi_dict = {}
+
+def init_multiprocessing(j, policy, mem_array_dimension):
+    global multi_dict
+
+    # Set single dimension array to put in shared memory
+    j_mp_array = mp.Array('f', mem_array_dimension)
+    policy_mp_array = mp.Array('i', mem_array_dimension)
+
+    # Fill array with current data
+    shared_j = np.frombuffer(j, 'f')
+    shared_policy = np.frombuffer(policy, 'i')
+
+    for i in range(mem_array_dimension):
+        j_mp_array[i] = shared_j[i]
+        policy_mp_array[i] = shared_policy[i]
+
+    # Copy in dictionary
+    multi_dict['im_arr'] = j_mp_array
+    multi_dict['im_pol'] = policy_mp_array
 
 
 '''
@@ -654,11 +678,23 @@ class ValueIteration_ND:
     def compute_step_multi(self):
         """ One step of value iteration """
 
+        # Use the global multi_dict declared at the beginning of the file
+        # https://www.python-course.eu/python3_global_vs_local_variables.php
+        global multi_dict
+
+        # Get array dimension for shared arrays
+        mem_array_dimension = 1
+        for i in range(self.n_dim):
+            mem_array_dimension = mem_array_dimension * self.grid_sys.xgriddim[i]
+
         # Parallel CPU
         cpu_cores = mp.cpu_count()
-        pool = mp.Pool(processes=cpu_cores)
-        j_mp_array = mp.Array();
+        pool = mp.Pool(processes=cpu_cores, initializer=init_multiprocessing,
+                       initargs=(self.Jnew, self.action_policy, mem_array_dimension))
+
         manager = mp.Manager()
+        final_jnew = manager.list()
+        final_policy = manager.list()
         im_j = self.J.copy()
 
         # Get interpolation of current cost space
@@ -672,25 +708,24 @@ class ValueIteration_ND:
             points = tuple(self.grid_sys.xd[i] for i in range(self.n_dim))
             J_interpol = rgi(points, im_j)
 
-        # copy array in multiprocessing array variables
-        # TODO: generalize size for 3 DoF and ++
-        im_arr = manager.list(self.Jnew)
-        im_pol = manager.list(self.action_policy)
-
         # Split nodes in equal sections to give to the cpu cores
         nodes = np.arange(self.grid_sys.nodes_n)
         split_arrays = np.array_split(nodes, mp.cpu_count())
         for i in range(len(split_arrays)):
-            pool.apply(self.compute_node_multi, args=(split_arrays[i], J_interpol, im_arr, im_pol))
+            pool.apply(self.compute_node_multi, args=(split_arrays[i], J_interpol))
 
         pool.close()
         pool.join()
 
-        print(im_j)
+        print(multi_dict)
 
-        self.J = np.array(im_j)
-        self.Jnew = np.array(im_arr)
-        self.action_policy = np.array(im_pol)
+        # Copy back the arrays
+        self.J = im_j.copy()
+        self.Jnew = np.frombuffer(multi_dict['im_arr'], 'f').reshape(self.grid_sys.xgriddim)
+        self.action_policy = np.frombuffer(multi_dict['im_pol'], 'i').reshape(self.grid_sys.xgriddim)
+
+        print(self.Jnew)
+        print(self.action_policy)
 
         # Convergence check
         delta = self.J - self.Jnew
@@ -704,7 +739,12 @@ class ValueIteration_ND:
         return delta_min
 
     #############################
-    def compute_node_multi(self, nodes, J_interpol, im_arr, im_pol):
+    def compute_node_multi(self, nodes, J_interpol, final_jnew, final_policy):
+        global multi_dict
+
+        print("Jnew and policy global variables when passed to pool")
+        print(multi_dict['im_arr'], multi_dict['im_pol'])
+
         for node in nodes:
             x = self.grid_sys.nodes_state[node, :]
 
@@ -717,15 +757,27 @@ class ValueIteration_ND:
             for action in np.arange(self.grid_sys.actions_n):
                 self.compute_action_multi(Q, action, node, J_interpol, x)
 
-            print(Q)
+            print("Values of Q", Q)
 
             if self.n_dim == 2:
-                im_arr[indices[0]][indices[1]] = Q.min()
-                im_pol[indices[0]][indices[1]] = Q.argmin()
+                multi_dict['im_arr'][indices[0] * indices[1]] = Q.min()
+                multi_dict['im_pol'][indices[0] * indices[1]] = Q.argmin()
+            elif self.n_dim == 3:
+                multi_dict['im_arr'][indices[0] * indices[1] * indices[2]] = Q.min()
+                multi_dict['im_pol'][indices[0] * indices[1] * indices[2]] = Q.argmin()
 
             # Impossible situation ( unaceptable situation for any control actions )
-            if im_arr[indices[0]][indices[1]] > (self.cf.INF - 1):
-                im_pol[indices[0]][indices[1]] = -1
+            if self.n_dim == 2:
+                if multi_dict['im_arr'][indices[0] * indices[1]] > (self.cf.INF - 1):
+                    multi_dict['im_pol'][indices[0] * indices[1]] = -1
+            elif self.n_dim == 3:
+                if multi_dict['im_arr'][indices[0] * indices[1] * indices[2]] > (self.cf.INF - 1):
+                    multi_dict['im_pol'][indices[0] * indices[1] * indices[2]] = -1
+
+        print("Jnew and policy global variables after passing through nodes")
+        print(multi_dict['im_arr'], multi_dict['im_pol'])
+
+
 
     #############################
     def compute_action_multi(self, Q, action, node, J_interpol, x):
