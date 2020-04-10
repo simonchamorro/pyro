@@ -722,8 +722,8 @@ class ValueIteration_ND:
         self.Jnew = np.array(final_jnew[:]).reshape(self.grid_sys.xgriddim)
         self.action_policy = np.array(final_policy[:]).reshape(self.grid_sys.xgriddim)
 
-        print(self.Jnew, self.action_policy)
-        print(multi_dict['im_arr'])
+        # print(self.Jnew, self.action_policy)
+        # print(multi_dict['im_arr'])
 
         # Convergence check
         delta = self.J - self.Jnew
@@ -740,8 +740,8 @@ class ValueIteration_ND:
     def compute_node_multi(self, nodes, J_interpol, final_jnew, final_policy):
         global multi_dict
 
-        print("Jnew and policy global variables when passed to pool")
-        print(multi_dict['im_arr'], multi_dict['im_pol'])
+        # print("Jnew and policy global variables when passed to pool")
+        # print(multi_dict['im_arr'], multi_dict['im_pol'])
 
         for node in nodes:
             x = self.grid_sys.nodes_state[node, :]
@@ -755,7 +755,7 @@ class ValueIteration_ND:
             for action in np.arange(self.grid_sys.actions_n):
                 self.compute_action_multi(Q, action, node, J_interpol, x)
 
-            print("Values of Q", Q)
+            # print("Values of Q", Q)
 
             if self.n_dim == 2:
                 multi_dict['im_arr'][indices[0] * indices[1]] = Q.min()
@@ -778,8 +778,8 @@ class ValueIteration_ND:
                     multi_dict['im_pol'][indices[0] * indices[1] * indices[2]] = -1
                     final_policy[indices[0] * indices[1] * indices[2]] = -1
 
-        print("Jnew and policy global variables after passing through nodes")
-        print(multi_dict['im_arr'], multi_dict['im_pol'])
+        # print("Jnew and policy global variables after passing through nodes")
+        # print(multi_dict['im_arr'], multi_dict['im_pol'])
 
 
     #############################
