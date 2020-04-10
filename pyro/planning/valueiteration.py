@@ -693,8 +693,8 @@ class ValueIteration_ND:
                        initargs=(self.Jnew, self.action_policy, mem_array_dimension))
 
         manager = mp.Manager()
-        final_jnew = manager.list()
-        final_policy = manager.list()
+        final_jnew = manager.list(np.zeros(mem_array_dimension))
+        final_policy = manager.list(np.zeros(mem_array_dimension))
         im_j = self.J.copy()
 
         # Get interpolation of current cost space
@@ -712,20 +712,18 @@ class ValueIteration_ND:
         nodes = np.arange(self.grid_sys.nodes_n)
         split_arrays = np.array_split(nodes, mp.cpu_count())
         for i in range(len(split_arrays)):
-            pool.apply(self.compute_node_multi, args=(split_arrays[i], J_interpol))
+            pool.apply(self.compute_node_multi, args=(split_arrays[i], J_interpol, final_jnew, final_policy))
 
         pool.close()
         pool.join()
 
-        print(multi_dict)
-
         # Copy back the arrays
         self.J = im_j.copy()
-        self.Jnew = np.frombuffer(multi_dict['im_arr'], 'f').reshape(self.grid_sys.xgriddim)
-        self.action_policy = np.frombuffer(multi_dict['im_pol'], 'i').reshape(self.grid_sys.xgriddim)
+        self.Jnew = np.array(final_jnew[:]).reshape(self.grid_sys.xgriddim)
+        self.action_policy = np.array(final_policy[:]).reshape(self.grid_sys.xgriddim)
 
-        print(self.Jnew)
-        print(self.action_policy)
+        print(self.Jnew, self.action_policy)
+        print(multi_dict['im_arr'])
 
         # Convergence check
         delta = self.J - self.Jnew
@@ -762,21 +760,26 @@ class ValueIteration_ND:
             if self.n_dim == 2:
                 multi_dict['im_arr'][indices[0] * indices[1]] = Q.min()
                 multi_dict['im_pol'][indices[0] * indices[1]] = Q.argmin()
+                final_jnew[indices[0] * indices[1]] = Q.min()
+                final_policy[indices[0] * indices[1]] = Q.argmin()
             elif self.n_dim == 3:
                 multi_dict['im_arr'][indices[0] * indices[1] * indices[2]] = Q.min()
                 multi_dict['im_pol'][indices[0] * indices[1] * indices[2]] = Q.argmin()
+                final_jnew[indices[0] * indices[1] * indices[2]] = Q.min()
+                final_policy[indices[0] * indices[1] * indices[2]] = Q.argmin()
 
             # Impossible situation ( unaceptable situation for any control actions )
             if self.n_dim == 2:
                 if multi_dict['im_arr'][indices[0] * indices[1]] > (self.cf.INF - 1):
                     multi_dict['im_pol'][indices[0] * indices[1]] = -1
+                    final_policy[indices[0] * indices[1]] = -1
             elif self.n_dim == 3:
                 if multi_dict['im_arr'][indices[0] * indices[1] * indices[2]] > (self.cf.INF - 1):
                     multi_dict['im_pol'][indices[0] * indices[1] * indices[2]] = -1
+                    final_policy[indices[0] * indices[1] * indices[2]] = -1
 
         print("Jnew and policy global variables after passing through nodes")
         print(multi_dict['im_arr'], multi_dict['im_pol'])
-
 
 
     #############################
