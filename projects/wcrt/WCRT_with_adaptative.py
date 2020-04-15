@@ -28,7 +28,7 @@ sys.k2 = 10
 sys.k3 = 10
 
 sys.m1 = 2
-sys.m1 = 1
+sys.m2 = 1
 sys.m3 = 1
 
 sys.l1  = 0.5 
