@@ -8,12 +8,12 @@ Created on 19/11/2019
 import numpy as np
 ###############################################################################
 from pyro.dynamic import pendulum
-from adaptive_computed_torque import SinglePendulumAdaptativeController_dyn
+from adaptive_computed_torque import SinglePendulumAdaptativeController
 ###############################################################################
 
 sys = pendulum.SinglePendulum()
 sys.cost_function = None
-ctl = SinglePendulumAdaptativeController_dyn( sys )
+ctl = SinglePendulumAdaptativeController( sys )
 
 sys.m1 = 1
 
