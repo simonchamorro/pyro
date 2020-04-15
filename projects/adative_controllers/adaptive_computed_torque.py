@@ -8,10 +8,10 @@ Created on Tue Mar 24 21:15:49 2020
 
 import numpy as np
 from pyro.control import nonlinear
+from pyro.control import controller
 
 ##############################################################################
-        
-class SinglePendulumAdaptativeController( nonlinear.ComputedTorqueController ):
+class SinglePendulumAdaptativeController( controller.DynamicController ):
     """ 
     Adaptative Controller for fully actuated mechanical systems (single pendulum)
     """
@@ -19,23 +19,25 @@ class SinglePendulumAdaptativeController( nonlinear.ComputedTorqueController ):
     
     ############################
     def __init__( self , model , traj = None ):
-        """ """
-        
-        nonlinear.ComputedTorqueController.__init__( self , model , traj )
-        
+        """ """ 
         self.name = 'Adaptive controller'
-        
+
         # Params
         self.dt = 0.001
         self.A = np.array([0.2,0.2])
         self.T=np.eye(2)
-        #self.A[0] = 2
-        #self.A[1] = 5
         self.Kd = 1
         self.lam  = 1   # Sliding surface slope
         self.nab  = 0.1 # Min convergence rate
         
+        self.model=model
         
+        k = model.dof   
+        m = model.m
+        p = model.p
+        l = self.A.shape[0]
+        
+        controller.DynamicController.__init__( self, k, l, m, p)
     ############################
     def adaptative_variables( self , ddq_d , dq_d , q_d , dq , q ):
         """ 
@@ -71,12 +73,8 @@ class SinglePendulumAdaptativeController( nonlinear.ComputedTorqueController ):
                         
         
     ############################
-    def fixed_goal_ctl( self , x , q_d , t = 0 ):
-        """ 
-        
-        Given desired fixed goal state and actual state, compute torques
-        
-        """
+
+    def b(self, z, x, q_d, t):
         
         [ q , dq ]     = self.model.x2q( x ) 
         
@@ -92,18 +90,42 @@ class SinglePendulumAdaptativeController( nonlinear.ComputedTorqueController ):
 
         Y[0]=ddq_r
         Y[1]=np.sin(q)
-        
         b = Y * s
         dA=-1*np.dot( self.T , b )
+        dz=dA
         
-        self.A=self.A+dA*self.dt  #TODO use dynamic controller class
-        #print(self.A)
+        return dz
+    
+    ############################
+    def c(self ,z , x , q_d , t = 0):
+        """ 
+        
+        Given desired fixed goal state and actual state, compute torques
+        
+        """
+        [ q , dq ]     = self.model.x2q( x ) 
+        
+        ddq_d          =   np.zeros( self.model.dof )
+        dq_d           =   np.zeros( self.model.dof )
+        
+        [ s , dq_r , ddq_r ]  = self.adaptative_variables( ddq_d , dq_d , 
+                                                           q_d , dq , q )
+
+        Y = np.zeros(2)
+        Y[0]=ddq_r
+        Y[1]=np.sin(q)
+        
+        self.A=self.get_z_integral( z )
                 
         u                     = self.adaptative_torque( Y , s  , q , t )
         
         return u
-
-
+    
+    ############################
+    def get_z_integral(self, z):
+        """ get intergral error internal states """
+        
+        return z[:self.p]
 
 ##############################################################################
         
