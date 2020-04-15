@@ -8,11 +8,15 @@ Created on 19/11/2019
 import numpy as np
 ###############################################################################
 from pyro.dynamic import pendulum
-from adaptive_computed_torque import SinglePendulumAdaptativeController
+#from adaptive_computed_torque import SinglePendulumAdaptativeController
+from adaptive_computed_torque import SinglePendulumAdaptativeController_dyn
 ###############################################################################
 
 sys = pendulum.SinglePendulum()
-ctl = SinglePendulumAdaptativeController( sys )
+dof = 1
+sys.cost_function = None
+#ctl = SinglePendulumAdaptativeController( sys )
+ctl = SinglePendulumAdaptativeController_dyn( sys )
 
 sys.m1 = 1
 
@@ -31,9 +35,9 @@ ctl.rbar = q_target
 cl_sys = ctl + sys
 
 # Simultation
-cl_sys.x0  = np.array([ 0 , 1 ])
-tf = 12
-n  = tf * 1000 + 1
-cl_sys.compute_trajectory( tf , n, 'euler')
+cl_sys.x0[0]  = 0
+
+cl_sys.compute_trajectory(tf=10, n=20001, solver='euler')
+cl_sys.plot_phase_plane_trajectory()
 cl_sys.plot_trajectory('xu')
 cl_sys.animate_simulation()
