@@ -17,7 +17,7 @@ pi = math.pi
 
 sys = WCRT()
 sys.cost_function = None
-ctl  = adaptive_computed_torque.AdaptativeController_WCRT(sys)
+ctl  = adaptive_computed_torque.AdaptativeController_WCRT( sys )
 
 #Param Wcrt
 sys.d1 = 3
