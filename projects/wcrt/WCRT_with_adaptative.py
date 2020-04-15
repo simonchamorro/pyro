@@ -16,6 +16,7 @@ from projects.adative_controllers import adaptive_computed_torque
 pi = math.pi
 
 sys = WCRT()
+sys.cost_function = None
 ctl  = adaptive_computed_torque.AdaptativeController_WCRT(sys)
 
 #Param Wcrt
@@ -72,10 +73,12 @@ cl_sys = ctl + sys
 #cl_sys = sys
 
 # Simultation
-cl_sys.x0  = np.array([pi/3,1,0,0,0,0])
-tf = 12
-n = tf*1000 + 1
-cl_sys.compute_trajectory(tf, n, 'euler')
+#cl_sys.x0  = np.array([pi/3,1,0,0,0,0])
+cl_sys.x0[0]  = pi/3
+cl_sys.x0[1]  = 1
+cl_sys.x0[2]  = 0
+
+cl_sys.compute_trajectory(tf=10, n=20001, solver='euler')
 cl_sys.plot_trajectory()
 cl_sys.animate_simulation(is_3d = True)
 
