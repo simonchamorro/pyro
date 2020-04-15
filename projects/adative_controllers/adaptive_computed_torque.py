@@ -23,7 +23,6 @@ class SinglePendulumAdaptativeController( controller.DynamicController ):
         self.name = 'Adaptive controller'
 
         # Params
-        self.dt = 0.001
         self.A = np.array([0.2,0.2])
         self.T=np.eye(2)
         self.Kd = 1
@@ -73,7 +72,6 @@ class SinglePendulumAdaptativeController( controller.DynamicController ):
                         
         
     ############################
-
     def b(self, z, x, q_d, t):
         
         [ q , dq ]     = self.model.x2q( x ) 
@@ -81,23 +79,21 @@ class SinglePendulumAdaptativeController( controller.DynamicController ):
         ddq_d          =   np.zeros( self.model.dof )
         dq_d           =   np.zeros( self.model.dof )
         
-
         [ s , dq_r , ddq_r ]  = self.adaptative_variables( ddq_d , dq_d , 
                                                            q_d , dq , q )
         
         Y = np.zeros(2)
-        dA = np.zeros(2)
+        dz = np.zeros(2)
 
         Y[0]=ddq_r
         Y[1]=np.sin(q)
         b = Y * s
-        dA=-1*np.dot( self.T , b )
-        dz=dA
+        dz=-1*np.dot( self.T , b )
         
         return dz
     
     ############################
-    def c(self ,z , x , q_d , t = 0):
+    def c(self , z , x , q_d , t = 0):
         """ 
         
         Given desired fixed goal state and actual state, compute torques
@@ -125,11 +121,11 @@ class SinglePendulumAdaptativeController( controller.DynamicController ):
     def get_z_integral(self, z):
         """ get intergral error internal states """
         
-        return z[:self.p]
+        return z[:self.l]
 
 ##############################################################################
         
-class DoublePendulumAdaptativeController( nonlinear.ComputedTorqueController ):
+class DoublePendulumAdaptativeController(  controller.DynamicController ):
     """ 
     
     """
@@ -138,19 +134,22 @@ class DoublePendulumAdaptativeController( nonlinear.ComputedTorqueController ):
     def __init__( self , model , traj = None ):
         """ """
         
-        nonlinear.ComputedTorqueController.__init__( self , model , traj )
-        
         self.name = 'Adaptive controller'
-        
-        # Params
-        self.dt = 0.001
+
         self.A = np.zeros(5)
         self.T=np.eye(5)
         self.Kd = np.eye(2)
         self.lam  = 1   # Sliding surface slope
+        self.nab  = 0.1 # Min convergence rate
         
+        self.model=model
         
+        k = model.dof   
+        m = model.m
+        p = model.p
+        l = self.A.shape[0]
         
+        controller.DynamicController.__init__( self, k, l, m, p)        
     ##############################
     def trig(self, q ):
         """ 
@@ -202,27 +201,21 @@ class DoublePendulumAdaptativeController( nonlinear.ComputedTorqueController ):
         
         return u_tot
                         
-        
     ############################
-    def fixed_goal_ctl( self , x , q_d , t = 0 ):
-        """ 
-        
-        Given desired fixed goal state and actual state, compute torques
-        
-        """
+    def b(self, z, x, q_d, t):
         
         [ q , dq ]     = self.model.x2q( x ) 
         
         ddq_d          =   np.zeros( self.model.dof )
         dq_d           =   np.zeros( self.model.dof )
         
-
         [ s , dq_r , ddq_r ]  = self.adaptative_variables( ddq_d , dq_d , 
                                                            q_d , dq , q )
+        
         [c1,s1,c2,s2,c12,s12] = self.trig( q )
         
         Y = np.zeros((2,5))
-        dA = np.zeros(5)
+        dz = np.zeros(5)
                 
         Y[0,0]=ddq_r[0]*c2
         Y[0,1]=ddq_r[1]*c2
@@ -236,14 +229,52 @@ class DoublePendulumAdaptativeController( nonlinear.ComputedTorqueController ):
         Y[1,4]=s12
         
         b = np.dot(Y.T,s)
-        dA=-1*np.dot( self.T , b )
+        dz=-1*np.dot( self.T , b )
+       # print(dz)
         
-        self.A=self.A+dA*self.dt # ToDo use Dynamic COntroller Class
-        #print(self.A)
+        return dz
+        
+    ############################
+    def c( self , z , x , q_d , t = 0 ):
+        """ 
+        
+        Given desired fixed goal state and actual state, compute torques
+        
+        """
+        
+        [ q , dq ]     = self.model.x2q( x ) 
+        
+        ddq_d          =   np.zeros( self.model.dof )
+        dq_d           =   np.zeros( self.model.dof )
+        
+        [ s , dq_r , ddq_r ]  = self.adaptative_variables( ddq_d , dq_d , 
+                                                           q_d , dq , q )
+        [c1,s1,c2,s2,c12,s12] = self.trig( q )
+        
+        Y = np.zeros((2,5))
                 
-        u                     = self.adaptative_torque( Y , s  , q , t )
+        Y[0,0]=ddq_r[0]*c2
+        Y[0,1]=ddq_r[1]*c2
+        Y[0,2]=s2*dq[1]*dq_r[0]
+        Y[0,3]=s2*(dq[0]+dq[1])*dq_r[1]
+        Y[0,4]=s1+s12
+        Y[1,0]=ddq_r[0]*c2
+        Y[1,1]=ddq_r[1]
+        Y[1,2]=s2*dq[0]*dq_r[0]
+        Y[1,3]=0
+        Y[1,4]=s12
+        
+        self.A=self.get_z_integral( z )
+                
+        u                     = self.adaptative_torque(  Y , s  , q , t )
         
         return u
+    
+    ############################
+    def get_z_integral(self, z):
+        """ get intergral error internal states """
+        
+        return z[:self.l]
     
 ##############################################################################
 

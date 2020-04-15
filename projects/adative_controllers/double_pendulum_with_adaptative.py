@@ -12,6 +12,7 @@ from adaptive_computed_torque import DoublePendulumAdaptativeController
 ###############################################################################
 
 sys = pendulum.DoublePendulum()
+sys.cost_function = None
 ctl = DoublePendulumAdaptativeController( sys )
 
 #Param adapt-control
@@ -43,9 +44,11 @@ cl_sys = ctl + sys
 
 # Simultation
 
-cl_sys.x0  = np.array([3.14,0,0,0])
-tf = 12
-n  = tf * 1000 + 1
-cl_sys.compute_trajectory( tf , n, 'euler')
+cl_sys.x0[0]  = 3.14
+cl_sys.x0[1]  = 0
+
+
+cl_sys.compute_trajectory(tf=10, n=20001, solver='euler')
+cl_sys.plot_phase_plane_trajectory()
 cl_sys.plot_trajectory('xu')
 cl_sys.animate_simulation()
