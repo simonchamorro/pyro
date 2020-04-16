@@ -456,6 +456,10 @@ class DynamicController( StaticController ):
         # default constant reference
         self.zbar = np.zeros(self.l)
         
+        # initial internal controller states
+        self.z0   = np.zeros(self.l)
+        
+        
 
     #############################
     def c(self, z, y, r, t):
@@ -575,7 +579,7 @@ class DynamicClosedLoopSystem( ClosedLoopSystem ):
         
         # Initial value for simulations
         self.x0   = np.concatenate([ self.plant.x0,
-                                     np.zeros( self.controller.l )
+                                     self.controller.z0
                                     ], axis=0)
         
         # Result of last simulation
