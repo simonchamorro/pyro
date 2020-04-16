@@ -18,7 +18,7 @@ ctl = SinglePendulumAdaptativeController(sys)
 sys.m1 = 1
 
 ctl.z0[0] = 8
-ctl.z0[1] = 12
+ctl.z0[1] = 15
 
 ctl.Kd = 1
 ctl.lam = 1
@@ -31,6 +31,8 @@ ctl.rbar = q_target
 # New cl-dynamic
 cl_sys = ctl + sys
 
+cl_sys.state_label[2] = 'H'
+cl_sys.state_label[3] = 'g'
 # Simultation
 cl_sys.x0[0]  = 0
 
