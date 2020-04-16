@@ -16,11 +16,11 @@ sys.cost_function = None
 ctl = DoublePendulumAdaptativeController( sys )
 
 #Param adapt-control
-ctl.A[0] = 0
-ctl.A[1] = 0
-ctl.A[2] = 0
-ctl.A[3] = 0
-ctl.A[4] = 0
+ctl.z0[0] = 0
+ctl.z0[1] = 0
+ctl.z0[2] = 0
+ctl.z0[3] = 0
+ctl.z0[4] = 0
 
 
 ctl.Kd[0,0] = 5
@@ -51,4 +51,5 @@ cl_sys.x0[1]  = 0
 cl_sys.compute_trajectory(tf=10, n=20001, solver='euler')
 cl_sys.plot_phase_plane_trajectory()
 cl_sys.plot_trajectory('xu')
+cl_sys.plot_trajectory_with_internal_states()
 cl_sys.animate_simulation()

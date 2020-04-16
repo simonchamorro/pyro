@@ -9,6 +9,7 @@ Created on Tue Mar 24 21:15:49 2020
 import numpy as np
 from pyro.control import controller
 
+
 ##############################################################################
 class SinglePendulumAdaptativeController( controller.DynamicController ):
     """ 
@@ -22,7 +23,7 @@ class SinglePendulumAdaptativeController( controller.DynamicController ):
         self.name = 'Adaptive controller'
 
         # Params
-        self.A = np.array([0.2,0.2])
+        #self.A = np.array([0.2,0.2])
         self.T=np.eye(2)
         self.Kd = 1
         self.lam  = 1   # Sliding surface slope
@@ -33,9 +34,22 @@ class SinglePendulumAdaptativeController( controller.DynamicController ):
         k = model.dof   
         m = model.m
         p = model.p
-        l = self.A.shape[0]
+        l = 2
         
         controller.DynamicController.__init__( self, k, l, m, p)
+        
+        # Init internal states
+        self.z0 = np.array([0.2,0.2])
+        
+        
+        self.internal_state_label = []
+        self.internal_state_units = []
+        
+        for i in range(l):
+            self.internal_state_label.append('a' +str(i))
+            self.internal_state_units.append('')
+            
+        
     ############################
     def adaptative_variables( self , ddq_d , dq_d , q_d , dq , q ):
         """ 
@@ -135,7 +149,7 @@ class DoublePendulumAdaptativeController(  controller.DynamicController ):
         
         self.name = 'Adaptive controller'
 
-        self.A = np.zeros(5)
+        #self.A = np.zeros(5)
         self.T=np.eye(5)
         self.Kd = np.eye(2)
         self.lam  = 1   # Sliding surface slope
@@ -146,9 +160,23 @@ class DoublePendulumAdaptativeController(  controller.DynamicController ):
         k = model.dof   
         m = model.m
         p = model.p
-        l = self.A.shape[0]
+        l = 5
         
-        controller.DynamicController.__init__( self, k, l, m, p)        
+        controller.DynamicController.__init__( self, k, l, m, p)
+        
+        
+        
+        # Init states
+        self.z0 = np.zeros(5)
+        
+        self.internal_state_label = []
+        self.internal_state_units = []
+        
+        for i in range(l):
+            self.internal_state_label.append('a' +str(i))
+            self.internal_state_units.append('')
+        
+        
     ##############################
     def trig(self, q ):
         """ 
@@ -199,6 +227,7 @@ class DoublePendulumAdaptativeController(  controller.DynamicController ):
         u_tot = u_computed - u_discontinuous
         
         return u_tot
+    
                         
     ############################
     def b(self, z, x, q_d, t):
@@ -231,6 +260,7 @@ class DoublePendulumAdaptativeController(  controller.DynamicController ):
         dz=-1*np.dot( self.T , b )
         
         return dz
+    
         
     ############################
     def c( self , z , x , q_d , t = 0 ):
@@ -268,11 +298,13 @@ class DoublePendulumAdaptativeController(  controller.DynamicController ):
         
         return u
     
+    
     ############################
     def get_z_integral(self, z):
         """ get intergral error internal states """
         
         return z[:self.l]
+    
     
 ##############################################################################
 
@@ -303,6 +335,8 @@ class AdaptativeController_WCRT( controller.DynamicController ):
         l = self.A.shape[0]
         
         controller.DynamicController.__init__( self, k, l, m, p) 
+        
+        
     ##############################
     def trig(self, q ):
         """ 
@@ -355,6 +389,7 @@ class AdaptativeController_WCRT( controller.DynamicController ):
         u_tot = u_computed - u_discontinuous
         
         return u_tot
+    
                         
     ############################
     def b(self, z, x, q_d, t):
@@ -401,6 +436,7 @@ class AdaptativeController_WCRT( controller.DynamicController ):
         dz=-1*np.dot( self.T , b )
             
         return dz
+    
     
     ############################
     def c( self , z , x , q_d , t = 0 ):
@@ -451,11 +487,13 @@ class AdaptativeController_WCRT( controller.DynamicController ):
         u                     = self.adaptative_torque( Y , s  , q , t )
         
         return u
+    
 
     ############################
     def get_z_integral(self, z):
         """ get intergral error internal states """
         
         return z[:self.l]
+    
         
 ##############################################################################
