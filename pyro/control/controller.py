@@ -737,7 +737,7 @@ class DynamicClosedLoopSystem( ClosedLoopSystem ):
         # Check if trajectory is already computed
         if self.traj == None:
             self.compute_trajectory()
-        
+            
         plotter = graphical.TrajectoryPlotter( self )
         plotter.plot( self.traj, plot, **kwargs)
     
