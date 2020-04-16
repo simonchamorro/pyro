@@ -13,6 +13,9 @@ from pyro.analysis import costfunction, stopwatch
 from pyro.planning import valueiteration
 from pyro.control  import controller
 
+# IMPORTANT: if __name__ == "__main__" is important
+# to enable multiple process creation in Windows
+# since fork() is not supported
 if __name__ == "__main__":
     sys = pendulum.SinglePendulum()
 

@@ -400,7 +400,9 @@ class ValueIteration_ND:
         # Print params
         self.fontsize = 10
 
-        # Interpolation settings
+        # Interpolation settings. Default value is 'scipy'
+        # If 'scipy', uses SciPy interpolation functions
+        # If 'custom', uses methods defined in interpolation.py
         self.interpolation = interpolation
 
         # Options
@@ -418,14 +420,6 @@ class ValueIteration_ND:
 
         self.Jnew = self.J.copy()
         self.Jplot = self.J.copy()
-
-        # Get interpolation of current cost space
-
-        # elif self.interpolation == 'custom':
-        #    if self.n_dim == 2:
-        #        self.J_interpol = Interpolation2D(self.sys, self.grid_sys, self.J)
-        #    elif self.n_dim == 3:
-        #        self.J_interpol = Interpolation3D(self.sys, self.grid_sys, self.J)
 
         # For all state nodes
         for node in range(self.grid_sys.nodes_n):
@@ -455,11 +449,6 @@ class ValueIteration_ND:
             else:
                 points = tuple(self.grid_sys.xd[i] for i in range(self.n_dim))
                 J_interpol = rgi(points, self.J, method='nearest')
-        elif self.interpolation == 'custom':
-            if self.n_dim == 2:
-                J_interpol = Interpolation2D(self.sys, self.grid_sys, self.J)
-            elif self.n_dim == 3:
-                J_interpol = Interpolation3D(self.sys, self.grid_sys, self.J)
 
         # For all state nodes
         for node in range(self.grid_sys.nodes_n):
@@ -596,7 +585,7 @@ class ValueIteration_ND:
         # Asign Controller
         self.ctl.vi_law = self.vi_law
 
-    def compute_steps(self, l=50, plot=False, threshold=1.0e-25, maxJ=1000):
+    def compute_steps(self, l=50, plot=False, maxJ=1000):
         """ compute number of step """
         step = 0
         print('Step:', step)
@@ -604,8 +593,12 @@ class ValueIteration_ND:
         print('Current threshold', cur_threshold)
         if plot:
            self.plot_dynamic_cost2go(maxJ)
+
+        # Initialize timer
         timer = stopwatch.Stopwatch()
         timer.start()
+
+        # Loop through steps
         while step < l:
             step = step + 1
             print('Step:', step)
@@ -614,6 +607,8 @@ class ValueIteration_ND:
             if plot:
                self.draw_cost2go(maxJ)
             timer.start_new_lap(step)
+
+        # Stop timer and show graph with elapsed time/step and total time
         timer.stop()
         timer.create_graph()
         timer.to_string()
@@ -687,11 +682,13 @@ class ValueIteration_ND:
         for i in range(self.n_dim):
             mem_array_dimension = mem_array_dimension * self.grid_sys.xgriddim[i]
 
-        # Parallel CPU
+        # Init pool of workers for Parallel CPU
         cpu_cores = mp.cpu_count()
         pool = mp.Pool(processes=cpu_cores, initializer=init_multiprocessing,
                        initargs=(self.Jnew, self.action_policy, mem_array_dimension))
 
+        # Create Jnew and Policy proxy lists handled by the multiprocessing Manager
+        # This is necessary for the processes to handle writeable arrays
         manager = mp.Manager()
         final_jnew = manager.list(np.zeros(mem_array_dimension))
         final_policy = manager.list(np.zeros(mem_array_dimension))
@@ -714,10 +711,11 @@ class ValueIteration_ND:
         for i in range(len(split_arrays)):
             pool.apply(self.compute_node_multi, args=(split_arrays[i], J_interpol, final_jnew, final_policy))
 
+        # Close and join the processes to ensure they all finish before continuing
         pool.close()
         pool.join()
 
-        # Copy back the arrays
+        # Copy back the manager arrays in the regular objects
         self.J = im_j.copy()
         self.Jnew = np.array(final_jnew[:]).reshape(self.grid_sys.xgriddim)
         self.action_policy = np.array(final_policy[:]).reshape(self.grid_sys.xgriddim)

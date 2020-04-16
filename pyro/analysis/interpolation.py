@@ -7,10 +7,9 @@ import numpy as np
 from numba import jit
 
 
-# Numba implementations of 2D classes
+# Numba implementations of 2D and 3D classes
 def nearest_neighbor_2D(x_next, nodes_state, nodes_index, xgriddim, J):
     J_indices = find_indices(x_next, nodes_state, nodes_index, xgriddim, J)
-    print(J_indices)
     return J[J_indices[0]][J_indices[1]]
 
 
@@ -38,7 +37,7 @@ def find_indices(x_next, nodes_state, nodes_index, xgriddim, J):
     return nodes_dict.get(closest_neighbor)
 
 
-@jit(nopython=True, parallel=True)
+@jit(nopython=True)
 def find_neighbor(nodes_state, interpolated_x, interpolated_y, xgriddim):
     # get grid step and scale
     x_step = abs(nodes_state[xgriddim[0]][0] - nodes_state[0][0])

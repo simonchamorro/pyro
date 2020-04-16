@@ -39,7 +39,7 @@ if __name__ == "__main__":
     vi.uselookuptable = True
     vi.initialize()
     # vi.load_data('bicycle_parking_vi')
-    vi.compute_steps_multi(100, maxJ=100, plot=True)
+    vi.compute_steps_multi(50, maxJ=100, plot=True)
     #vi.save_data('bicycle_parking_vi')
 
     vi.assign_interpol_controller()
