@@ -457,7 +457,7 @@ class Animator:
 
         # self.ani_fig.show()
         plt.ioff()
-        plt.show(block=True)
+        plt.show()
         
 
     #####################################    

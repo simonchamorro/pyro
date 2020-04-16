@@ -93,6 +93,12 @@ class ViController(controller.StaticController):
         u = self.vi_law( x )
         
         return u
+    
+
+
+##############################################################################
+# Value Iteration x dim = 2, u dim = 1
+##############################################################################
 
 class ValueIteration_2D:
     """ Dynamic programming for 2D continous dynamic system, one continuous input u """
@@ -174,7 +180,7 @@ class ValueIteration_2D:
                         
                     else:
                         
-                        x_next        = self.sys.f( x , u ) * self.dt + x
+                        x_next        = self.sys.f( x , u ) * self.grid_sys.dt + x
                         x_ok          = self.sys.isavalidstate(x_next)
                         u_ok          = self.sys.isavalidinput(x,u)
                         action_isok   = ( u_ok & x_ok )
@@ -374,12 +380,12 @@ class ValueIteration_2D:
         
         
         
-'''
-################################################################################
-'''
+##############################################################################
+# Value Iteration generic algo
+##############################################################################
 
 class ValueIteration_ND:
-    """ Dynamic programming for 2D continous dynamic system, one continuous input u """
+    """ Dynamic programming for continuous dynamic system """
 
     ############################
     def __init__(self, grid_sys, cost_function, interpolation='scipy'):
@@ -398,7 +404,8 @@ class ValueIteration_ND:
         self.cf = cost_function
 
         # Print params
-        self.fontsize = 10
+        self.fontsize   = 10
+        self.plot_max_J = 1000
 
         # Interpolation settings. Default value is 'scipy'
         # If 'scipy', uses SciPy interpolation functions
@@ -522,9 +529,11 @@ class ValueIteration_ND:
             # Cost-to-go of a given action
             y = self.sys.h(x, u, 0)
             if self.n_dim == 2 and self.interpolation == 'scipy':
-                Q[action] = self.cf.g(x, u, y, 0) * self.grid_sys.dt + J_next[0, 0]
+                Q[action] = ( self.cf.g(x, u, y, 0) * self.grid_sys.dt
+                            + J_next[0, 0] )
             else:
-                Q[action] = self.cf.g(x, u, y, 0) * self.grid_sys.dt + J_next
+                Q[action] = ( self.cf.g(x, u, y, 0) * self.grid_sys.dt 
+                            + J_next)
 
         else:
             # Not allowable states or inputs/states combinations
@@ -819,8 +828,10 @@ class ValueIteration_ND:
             Q[action] = self.cf.INF
 
     ################################
-    def plot_dynamic_cost2go(self, maxJ=1000):
+    def plot_dynamic_cost2go(self):
         """ print graphic """
+        
+        maxJ = self.plot_max_J
 
         plt.ion()
 
@@ -840,7 +851,7 @@ class ValueIteration_ND:
                   self.sys.x_ub[1]])
 
         self.Jplot = self.J.copy()
-        self.create_Jplot(maxJ)
+        self.create_Jplot()
         plot = self.Jplot.T if self.n_dim == 2 else self.Jplot[..., 0].T
         self.im1_dynamic = plt.pcolormesh(self.grid_sys.xd[0],
                                   self.grid_sys.xd[1],
@@ -857,14 +868,17 @@ class ValueIteration_ND:
     #############################
     def draw_cost2go(self, maxJ=1000):
         self.Jplot = self.J.copy()
-        self.create_Jplot(maxJ)
+        self.create_Jplot()
         plot = self.Jplot.T if self.n_dim == 2 else self.Jplot.T[0]
         self.im1_dynamic.set_array(np.ravel(plot))
         plt.draw()
         plt.pause(0.1)
 
     ################################
-    def create_Jplot(self, maxJ=1000):
+    def create_Jplot(self):
+        
+        maxJ = self.plot_max_J
+        
         ## Saturation function for cost
         if self.n_dim == 2:
             for i in range(self.grid_sys.xgriddim[0]):
@@ -879,9 +893,11 @@ class ValueIteration_ND:
     ################################
     def plot_cost2go(self, maxJ=1000):
         """ print graphic """
+        
+        self.plot_max_J = maxJ
 
-        self.plot_dynamic_cost2go(maxJ)
-        self.draw_cost2go(maxJ)
+        self.plot_dynamic_cost2go()
+        self.draw_cost2go()
 
     ################################
     def plot_policy(self, i=0):

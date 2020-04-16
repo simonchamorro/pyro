@@ -7,25 +7,27 @@ Created on Fri Nov 16 12:01:07 2018
 
 ###############################################################################
 import numpy as np
-###############################################################################
-from pyro.dynamic  import vehicle
-from pyro.control  import linear
 import matplotlib.pyplot as plt
+###############################################################################
+import advanced_vehicles
+import test_vehicle_controllers
 ###############################################################################
 
 # "Fake" controller - Varying inputs (delta, F_xf, F_xr) throughout time (change in linear.py)
-ctl = linear.dynLongForcesInputs()
+ctl = test_vehicle_controllers.dynLongForcesInputs()
 # Vehicule dynamical system
-sys = vehicle.LateralDynamicBicycleModelFI()
+sys = advanced_vehicles.LateralDynamicBicycleModelwithForceInputs()
 # Add the inputs to the dynamical system
 cl_sys = ctl + sys
 # Plot open-loop behavior (ex: np.array[intial_conditions], time_of_simulation)
-cl_sys.plot_trajectory( np.array([0,0,0,0,0,0]) , 48 )
+cl_sys.x0 = np.array([0,0,0,0,0,0])
+cl_sys.compute_trajectory( 48 )
+cl_sys.plot_trajectory('x')
 
 # Rebuild x,u and t from simulation
-x = cl_sys.sim.x_sol
-u = cl_sys.sim.u_sol 
-t = cl_sys.sim.t 
+x = cl_sys.traj.x
+u = cl_sys.traj.u
+t = cl_sys.traj.t 
 
 # Compute tire forces and slip angles for graphical purpose  
 F_nf = sys.mass*sys.g*sys.b/(sys.b+sys.a)
@@ -107,10 +109,6 @@ plt.legend(fontsize ='15')
 plt.show()
 
 # Animate the simulation
+cl_sys.plot_trajectory('x')
+cl_sys.plot_trajectory('u')
 cl_sys.animate_simulation()
-
-# Plot inputs only
-cl_sys.sim.plot( plot='u' )
-
-# Plot states only
-cl_sys.sim.plot( plot='x' )

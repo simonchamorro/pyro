@@ -13,7 +13,7 @@ from pyro.dynamic  import manipulator
 ###############################################################################
 
 torque_controlled_robot = manipulator.TwoLinkManipulator()
-speed_controlled_robot  = manipulator.SpeedControlledManipulator( 
+speed_controlled_robot  = manipulator.SpeedControlledManipulator.from_manipulator( 
                                              torque_controlled_robot )
 
 

@@ -214,6 +214,7 @@ class PIDController( controller.DynamicController ):
         # Error derivative value
         de = (e - self.get_z_filter(z)) / self.tau
         
+        # Control Input
         u = self.KP.dot( e ) + self.KI.dot( ei ) + self.KD.dot( de )
         
         # Saturation
