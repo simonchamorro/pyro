@@ -64,21 +64,20 @@ ctl.T[5,5] = 8
 ctl.T[6,6] = 8
 ctl.T[7,7] = 8
 
-
 # Set Point
-ctl.rbar = np.array([0,-pi/4,pi/2])
+ctl.rbar = np.array([0,0,0])
 
 # New cl-dynamic
 cl_sys = ctl + sys
 #cl_sys = sys
 
 # Simultation
-#cl_sys.x0  = np.array([pi/3,1,0,0,0,0])
 cl_sys.x0[0]  = pi/3
 cl_sys.x0[1]  = 1
 cl_sys.x0[2]  = 0
 
 cl_sys.compute_trajectory(tf=10, n=20001, solver='euler')
 cl_sys.plot_trajectory()
+#cl_sys.plot_trajectory_with_internal_states()
 cl_sys.animate_simulation(is_3d = True)
 

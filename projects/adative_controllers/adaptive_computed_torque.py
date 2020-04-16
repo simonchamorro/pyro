@@ -359,10 +359,7 @@ class AdaptativeController_WCRT( controller.DynamicController ):
     ############################
     def b(self, z, x, q_d, t):
         
-#        [ q , dq ]     = self.model.x2q( x ) 
-        
-        q = np.zeros( self.model.dof )
-        dq = np.zeros( self.model.dof )
+        [ q , dq ]     = self.model.x2q( x ) 
         
         ddq_d          =   np.zeros( self.model.dof )
         dq_d           =   np.zeros( self.model.dof )
@@ -414,8 +411,6 @@ class AdaptativeController_WCRT( controller.DynamicController ):
         """
         
         [ q , dq ]     = self.model.x2q( x )
-        q = np.zeros( self.model.dof )
-        dq = np.zeros( self.model.dof )
         
         ddq_d          =   np.zeros( self.model.dof )
         dq_d           =   np.zeros( self.model.dof )
@@ -452,7 +447,6 @@ class AdaptativeController_WCRT( controller.DynamicController ):
         Y[2,7]=q[2]
         
         self.A=self.get_z_integral( z )
-        print(self.A)
                          
         u                     = self.adaptative_torque( Y , s  , q , t )
         
