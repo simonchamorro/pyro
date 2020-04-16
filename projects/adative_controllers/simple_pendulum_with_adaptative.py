@@ -13,12 +13,12 @@ from adaptive_computed_torque import SinglePendulumAdaptativeController
 
 sys = pendulum.SinglePendulum()
 sys.cost_function = None
-ctl = SinglePendulumAdaptativeController( sys )
+ctl = SinglePendulumAdaptativeController(sys)
 
 sys.m1 = 1
 
-ctl.A[0] = 0
-ctl.A[1] = 0
+ctl.z0[0] = 8
+ctl.z0[1] = 12
 
 ctl.Kd = 1
 ctl.lam = 1
@@ -36,5 +36,5 @@ cl_sys.x0[0]  = 0
 
 cl_sys.compute_trajectory(tf=10, n=20001, solver='euler')
 cl_sys.plot_phase_plane_trajectory()
-cl_sys.plot_trajectory('xu')
+cl_sys.plot_trajectory_with_internal_states()
 cl_sys.animate_simulation()

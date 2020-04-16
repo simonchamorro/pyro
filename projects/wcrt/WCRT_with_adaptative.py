@@ -10,14 +10,13 @@ import math
 ###############################################################################
 from wcrt import WCRT 
 from projects.adative_controllers import adaptive_computed_torque
-
 ###############################################################################
 
 pi = math.pi
 
 sys = WCRT()
 sys.cost_function = None
-ctl  = adaptive_computed_torque.AdaptativeController_WCRT( sys )
+ctl  = adaptive_computed_torque.AdaptativeController_WCRT(sys)
 
 #Param Wcrt
 sys.d1 = 3
@@ -40,14 +39,14 @@ sys.lc2 = 0.5
 sys.lc3 = 0.7
 
 #Param adapt-control
-ctl.A[0] = 5
-ctl.A[1] = 5
-ctl.A[2] = 5
-ctl.A[3] = 0
-ctl.A[4] = 5
-ctl.A[5] = 20
-ctl.A[6] = 10
-ctl.A[7] = 0
+ctl.guess[0] = 5
+ctl.guess[1] = 5
+ctl.guess[2] = 5
+ctl.guess[3] = 0
+ctl.guess[4] = 5
+ctl.guess[5] = 20
+ctl.guess[6] = 10
+ctl.guess[7] = 0
 
 ctl.Kd[0,0] = 7
 ctl.Kd[1,1] = 7
@@ -64,20 +63,20 @@ ctl.T[5,5] = 8
 ctl.T[6,6] = 8
 ctl.T[7,7] = 8
 
-# Set Point
+#Set Point
 ctl.rbar = np.array([0,0,0])
 
-# New cl-dynamic
+#New cl-dynamic
 cl_sys = ctl + sys
 #cl_sys = sys
 
-# Simultation
+#Simultation
 cl_sys.x0[0]  = pi/3
 cl_sys.x0[1]  = 1
 cl_sys.x0[2]  = 0
 
-cl_sys.compute_trajectory(tf=10, n=20001, solver='euler')
+cl_sys.compute_trajectory(tf=5, n=20001, solver='euler')
 cl_sys.plot_trajectory()
-#cl_sys.plot_trajectory_with_internal_states()
+cl_sys.plot_trajectory_with_internal_states()
 cl_sys.animate_simulation(is_3d = True)
 
