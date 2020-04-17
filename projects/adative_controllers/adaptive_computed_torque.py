@@ -317,7 +317,6 @@ class AdaptativeController_WCRT( controller.DynamicController ):
         
         # Params
         self.A = np.zeros(8)
-        self.guess = np.zeros(8)
         self.T=np.eye(8)
         self.Kd = np.eye(3)
         self.lam  = 1   # Sliding surface slope
@@ -478,7 +477,7 @@ class AdaptativeController_WCRT( controller.DynamicController ):
         Y[2,6]=c23
         Y[2,7]=q[2]
         
-        self.A = self.guess + self.get_z_integral( z )
+        self.A =self.get_z_integral( z )
                          
         u                     = self.adaptative_torque( Y , s  , q , t )
         
