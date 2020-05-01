@@ -56,8 +56,8 @@ class JointPID( RobotController ) :
     Linear controller for mechanical system with full state feedback (y=x)
     Independent PID for each DOF
     ---------------------------------------
-    r  : reference signal_proc vector  dof x 1
-    y  : sensor signal_proc vector     n   x 1
+    r  : reference signal vector  dof x 1
+    y  : sensor signal vector     n   x 1
     u  : control inputs vector    dof x 1
     t  : time                     1   x 1
     ---------------------------------------
@@ -91,8 +91,8 @@ class JointPID( RobotController ) :
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal_proc vector     p x 1
-        r  : reference signal_proc vector  k x 1
+        y  : sensor signal vector     p x 1
+        r  : reference signal vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS
@@ -132,8 +132,8 @@ class EndEffectorPID( RobotController ) :
     """ 
     PID in effector coordinates, using the Jacobian of the system
     ---------------------------------------
-    r  : reference signal_proc vector  e   x 1
-    y  : sensor signal_proc vector     n   x 1
+    r  : reference signal vector  e   x 1
+    y  : sensor signal vector     n   x 1
     u  : control inputs vector    dof x 1
     t  : time                     1   x 1
     ---------------------------------------
@@ -172,8 +172,8 @@ class EndEffectorPID( RobotController ) :
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal_proc vector     p x 1
-        r  : reference signal_proc vector  k x 1
+        y  : sensor signal vector     p x 1
+        r  : reference signal vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS
@@ -220,8 +220,8 @@ class EndEffectorKinematicController( RobotController ) :
     """ 
     Kinematic effector coordinates controller using the Jacobian of the system
     ---------------------------------------
-    r  : reference signal_proc vector  e   x 1
-    y  : sensor signal_proc vector     dof x 1
+    r  : reference signal vector  e   x 1
+    y  : sensor signal vector     dof x 1
     u  : control inputs vector    dof x 1
     t  : time                     1   x 1
     ---------------------------------------
@@ -230,7 +230,7 @@ class EndEffectorKinematicController( RobotController ) :
     """
     
     ############################
-    def __init__(self, manipulator, k = 0):
+    def __init__(self, manipulator, k = 1 ):
         """ """
         
         # Using from model
@@ -259,8 +259,8 @@ class EndEffectorKinematicController( RobotController ) :
         Feedback static computation u = c(y,r,t)
         
         INPUTS
-        y  : sensor signal_proc vector     p x 1
-        r  : reference signal_proc vector  k x 1
+        y  : sensor signal vector     p x 1
+        r  : reference signal vector  k x 1
         t  : time                     1 x 1
         
         OUPUTS
@@ -283,8 +283,82 @@ class EndEffectorKinematicController( RobotController ) :
         # Error
         e  = r_desired - r_actual
         
-        # Effector space PID
+        # Effector space speed
         dr_r = e * self.gains
+        
+        # From effector speed to joint speed
+        if self.dof == self.e:
+            dq_r = np.dot( np.linalg.inv( J ) , dr_r )
+            
+        elif self.dof > self.e:
+            J_pinv = np.linalg.pinv( J )
+            dq_r   = np.dot( J_pinv , dr_r )
+            
+        else:
+            #TODO
+            pass
+        
+        return dq_r
+    
+    
+class EndEffectorKinematicControllerWithNullSpaceTask( EndEffectorKinematicController ) :
+    """ 
+    Kinematic effector coordinates controller using the Jacobian of the system
+    ---------------------------------------
+    r  : reference signal vector  e   x 1
+    y  : sensor signal vector     dof x 1
+    u  : control inputs vector    dof x 1
+    t  : time                     1   x 1
+    ---------------------------------------
+    u = c( y , r , t ) = J(q)^T *  [ (r - r_robot(q)) * k ]
+
+    """
+    
+    ############################
+    def __init__(self, manipulator, k = 1 , k_null = 1):
+        """ """
+        
+        EndEffectorKinematicController.__init__( self , manipulator , k )
+        
+        
+        self.gains_null = np.ones( self.dof  ) * k_null
+        self.q_d        = np.zeros( self.dof  )
+        
+    
+    #############################
+    def c( self , y , r , t = 0 ):
+        """ 
+        Feedback static computation u = c(y,r,t)
+        
+        INPUTS
+        y  : sensor signal vector     p x 1
+        r  : reference signal vector  k x 1
+        t  : time                     1 x 1
+        
+        OUPUTS
+        u  : control inputs vector    m x 1
+        
+        """
+        
+        #u = np.zeros(self.m) 
+        
+        # Feedback from sensors
+        q = y
+        
+        # Jacobian computation
+        J = self.J( q )
+        
+        # Ref
+        r_desired   = r
+        r_actual    = self.fwd_kin( q )
+        
+        # Error
+        e   = r_desired - r_actual
+        q_e = self.q_d  - q    
+        
+        # Effector space speed 
+        dr_r    =   e * self.gains
+        dq_null = q_e * self.gains_null
         
         # From effector force to joint torques
         if self.dof == self.e:
@@ -292,7 +366,9 @@ class EndEffectorKinematicController( RobotController ) :
             
         elif self.dof > self.e:
             J_pinv = np.linalg.pinv( J )
-            dq_r   = np.dot( J_pinv , dr_r )
+            Null_p = np.identity( self.dof ) - np.dot(J_pinv,J)
+            
+            dq_r   = np.dot( J_pinv , dr_r ) + np.dot( Null_p , dq_null )
             
         else:
             #TODO
