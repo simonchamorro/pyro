@@ -102,12 +102,12 @@ class Asimov2D( manipulator.TwoLinkManipulator ):
 if __name__ == "__main__":
     """ MAIN TEST """
 
-    sys = Asimov()
-    dsys = manipulator.SpeedControlledManipulator(sys)
-    dsys.ubar = np.array([1, 1, 1])
-    dsys.show3([0.1, 0.1, 0.1])
-    x02 = np.array([0, 1, 1])  # Position initiale
+    asi = Asimov()
+    sys = manipulator.SpeedControlledManipulator.from_manipulator(asi)
 
-    dsys.plot_animation(x02)
-    dsys.sim.plot('xu')
+    sys.ubar = np.array([1,0.5,0.1]) # Constant velocity
+    sys.x0   = np.array([0, 0, 0])   # Position initiale
+    
+    sys.compute_trajectory()
+    sys.animate_simulation( is_3d = True )
 

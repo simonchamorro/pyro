@@ -1232,7 +1232,7 @@ class ThreeLinkManipulator3D( Manipulator ):
         lines_pts.append( pts )
         
         ###########################
-        # pendulum kinematic
+        # robot kinematic
         ###########################
         
         pts      = np.zeros(( 4 , 3 ))
