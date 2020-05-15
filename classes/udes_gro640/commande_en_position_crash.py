@@ -28,9 +28,9 @@ clsys = ctl + sys
 
 # clsys.x0 =  np.array([0,0.1,0])  #crash
 # clsys.x0 =  np.array([0,0.3,0]) #crash 
-# clsys.x0 =  np.array([0,0.5,0]) #crash 
-clsys.x0 =  np.array([0,0.7,0]) # fonctionne
-
+clsys.x0 =  np.array([0,0.5,0]) #crash 
+#clsys.x0 =  np.array([0,0.7,0]) # fonctionne
+# 
 # Simulation
 clsys.compute_trajectory( 5 )
 clsys.plot_trajectory( plot='xu' )
