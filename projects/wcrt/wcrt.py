@@ -54,6 +54,9 @@ class WCRT( mechanical.MechanicalSystem ):
         self.d2 = 0
         self.d3 = 0
         
+        self.k1 = 0
+        self.k2 = 0
+        self.k3 = 0
         
     ##############################
     def trig(self, q ):
@@ -155,9 +158,9 @@ class WCRT( mechanical.MechanicalSystem ):
         
         G = np.zeros(3)
         
-        G[0] = 0
-        G[1] = self.m2*g*self.lc2*c2 + self.m3*g*self.l2*c2 + self.m3*g*self.lc3*c23
-        G[2] = self.m3*g*self.lc3*c23
+        G[0] = 0 + self.k1*q[0]
+        G[1] = self.m2*g*self.lc2*c2 + self.m3*g*self.l2*c2 + self.m3*g*self.lc3*c23 + self.k2*q[1]
+        G[2] = self.m3*g*self.lc3*c23 + self.k3*q[2]
 
         return G
         

@@ -103,11 +103,10 @@ if __name__ == "__main__":
     """ MAIN TEST """
 
     sys = Asimov()
-    dsys = manipulator.SpeedControlledManipulator(sys)
+    dsys = manipulator.SpeedControlledManipulator.from_manipulator( sys )
     dsys.ubar = np.array([1, 1, 1])
     dsys.show3([0.1, 0.1, 0.1])
-    x02 = np.array([0, 1, 1])  # Position initiale
-
-    dsys.plot_animation(x02)
-    dsys.sim.plot('xu')
+    dsys.x0 = np.array([0, 1, 1])  # Position initiale
+    dsys.plot_trajectory('xu')
+    dsys.animate_simulation( is_3d = True )
 
