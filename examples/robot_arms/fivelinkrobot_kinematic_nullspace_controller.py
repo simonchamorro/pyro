@@ -24,8 +24,8 @@ kinematic_controller.rbar  = np.array([1.0,1.0])
 kinematic_controller.gains = np.array([1.0,1.0])
 
 # Secondary objective
-kinematic_controller.q_d         = np.array([-1,-1,0,0,0])
-kinematic_controller.gains_null  = np.array([100,100,0,0,0])
+kinematic_controller.q_d         = np.array([-1,-1,-1,-1,-1])
+kinematic_controller.gains_null  = np.array([10,10,10,10,10])
 
 
 # Closed-loop dynamics
