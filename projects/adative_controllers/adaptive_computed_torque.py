@@ -15,15 +15,13 @@ class SinglePendulumAdaptativeController( controller.DynamicController ):
     """ 
     Adaptative Controller for fully actuated mechanical systems (single pendulum)
     """
-    
-    
     ############################
     def __init__( self , model , traj = None ):
         """ """ 
         self.name = 'Adaptive controller'
 
         # Params
-        #self.A = np.array([0.2,0.2])
+        self.A = np.zeros(2)
         self.T=np.eye(2)
         self.Kd = 1
         self.lam  = 1   # Sliding surface slope
@@ -70,11 +68,8 @@ class SinglePendulumAdaptativeController( controller.DynamicController ):
     ############################
     def adaptative_torque( self , Y , s , q , t ):
         """ 
-        
         Given actual state, compute torque necessarly to guarantee convergence
-        
         """
-                
         u_computed      = np.dot( Y , self.A  )
         
         u_discontinuous = self.Kd*s
@@ -83,7 +78,6 @@ class SinglePendulumAdaptativeController( controller.DynamicController ):
         
         return u_tot
                         
-        
     ############################
     def b(self, z, x, q_d, t):
         
@@ -124,7 +118,7 @@ class SinglePendulumAdaptativeController( controller.DynamicController ):
         Y[0]=ddq_r
         Y[1]=np.sin(q)
         
-        self.A=self.get_z_integral( z )
+        self.A = self.get_z_integral(z)
                 
         u                     = self.adaptative_torque( Y , s  , q , t )
         
@@ -149,7 +143,8 @@ class DoublePendulumAdaptativeController(  controller.DynamicController ):
         
         self.name = 'Adaptive controller'
 
-        #self.A = np.zeros(5)
+        self.A = np.zeros(5)
+        self.guess = np.zeros(5)
         self.T=np.eye(5)
         self.Kd = np.eye(2)
         self.lam  = 1   # Sliding surface slope
@@ -292,7 +287,7 @@ class DoublePendulumAdaptativeController(  controller.DynamicController ):
         Y[1,3]=0
         Y[1,4]=s12
         
-        self.A=self.get_z_integral( z )
+        self.A= self.guess + self.get_z_integral(z)
                 
         u                     = self.adaptative_torque(  Y , s  , q , t )
         
@@ -482,7 +477,7 @@ class AdaptativeController_WCRT( controller.DynamicController ):
         Y[2,6]=c23
         Y[2,7]=q[2]
         
-        self.A=self.get_z_integral( z )
+        self.A =self.get_z_integral( z )
                          
         u                     = self.adaptative_torque( Y , s  , q , t )
         
