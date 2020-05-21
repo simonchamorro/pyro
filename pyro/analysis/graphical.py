@@ -162,10 +162,9 @@ class TrajectoryPlotter:
 
         simfig.tight_layout()
 
-        if show:
-            simfig.canvas.draw()
-            plt.draw()
-            #plt.pause(5)
+        simfig.canvas.draw()
+        plt.draw()
+        plt.show()
 
         self.fig   = simfig
         self.plots = plots
@@ -182,6 +181,9 @@ class TrajectoryPlotter:
         plt.plot([traj.x[-1,x_axis]], [traj.x[-1,y_axis]], 's') # end
 
         pp.phasefig.tight_layout()
+        
+        plt.draw()
+        plt.show()
         
 
     ###########################################################################
@@ -212,6 +214,9 @@ class TrajectoryPlotter:
                              self.sys.x_ub[ z_axis ])
 
         pp.phasefig.tight_layout()
+        
+        plt.draw()
+        plt.show()
 
 
     ###########################################################################
@@ -242,6 +247,9 @@ class TrajectoryPlotter:
         plt.plot([traj.x[-1,x_axis]], [traj.x[-1,y_axis]], 's') # end
 
         plt.tight_layout()
+        
+        plt.draw()
+        plt.show()
         
         
         
