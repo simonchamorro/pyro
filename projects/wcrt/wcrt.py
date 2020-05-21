@@ -50,10 +50,13 @@ class WCRT( mechanical.MechanicalSystem ):
         
         self.gravity = 9.81
         
-        self.d1 = 2
-        self.d2 = 2
-        self.d3 = 2
+        self.d1 = 0
+        self.d2 = 0
+        self.d3 = 0
         
+        self.k1 = 0
+        self.k2 = 0
+        self.k3 = 0
         
     ##############################
     def trig(self, q ):
@@ -90,16 +93,16 @@ class WCRT( mechanical.MechanicalSystem ):
         H = np.zeros((3,3))
         
         H[0,0] = self.m1*self.lc1**2 + self.m2*self.l1**2 + self.m3*self.l1**2
-        H[1,0] = - ( self.m3*self.l1*self.l2*s2 + self.m3*self.l1*self.lc3*c3*s2
-                    + self.m2*self.l1*self.lc2*s2 )
-        H[2,0] = - ( self.m3*self.l1*self.lc3*s23 )
+        H[1,0] = self.m3*self.l1*self.l2*s2 + self.m3*self.l1*self.lc3*c3*s2 + self.m2*self.l1*self.lc2*s2
+        H[1,0] = -H[1,0]
+        H[2,0] = self.m3*self.l1*self.lc3*s23
+        H[2,0] = -H[2,0]
         H[0,1] = H[1,0]
         H[1,1] = self.m2*self.lc2**2 + self.m3*self.l2**2 + 2*self.m3*self.l2*self.lc3*c3 + self.m3*self.lc3**2*c3*c3
         H[2,1] = self.m3*self.lc3*self.l2*c3 + self.m3*self.lc3**2*c3*c3
         H[0,2] = H[2,0]
         H[1,2] = H[2,1]
         H[2,2] = self.m3*self.lc3**2
-        
         
         return H
     
@@ -122,13 +125,12 @@ class WCRT( mechanical.MechanicalSystem ):
         C[0,0] = 0
         C[1,0] = 0
         C[2,0] = 0
-        C[0,1] = - ( self.m2*self.l1*self.lc2*c2*dq[1] + self.m3*self.l1*self.l2*c2*dq[1] 
-                    + self.m3*self.l1*self.lc3*c2*c3*dq[1] 
-                    - self.m3*self.l1*self.lc3*s2*s3*dq[2] )
+        C[0,1] = self.m2*self.l1*self.lc2*c2*dq[1] + self.m3*self.l1*self.l2*c2*dq[1] + self.m3*self.l1*self.lc3*c2*c3*dq[1] - self.m3*self.l1*self.lc3*s2*s3*dq[2]
+        C[0,1] = -C[0,1]
         C[1,1] = -self.m3*self.l2*self.lc3*s3*dq[2] - self.m3*self.lc3**2*s3*c3*dq[2]
         C[2,1] = self.m3*self.l1*self.lc3*c2*c3*dq[0] + self.m3*self.l2*self.lc3*s3*dq[1] + self.m3*self.lc3**2*s3*c3*dq[1] 
-        C[0,2] = - ( self.m3*self.l1*self.lc3*c23*dq[1] 
-                    + self.m3*self.l1*self.lc3*c23*dq[2] )
+        C[0,2] = self.m3*self.l1*self.lc3*c23*dq[1] + self.m3*self.l1*self.lc3*c23*dq[2]
+        C[0,2] = -C[0,2]
         C[1,2] = -C[2,1] - self.m3*self.l2*self.lc3*s3*dq[2] - 2*self.m3*self.lc3**2*s3*c3*dq[2]
         C[2,2] = 0
       
@@ -156,9 +158,9 @@ class WCRT( mechanical.MechanicalSystem ):
         
         G = np.zeros(3)
         
-        G[0] = 0
-        G[1] = self.m2*g*self.lc2*c2 + self.m3*g*self.l2*c2 + self.m3*g*self.lc3*c23
-        G[2] = self.m3*g*self.lc3*c23
+        G[0] = 0 + self.k1*q[0]
+        G[1] = self.m2*g*self.lc2*c2 + self.m3*g*self.l2*c2 + self.m3*g*self.lc3*c23 + self.k2*q[1]
+        G[2] = self.m3*g*self.lc3*c23 + self.k3*q[2]
 
         return G
         

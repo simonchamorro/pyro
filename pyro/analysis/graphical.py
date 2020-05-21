@@ -32,7 +32,7 @@ class TrajectoryPlotter:
 
 
     ##########################################################################
-    def plot(self, traj, plot = 'x' , show = True):
+    def plot(self, traj, plot = 'x' , show = True ):
         """
         Create a figure with trajectories for states, inputs, outputs and cost
         ----------------------------------------------------------------------
@@ -75,6 +75,10 @@ class TrajectoryPlotter:
             l = sys.p
         elif plot == 'j':
             l = 2
+        elif plot == 'z5':
+            l = 5
+        elif plot == 'z8':
+            l = 8
         else:
             raise ValueError('not a valid ploting argument')
 
@@ -133,15 +137,34 @@ class TrajectoryPlotter:
             plots[j].grid(True)
             plots[j].tick_params( labelsize = self.fontsize )
             j = j + 1
+            
+        if plot == 'z5':
+            # Internal states
+            for i in range( l ):
+                plots[j].plot( traj.t , traj.x[:,i+sys.p] , 'b')
+                plots[j].set_ylabel(sys.state_label[i+sys.p] +'\n'+
+                sys.state_units[i+sys.p] , fontsize=self.fontsize )
+                plots[j].grid(True)
+                plots[j].tick_params( labelsize = self.fontsize )
+                j = j + 1
 
+        if plot == 'z8':
+            # Internal states
+            for i in range( l ):
+                plots[j].plot( traj.t , traj.x[:,i+sys.p] , 'b')
+                plots[j].set_ylabel(sys.state_label[i+sys.p] +'\n'+
+                sys.state_units[i+sys.p] , fontsize=self.fontsize )
+                plots[j].grid(True)
+                plots[j].tick_params( labelsize = self.fontsize )
+                j = j + 1
+                
         plots[l-1].set_xlabel('Time [sec]', fontsize=self.fontsize )
 
         simfig.tight_layout()
 
-        if show:
-            simfig.canvas.draw()
-            plt.draw()
-            #plt.pause(5)
+        simfig.canvas.draw()
+        plt.draw()
+        plt.show()
 
         self.fig   = simfig
         self.plots = plots
@@ -160,6 +183,9 @@ class TrajectoryPlotter:
         plt.draw()
 
         pp.phasefig.tight_layout()
+        
+        plt.draw()
+        plt.show()
         
 
     ###########################################################################
@@ -192,6 +218,9 @@ class TrajectoryPlotter:
         plt.draw()
 
         pp.phasefig.tight_layout()
+        
+        plt.draw()
+        plt.show()
 
 
     ###########################################################################
@@ -224,6 +253,9 @@ class TrajectoryPlotter:
         plt.draw()
 
         plt.tight_layout()
+        
+        plt.draw()
+        plt.show()
         
         
         

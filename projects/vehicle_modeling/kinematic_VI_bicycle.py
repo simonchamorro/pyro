@@ -7,16 +7,16 @@ Created on Fri Nov 16 12:01:07 2018
 
 ###############################################################################
 import numpy as np
-###############################################################################
-from pyro.dynamic  import vehicle
-from pyro.control  import linear
 import matplotlib.pyplot as plt
-
+###############################################################################
+from pyro.dynamic import vehicle
+###############################################################################
+import advanced_vehicles
+import test_vehicle_controllers
 ###############################################################################
 
-# "Fake" controller - Varying inputs (delta, Vx) throughout time (change in linear.py)
-ctl = linear.kinematicInputs()
-
+# "Fake" controller - Varying inputs (delta, T_f, T_r) throughout time (change in linear.py)
+ctl = test_vehicle_controllers.kinematicInputs()
 # Vehicule dynamical system
 sys = vehicle.KinematicBicyleModel()
 
@@ -25,12 +25,13 @@ cl_sys = ctl+sys
 
 
 # Plot open-loop behavior (ex: np.array[intial_conditions], time_of_simulation)
-cl_sys.plot_trajectory( np.array([0,0,0]) , 10)
+cl_sys.x0 = np.array([0,0,0])
+cl_sys.plot_trajectory()
 
 # Rebuild x,u and t from simulation
-x = cl_sys.sim.x_sol
-u = cl_sys.sim.u_sol 
-t = cl_sys.sim.t   
+x = cl_sys.traj.x
+u = cl_sys.traj.u
+t = cl_sys.traj.t   
 
 # Plot the vehicle's trajectory
 figsize   = (7, 4)
