@@ -156,6 +156,8 @@ class TrajectoryPlotter:
         plt.plot(traj.x[:,x_axis], traj.x[:,y_axis], 'b-') # path
         plt.plot([traj.x[0,x_axis]], [traj.x[0,y_axis]], 'o') # start
         plt.plot([traj.x[-1,x_axis]], [traj.x[-1,y_axis]], 's') # end
+        
+        plt.draw()
 
         pp.phasefig.tight_layout()
         
@@ -186,6 +188,8 @@ class TrajectoryPlotter:
                              self.sys.x_ub[ y_axis ])
         pp.ax.set_zlim( self.sys.x_lb[ z_axis ] ,
                              self.sys.x_ub[ z_axis ])
+        
+        plt.draw()
 
         pp.phasefig.tight_layout()
 
@@ -216,6 +220,8 @@ class TrajectoryPlotter:
         plt.plot(traj.x[:,x_axis], traj.x[:,y_axis], 'b-') # path
         plt.plot([traj.x[0,x_axis]], [traj.x[0,y_axis]], 'o') # start
         plt.plot([traj.x[-1,x_axis]], [traj.x[-1,y_axis]], 's') # end
+        
+        plt.draw()
 
         plt.tight_layout()
         
