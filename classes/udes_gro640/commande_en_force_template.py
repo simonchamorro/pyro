@@ -21,11 +21,16 @@ ctl = CustomDrillingController( )
 clsys = ctl + sys
 
 # États initiaux
-#clsys.x0 =  np.array([0.7,1.4,-1.3,0,0,0]) #
-clsys.x0 =  np.array([0,1.4,-1.3,0,0,0]) #
+clsys.x0 =  np.array([0.7,1.4,-1.3,0,0,0]) #
+#clsys.x0 =  np.array([0,1.4,-1.3,0,0,0]) #
 
 # Simulation
-tf = 4
+tf = 6
 clsys.compute_trajectory( tf )
 clsys.plot_trajectory('x')
+clsys.plot_trajectory('u')
 clsys.animate_simulation( is_3d = True )
+
+# Exemple pour analyse
+x = clsys.traj.x  # Trajectoire des états du robot
+u = clsys.traj.u  # Trajectoire des inputs du robot

@@ -467,11 +467,14 @@ class DrillingRobot( ThreeLinkManipulator3D ):
         ###############################
         
         pts      = np.zeros(( 5 , 3 ))
-        pts[0,:] = np.array([-1,-1,0])
-        pts[1,:] = np.array([+1,-1,0])
-        pts[2,:] = np.array([+1,+1,0])
-        pts[3,:] = np.array([-1,+1,0])
-        pts[4,:] = np.array([-1,-1,0])
+        
+        z = 0.2
+        
+        pts[0,:] = np.array([-1,-1,z])
+        pts[1,:] = np.array([+1,-1,z])
+        pts[2,:] = np.array([+1,+1,z])
+        pts[3,:] = np.array([-1,+1,z])
+        pts[4,:] = np.array([-1,-1,z])
         
         lines_pts.append( pts )
         
@@ -539,7 +542,7 @@ class DrillingRobotOnJig( DrillingRobot ):
             # Dans le bois
             fx = - dr[0] * 2000 # damping lateral
             fy = - dr[1] * 2000 # damping lateral
-            fz = - dr[2] * 500 # damping vertical 
+            fz = - dr[2] * 1000 # damping vertical 
             
             # Pointe de la mèche dans le pré-trou
             if  (( r[0] > hole_position[0] - hole_radius ) &
@@ -550,8 +553,8 @@ class DrillingRobotOnJig( DrillingRobot ):
                 # Aspiration dans le trou du à l'angle de la pointe de la mèche
                 ex = r[0] - hole_position[0]
                 ey = r[1] - hole_position[1]
-                fx = fx / 10 - 10 * ex * fz
-                fy = fy / 10 - 10 * ey * fz
+                fx = fx / 10 - 2 * ex * fz
+                fy = fy / 10 - 2 * ey * fz
                 
                 # Moins de résistance verticale
                 fz = fz / 2
@@ -600,7 +603,7 @@ class DrillingRobotOnJig( DrillingRobot ):
         
         pts[1,0] = c1*(lx3*c23 + lx2*c2)
         pts[1,1] = s1*(lx3*c23 + lx2*c2) 
-        pts[1,2] = lz1 + lx3*s23 + lx2*s2 - 0.4
+        pts[1,2] = lz1 + lx3*s23 + lx2*s2 - 0.2
         
         lines_pts.append(pts)
         
@@ -614,8 +617,8 @@ class DrillingRobotOnJig( DrillingRobot ):
         y = self.hole_position[1]
         z = self.hole_position[2]
         
-        pts[0,:] = np.array([x,y,z-0.4])
-        pts[1,:] = np.array([x,y,z-0.4 - self.hole_depth])
+        pts[0,:] = np.array([x,y,z-0.2])
+        pts[1,:] = np.array([x,y,z-0.2 - self.hole_depth])
         
         lines_pts.append( pts )
         
