@@ -16,4 +16,5 @@ sys  = pendulum.SinglePendulum()
 # Simulation
 sys.x0 = np.array([0.7,0])
 sys.plot_trajectory('xu')
+sys.plot_phase_plane_trajectory()
 sys.animate_simulation()

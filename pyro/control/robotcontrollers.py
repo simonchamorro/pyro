@@ -9,7 +9,6 @@ Created on Wed May  8 12:43:21 2019
 import numpy as np
 ###############################################################################
 from pyro.control import controller
-from pyro.dynamic import manipulator
 ###############################################################################
 
 
@@ -112,7 +111,7 @@ class JointPID( RobotController ) :
         # Error
         e  = q_d - q
         de =     - dq
-        ie = self.e_int + e * self.dt
+        ie = self.e_int + e * self.dt # TODO use dynamic controller class
         
         # PIDs
         u = e * self.kp + de * self.kd + ie * self.ki
@@ -142,15 +141,15 @@ class EndEffectorPID( RobotController ) :
     """
     
     ############################
-    def __init__(self, manipulator, kp = 1, ki = 0, kd = 0):
+    def __init__(self, robot, kp = 1, ki = 0, kd = 0):
         """ """
         
         # Using from model
-        self.fwd_kin = manipulator.forward_kinematic_effector
-        self.J       = manipulator.J
-        self.e       = manipulator.e # nb of effector dof
+        self.fwd_kin = robot.forward_kinematic_effector
+        self.J       = robot.J
+        self.e       = robot.e # nb of effector dof
         
-        RobotController.__init__( self , manipulator.dof )
+        RobotController.__init__( self , robot.dof )
         
         # Label
         self.name = 'End-Effector PID Controller'
@@ -213,7 +212,7 @@ class EndEffectorPID( RobotController ) :
     
     
 ###############################################################################
-# Kinematic Controller
+# Kinematic Controllers
 ###############################################################################
         
 class EndEffectorKinematicController( RobotController ) :
@@ -230,16 +229,16 @@ class EndEffectorKinematicController( RobotController ) :
     """
     
     ############################
-    def __init__(self, manipulator, k = 1 ):
+    def __init__(self, robot, k = 1 ):
         """ """
         
-        # Using from model
-        self.fwd_kin = manipulator.forward_kinematic_effector
-        self.J       = manipulator.J
-        self.e       = manipulator.e # nb of effector dof
+        # Using functions from robot model
+        self.fwd_kin = robot.forward_kinematic_effector
+        self.J       = robot.J
+        self.e       = robot.e # nb of effector dof
         
         # Dimensions
-        self.dof = manipulator.dof
+        self.dof = robot.dof
         self.k   = self.e 
         self.m   = self.dof
         self.p   = self.dof
@@ -288,13 +287,18 @@ class EndEffectorKinematicController( RobotController ) :
         
         # From effector speed to joint speed
         if self.dof == self.e:
+            
             dq_r = np.dot( np.linalg.inv( J ) , dr_r )
             
         elif self.dof > self.e:
+            
+            # Pseudo-inverse of Jacobian
             J_pinv = np.linalg.pinv( J )
+            
             dq_r   = np.dot( J_pinv , dr_r )
             
         else:
+            
             #TODO
             pass
         
@@ -315,10 +319,10 @@ class EndEffectorKinematicControllerWithNullSpaceTask( EndEffectorKinematicContr
     """
     
     ############################
-    def __init__(self, manipulator, k = 1 , k_null = 1):
+    def __init__(self, robot, k = 1 , k_null = 1):
         """ """
         
-        EndEffectorKinematicController.__init__( self , manipulator , k )
+        EndEffectorKinematicController.__init__( self , robot , k )
         
         
         self.gains_null = np.ones( self.dof  ) * k_null
@@ -360,17 +364,23 @@ class EndEffectorKinematicControllerWithNullSpaceTask( EndEffectorKinematicContr
         dr_r    =   e * self.gains
         dq_null = q_e * self.gains_null
         
-        # From effector force to joint torques
+        # From effector velocity to joint velocities
         if self.dof == self.e:
+            
             dq_r = np.dot( np.linalg.inv( J ) , dr_r )
             
         elif self.dof > self.e:
+            
+            # Pseudo Inverse
             J_pinv = np.linalg.pinv( J )
+            
+            # Nullspacr projection Matrix
             Null_p = np.identity( self.dof ) - np.dot(J_pinv,J)
             
             dq_r   = np.dot( J_pinv , dr_r ) + np.dot( Null_p , dq_null )
             
         else:
+            
             #TODO
             pass
         

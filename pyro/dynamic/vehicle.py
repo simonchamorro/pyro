@@ -40,9 +40,9 @@ class KinematicBicyleModel( system.ContinuousDynamicSystem ):
         
         # Labels
         self.name = 'Kinematic Bicyle Model'
-        self.state_label = ['x','y','phi']
+        self.state_label = ['x','y','theta']
         self.input_label = ['v', 'beta']
-        self.output_label = ['x','y','phi']
+        self.output_label = ['x','y','theta']
         
         # Units
         self.state_units = ['[m]','[m]','[rad]']

@@ -5,8 +5,6 @@ Created on Mon Oct 22 08:40:31 2018
 @author: alxgr
 """
 
-from copy import copy
-
 import numpy as np
 
 from pyro.dynamic import system

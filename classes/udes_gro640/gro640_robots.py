@@ -13,12 +13,11 @@ from pyro.dynamic.manipulator import SpeedControlledManipulator
 from pyro.dynamic.manipulator import ThreeLinkManipulator3D
 ##############################################################################
 
-
 ########################################
 # Model de robot cinématique seulement
 ########################################
 
-class Robot1( SpeedControlledManipulator ):
+class LaserRobot( SpeedControlledManipulator ):
     """ 
     Robot
     """
@@ -34,7 +33,7 @@ class Robot1( SpeedControlledManipulator ):
         SpeedControlledManipulator.__init__( self, dof, e)
         
         # Name
-        self.name = 'Robot pour partie II de la problématique'
+        self.name = 'Robot planaire de gravure laser'
         
         l1  = 1.2
         l2  = 0.5
@@ -163,74 +162,60 @@ class Robot1( SpeedControlledManipulator ):
 
         
         lines_pts.append( pts )
+        
+        ###########################
+        # Drill
+        ###########################
+        
+        #pts      = np.zeros(( 2 , 3 ))
+        
+        #pts[0,:] = pts[3,1]
+        
+        #lines_pts.append( pts )
                 
         return lines_pts
     
-    
-    
-    
-class Robot2( ThreeLinkManipulator3D ):
-    """ 
-    Robot 2 for drilling
-    """
-    
-    
-    ##############################
-    def f_ext(self, q , dq , t = 0 ):
-        """ 
-        External force due to contact during drilling
-        
-        """
-        
-        r = self.forward_kinematic_effector( q )
-        
-        dr = self.forward_differential_kinematic_effector(q, dq)
-        
-        # Contact:
-        if r[2] < 1 :
-            
-            fx = - dr[0] * 1000 # damping lateral
-            fy = - dr[1] * 1000 # damping lateral
-            fz = - dr[2] * 100 # damping vertical 
-            
-            f_ext = np.array([fx,fy,fz])
-            
-        else:
-            
-            f_ext = np.zeros( self.e )
-        
-        return f_ext
-    
-    
-    
-    
 
-class Robot3( SpeedControlledManipulator ):
+
+
+########################################
+# Model de robot dynamiques
+########################################
+
+    
+class DrillingRobot( ThreeLinkManipulator3D ):
     """ 
-    Robot
     """
     
     ############################
     def __init__(self):
+        """ """
+               
+        # initialize standard params
+        ThreeLinkManipulator3D.__init__(self)
         
-        SpeedControlledManipulator.__init__( self, 3, 3)
-    
-        # Kinematic
-        self.l1  = 1 
-        self.l2  = 1
-        self.l3  = 1
-        self.lc1 = 1
-        self.lc2 = 1
-        self.lc3 = 1
+        # Name
+        self.name = 'Drilling Robot'
         
-        # Total length
-        self.lw  = (self.l1+self.l2+self.l3)
-    
+        # kinematic
+        self.l1  = 0.3
+        self.l2  = 0.525 
+        self.l3  = 0.375
+        
+        
+        # dynamic
+        self.I1  = 0.66125
+        self.m2  = 1.589
+        self.m3  = 0.545
+        
+        self.gravity = 9.81
+        
+        
     ##############################
     def trig(self, q ):
         """ 
-        Compute cos and sin 
-        --------------------
+        Compute cos and sin usefull in other computation 
+        ------------------------------------------------
         """
         
         c1  = np.cos( q[0] )
@@ -253,12 +238,15 @@ class Robot3( SpeedControlledManipulator ):
         
         [c1,s1,c2,s2,c3,s3,c12,s12,c23,s23] = self.trig( q )
         
-        # End-effector
-        z3 = self.l1 - self.l2 * s2 - self.l3 * s23
+        lz1     = self.l1
+        lx2     = self.l2
+        lx3     = self.l3
         
-        r3 = self.l2 * c2 + self.l3 * c23
-        x3 = r3 * c1
-        y3 = r3 * s1
+        # End-effector kinmatic
+
+        x3 = c1*(lx3*c23 + lx2*c2)
+        y3 = s1*(lx3*c23 + lx2*c2)
+        z3 = lz1 + lx3*s23 + lx2*s2
                 
         r = np.array([x3, y3, z3])
         
@@ -271,20 +259,180 @@ class Robot3( SpeedControlledManipulator ):
         
         [c1,s1,c2,s2,c3,s3,c12,s12,c23,s23] = self.trig( q )
         
+        q1 = q[0]
+        q2 = q[1]
+        q3 = q[2]
+        
+        sin=np.sin
+        cos=np.cos
+        
+        lx2     = self.l2
+        lx3     = self.l3
+        
         J = np.zeros((3,3))
         
-        J[0,0] =  -( self.l2 * c2 + self.l3 * c23 ) * s1
-        J[0,1] =  -( self.l2 * s2 + self.l3 * s23 ) * c1
-        J[0,2] =  - self.l3 * s23 * c1
-        J[1,0] =   ( self.l2 * c2 + self.l3 * c23 ) * c1
-        J[1,1] =  -( self.l2 * s2 + self.l3 * s23 ) * s1
-        J[1,2] =  - self.l3 * s23 * s1
+        J[0,0] =  -sin(q1)*(lx3*cos(q2 + q3) + lx2*cos(q2))
+        J[0,1] =  -cos(q1)*(lx3*sin(q2 + q3) + lx2*sin(q2))
+        J[0,2] =  -lx3*sin(q2 + q3)*cos(q1)
+        
+        J[1,0] =   cos(q1)*(lx3*cos(q2 + q3) + lx2*cos(q2))
+        J[1,1] =  -sin(q1)*(lx3*sin(q2 + q3) + lx2*sin(q2))        
+        J[1,2] =  -lx3*sin(q2 + q3)*sin(q1)
+        
         J[2,0] =  0
-        J[2,1] =  -( self.l2 * c2 + self.l3 * c23 )
-        J[2,2] =  - self.l3 * c23
+        J[2,1] =  lx3*cos(q2 + q3) + lx2*cos(q2)
+        J[2,2] =  lx3*cos(q2 + q3)
         
         return J
     
+    
+    ###########################################################################
+    def H(self, q ):
+        """ 
+        Inertia matrix 
+        ----------------------------------
+        dim( H ) = ( dof , dof )
+        
+        such that --> Kinetic Energy = 0.5 * dq**T * H(q) * dq
+        
+        """  
+        
+        [c1,s1,c2,s2,c3,s3,c12,s12,c23,s23] = self.trig( q )
+        
+        q1 = q[0]
+        q2 = q[1]
+        q3 = q[2]
+        
+        sin=np.sin
+        cos=np.cos
+        
+        lx2     = self.l2
+        lx3     = self.l3
+        
+        I1      = self.I1
+        m2      = self.m2
+        m3      = self.m3
+        
+        H = np.zeros((3,3))
+        
+        H[0,0] = I1 + (m3*(2*(lx2*cos(q2)*sin(q1) + lx3*cos(q2)*cos(q3)*sin(q1) - lx3*sin(q1)*sin(q2)*sin(q3))**2 + 2*(lx2*cos(q1)*cos(q2) + lx3*cos(q1)*cos(q2)*cos(q3) - lx3*cos(q1)*sin(q2)*sin(q3))**2))/2 + lx2**2*m2*cos(q2)**2
+        H[1,0] = 0        
+        H[2,0] = 0
+        
+        H[0,1] = H[1,0]
+        H[1,1] = (m3*(2*lx2**2 + 4*cos(q3)*lx2*lx3 + 2*lx3**2))/2 + lx2**2*m2
+        H[2,1] = m3*(lx3**2 + lx2*cos(q3)*lx3)
+        
+        H[0,2] = H[2,0]
+        H[1,2] = H[2,1]
+        H[2,2] = lx3**2*m3        
+        
+        return H
+    
+    
+    ###########################################################################
+    def C(self, q , dq ):
+        """ 
+         Corriolis and Centrifugal Matrix 
+        ------------------------------------
+        dim( C ) = ( dof , dof )
+        
+        such that --> d H / dt =  C + C**T
+        
+        
+        """ 
+        
+        [c1,s1,c2,s2,c3,s3,c12,s12,c23,s23] = self.trig( q )
+        
+        q2 = q[1]
+        q3 = q[2]
+        
+        sin=np.sin
+        
+        q1d     = dq[0]
+        q2d     = dq[1]
+        q3d     = dq[2]
+        
+        lx2     = self.l2
+        lx3     = self.l3
+        
+        m2      = self.m2
+        m3      = self.m3
+        
+        C = np.zeros((3,3))
+        
+        C[0,0] = 0
+        C[0,1] = -q1d*(lx3**2*m3*sin(2*q2 + 2*q3) + lx2**2*m2*sin(2*q2) + lx2**2*m3*sin(2*q2) + 2*lx2*lx3*m3*sin(2*q2 + q3))
+        C[0,2] = -lx3*m3*q1d*(lx3*sin(2*q2 + 2*q3) + lx2*sin(q3) + lx2*sin(2*q2 + q3))
+        
+        C[1,0] = (q1d*(lx3**2*m3*sin(2*q2 + 2*q3) + lx2**2*m2*sin(2*q2) + lx2**2*m3*sin(2*q2) + 2*lx2*lx3*m3*sin(2*q2 + q3)))/2
+        C[1,1] = 0
+        C[1,2] = -lx2*lx3*m3*sin(q3)*(2*q2d + q3d)
+        
+        C[2,0] = lx3*m3*q1d*((lx3*sin(2*q2 + 2*q3))/2 + (lx2*sin(q3))/2 + (lx2*sin(2*q2 + q3))/2)
+        C[2,1] = (lx2*lx3*m3*sin(q3)*(2*q2d + q3d))/2
+        C[2,2] = -(lx2*lx3*m3*q2d*sin(q3))/2 
+        
+        return C
+    
+    
+    ###########################################################################
+    def B(self, q ):
+        """ 
+        Actuator Matrix  : dof x m
+        """
+        
+        B = np.diag( np.ones( self.dof ) ) #  identity matrix
+        
+        return B
+    
+    
+    ###########################################################################
+    def g(self, q ):
+        """ 
+        Gravitationnal forces vector : dof x 1
+        """
+        
+        [c1,s1,c2,s2,c3,s3,c12,s12,c23,s23] = self.trig( q )
+        
+        q2 = q[1]
+        q3 = q[2]
+        
+        cos=np.cos
+        
+        lx2     = self.l2
+        lx3     = self.l3
+        
+        m2      = self.m2
+        m3      = self.m3
+        
+        G = np.zeros(3)
+        
+        
+        g = self.gravity
+        
+
+        
+        G[0] = 0
+        G[1] = g*(m3*(lx3*cos(q2 + q3) + lx2*cos(q2)) + lx2*m2*cos(q2))
+        G[2] = g*lx3*m3*cos(q2 + q3)
+
+        return G
+    
+        
+    ###########################################################################
+    def d(self, q , dq ):
+        """ 
+        State-dependent dissipative forces : dof x 1
+        """
+        
+        D = np.zeros((3,3))
+        
+        d = np.dot( D , dq )
+        
+        return d
+    
+        
     ###########################################################################
     # Graphical output
     ###########################################################################
@@ -293,11 +441,12 @@ class Robot3( SpeedControlledManipulator ):
     def forward_kinematic_domain(self, q ):
         """ 
         """
-        l = 2
+        l = 1.2
         
         domain  = [ (-l,l) , (-l,l) , (0,l*2) ]#  
                 
         return domain
+    
     
     ###########################################################################
     def forward_kinematic_lines(self, q ):
@@ -337,33 +486,157 @@ class Robot3( SpeedControlledManipulator ):
         
         # Three robot points
 
-        # Shperical point 
+        lz1     = self.l1
+        lx2     = self.l2
+        lx3     = self.l3
+        
         pts[1,0] = 0
         pts[1,1] = 0
-        pts[1,2] = self.l1 
+        pts[1,2] = lz1
         
-        # Elbow
-        z2 = self.l1 - self.l2 * s2
+        pts[2,0] = lx2*c1*c2
+        pts[2,1] = lx2*c1*s1
+        pts[2,2] = lz1 + lx2*s2
         
-        r2 = self.l2 * c2
-        x2 = r2 * c1
-        y2 = r2 * s1
-        
-        pts[2,0] = x2
-        pts[2,1] = y2
-        pts[2,2] = z2
-        
-        # End-effector
-        z3 = self.l1 - self.l2 * s2 - self.l3 * s23
-        
-        r3 = self.l2 * c2 + self.l3 * c23
-        x3 = r3 * c1
-        y3 = r3 * s1
-                
-        pts[3,0] = x3
-        pts[3,1] = y3
-        pts[3,2] = z3 
+        pts[3,0] = c1*(lx3*c23 + lx2*c2)
+        pts[3,1] = s1*(lx3*c23 + lx2*c2)
+        pts[3,2] = lz1 + lx3*s23 + lx2*s2
         
         lines_pts.append( pts )
                 
         return lines_pts
+    
+    
+class DrillingRobotOnJig( DrillingRobot ):
+    
+    
+    ############################
+    def __init__(self):
+        """ """
+        
+        DrillingRobot.__init__( self )
+        
+        self.hole_position = np.array([0.25,0.25,0.4])
+        self.hole_radius   = 0.05
+        self.hole_depth    = 0.2
+        
+    ##############################
+    def f_ext(self, q , dq , t = 0 ):
+        """ 
+        External force due to contact during drilling
+        
+        """
+        
+        r  = self.forward_kinematic_effector( q )
+        dr = self.forward_differential_kinematic_effector(q, dq)
+        
+        hole_position = self.hole_position
+        hole_radius   = self.hole_radius
+        
+        # Contact:
+        if r[2] < self.hole_position[2] :
+            
+            # Dans le bois
+            fx = - dr[0] * 2000 # damping lateral
+            fy = - dr[1] * 2000 # damping lateral
+            fz = - dr[2] * 500 # damping vertical 
+            
+            # Pointe de la mèche dans le pré-trou
+            if  (( r[0] > hole_position[0] - hole_radius ) &
+                 ( r[0] < hole_position[0] + hole_radius ) &
+                 ( r[1] > hole_position[1] - hole_radius ) &
+                 ( r[1] < hole_position[1] + hole_radius ) ) :
+                
+                # Aspiration dans le trou du à l'angle de la pointe de la mèche
+                ex = r[0] - hole_position[0]
+                ey = r[1] - hole_position[1]
+                fx = fx / 10 - 10 * ex * fz
+                fy = fy / 10 - 10 * ey * fz
+                
+                # Moins de résistance verticale
+                fz = fz / 2
+            
+            if r[2] < (self.hole_position[2] - self.hole_depth) :
+                
+                # Dans l'acier
+                fx = - dr[0] * 10000 # damping lateral
+                fy = - dr[1] * 10000 # damping lateral
+                fz = - dr[2] * 10000 # damping vertical 
+            
+            f_ext = np.array([fx,fy,fz])
+            
+        else:
+            
+            # No contact
+            f_ext = np.zeros( self.e )
+        
+        return f_ext
+    
+    
+    ###########################################################################
+    def forward_kinematic_lines(self, q ):
+        
+        ###########################
+        # Base graphic
+        ###########################
+        
+        lines_pts = DrillingRobot.forward_kinematic_lines(self, q)
+        
+        ###########################
+        # Drill
+        ###########################
+        
+        [c1,s1,c2,s2,c3,s3,c12,s12,c23,s23] = self.trig( q )
+        
+        pts      = np.zeros(( 2 , 3 ))
+        
+        lz1     = self.l1
+        lx2     = self.l2
+        lx3     = self.l3
+        
+        pts[0,0] = c1*(lx3*c23 + lx2*c2)
+        pts[0,1] = s1*(lx3*c23 + lx2*c2) 
+        pts[0,2] = lz1 + lx3*s23 + lx2*s2 
+        
+        pts[1,0] = c1*(lx3*c23 + lx2*c2)
+        pts[1,1] = s1*(lx3*c23 + lx2*c2) 
+        pts[1,2] = lz1 + lx3*s23 + lx2*s2 - 0.4
+        
+        lines_pts.append(pts)
+        
+        ###########################
+        # Hole
+        ###########################
+        
+        pts      = np.zeros(( 2 , 3 ))
+        
+        x = self.hole_position[0]
+        y = self.hole_position[1]
+        z = self.hole_position[2]
+        
+        pts[0,:] = np.array([x,y,z-0.4])
+        pts[1,:] = np.array([x,y,z-0.4 - self.hole_depth])
+        
+        lines_pts.append( pts )
+        
+        
+        return lines_pts
+    
+    
+    
+'''
+#################################################################
+##################          Main                         ########
+#################################################################
+'''
+
+
+if __name__ == "__main__":
+    
+    
+    sys = DrillingRobot()
+    sys.x0 = np.array([0,0,0.8,0,0,0])
+    sys.compute_trajectory()
+    sys.plot_trajectory()
+    sys.animate_simulation( is_3d = True )
+        

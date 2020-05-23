@@ -7,13 +7,13 @@ Created on Fri May  1 19:51:49 2020
 """
 import numpy as np
 
-from gro640_robots import Robot1, Robot3
+from gro640_robots import LaserRobot
 
 from pyro.control.robotcontrollers import EndEffectorKinematicController
 
 
 # Model cinématique du robot
-sys = Robot1()
+sys = LaserRobot()
 
 # Contrôleur en position de l'effecteur standard
 ctl = EndEffectorKinematicController( sys )
@@ -25,13 +25,12 @@ ctl.rbar = np.array([0,-1])
 clsys = ctl + sys
 
 # Configurations de départs
-
 # clsys.x0 =  np.array([0,0.1,0])  #crash
 # clsys.x0 =  np.array([0,0.3,0]) #crash 
 clsys.x0 =  np.array([0,0.5,0]) #crash 
 #clsys.x0 =  np.array([0,0.7,0]) # fonctionne
-# 
+
 # Simulation
-clsys.compute_trajectory( 5 )
-clsys.plot_trajectory( plot='xu' )
+clsys.compute_trajectory()
+clsys.plot_trajectory('xu')
 clsys.animate_simulation()
