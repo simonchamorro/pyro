@@ -9,7 +9,6 @@ Created on Wed May  8 12:43:21 2019
 import numpy as np
 ###############################################################################
 from pyro.control import controller
-from pyro.dynamic import manipulator
 ###############################################################################
 
 

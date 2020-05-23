@@ -518,6 +518,7 @@ class DrillingRobotOnJig( DrillingRobot ):
         
         self.hole_position = np.array([0.25,0.25,0.4])
         self.hole_radius   = 0.05
+        self.hole_depth    = 0.2
         
     ##############################
     def f_ext(self, q , dq , t = 0 ):
@@ -536,10 +537,9 @@ class DrillingRobotOnJig( DrillingRobot ):
         if r[2] < self.hole_position[2] :
             
             # Dans le bois
-            
-            fx = - dr[0] * 1000 # damping lateral
-            fy = - dr[1] * 1000 # damping lateral
-            fz = - dr[2] * 100 # damping vertical 
+            fx = - dr[0] * 2000 # damping lateral
+            fy = - dr[1] * 2000 # damping lateral
+            fz = - dr[2] * 500 # damping vertical 
             
             # Pointe de la mèche dans le pré-trou
             if  (( r[0] > hole_position[0] - hole_radius ) &
@@ -547,12 +547,18 @@ class DrillingRobotOnJig( DrillingRobot ):
                  ( r[1] > hole_position[1] - hole_radius ) &
                  ( r[1] < hole_position[1] + hole_radius ) ) :
                 
-                fz = fz /10 
+                # Aspiration dans le trou du à l'angle de la pointe de la mèche
+                ex = r[0] - hole_position[0]
+                ey = r[1] - hole_position[1]
+                fx = fx / 10 - 10 * ex * fz
+                fy = fy / 10 - 10 * ey * fz
+                
+                # Moins de résistance verticale
+                fz = fz / 2
             
-            if r[2] < (self.hole_position[2] - 0.2) :
+            if r[2] < (self.hole_position[2] - self.hole_depth) :
                 
                 # Dans l'acier
-                
                 fx = - dr[0] * 10000 # damping lateral
                 fy = - dr[1] * 10000 # damping lateral
                 fz = - dr[2] * 10000 # damping vertical 
@@ -562,7 +568,6 @@ class DrillingRobotOnJig( DrillingRobot ):
         else:
             
             # No contact
-            
             f_ext = np.zeros( self.e )
         
         return f_ext
@@ -610,7 +615,7 @@ class DrillingRobotOnJig( DrillingRobot ):
         z = self.hole_position[2]
         
         pts[0,:] = np.array([x,y,z-0.4])
-        pts[1,:] = np.array([x,y,z-0.6])
+        pts[1,:] = np.array([x,y,z-0.4 - self.hole_depth])
         
         lines_pts.append( pts )
         

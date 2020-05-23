@@ -8,6 +8,7 @@ Created on Thu May 14 23:19:16 2020
 
 import numpy as np
 
+from pyro.control.robotcontrollers import RobotController
 from pyro.control.robotcontrollers import EndEffectorKinematicController
 
 
@@ -156,17 +157,70 @@ class CustomPositionController( EndEffectorKinematicController ) :
 # Part 3
 ###################
         
+
+        
+class CustomDrillingController( RobotController ) :
+    """ 
+
+    """
     
+    ############################
+    def __init__(self, dof = 3 ):
+        """ """
+        
+        RobotController.__init__( self , dof )
+        
+        # Label
+        self.name = 'Custom Drilling Controller'
+        
+        ###################################################
+        # Vos paramètres de loi de commande ici !!
+        ###################################################
+        
+        # Target effector force
+        self.rbar = np.array([0,0,0]) 
+        
+        
+    
+    #############################
+    def c( self , y , r , t = 0 ):
+        """ 
+        Feedback static computation u = c(y,r,t)
+        
+        INPUTS
+        y  : sensor signal vector     p x 1
+        r  : reference signal vector  k x 1
+        t  : time                     1 x 1
+        
+        OUPUTS
+        u  : control inputs vector    m x 1
+        
+        """
+        
+        # Ref
+        f_e = r
+        
+        # Feedback from sensors
+        x = y
+        [ q , dq ] = self.x2q( x )
+        
+        ##################################
+        # Votre loi de commande ici !!!
+        ##################################
+        
+        tau = np.zeros(self.m)  # place-holder de bonne dimension
+        
+        return tau
+        
     
 ###################
 # Part 4
 ###################
         
     
-def goal2r( r_0 , r_f , t_f):
+def goal2r( r_0 , r_f , t_f ):
     """
     
-
     Parameters
     ----------
     r_0 : numpy array float 3 x 1
@@ -201,7 +255,6 @@ def goal2r( r_0 , r_f , t_f):
 
 def r2q( r, dr, ddr , manipulator ):
     """
-    
 
     Parameters
     ----------
@@ -237,7 +290,6 @@ def r2q( r, dr, ddr , manipulator ):
 
 def q2torque( q, dq, ddq , manipulator ):
     """
-    
 
     Parameters
     ----------
