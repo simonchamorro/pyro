@@ -8,8 +8,6 @@ Created on Thu May 14 23:19:16 2020
 
 import numpy as np
 
-from gro640_robots import Robot1, Robot3
-
 from pyro.control.robotcontrollers import EndEffectorKinematicController
 
 
