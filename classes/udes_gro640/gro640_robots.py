@@ -14,12 +14,13 @@ from pyro.dynamic.manipulator import ThreeLinkManipulator3D
 ##############################################################################
 
 ########################################
-# Model de robot cinématique seulement
+# Robot pour la gravure laser
 ########################################
 
 class LaserRobot( SpeedControlledManipulator ):
     """ 
-    Robot
+    3 DoF planar robot
+    kinematic model only
     """
     ###########################
     def __init__(self):
@@ -162,19 +163,9 @@ class LaserRobot( SpeedControlledManipulator ):
 
         
         lines_pts.append( pts )
-        
-        ###########################
-        # Drill
-        ###########################
-        
-        #pts      = np.zeros(( 2 , 3 ))
-        
-        #pts[0,:] = pts[3,1]
-        
-        #lines_pts.append( pts )
                 
         return lines_pts
-    
+
 
 
 
@@ -185,6 +176,8 @@ class LaserRobot( SpeedControlledManipulator ):
     
 class DrillingRobot( ThreeLinkManipulator3D ):
     """ 
+    3DoF Robot manipulator
+    Full dynamic model
     """
     
     ############################
@@ -201,7 +194,6 @@ class DrillingRobot( ThreeLinkManipulator3D ):
         self.l1  = 0.3
         self.l2  = 0.525 
         self.l3  = 0.375
-        
         
         # dynamic
         self.I1  = 0.66125
@@ -224,29 +216,26 @@ class DrillingRobot( ThreeLinkManipulator3D ):
         s2  = np.sin( q[1] )
         c3  = np.cos( q[2] )
         s3  = np.sin( q[2] )
-        c12 = np.cos( q[0] + q[1] )
-        s12 = np.sin( q[0] + q[1] )
         c23 = np.cos( q[2] + q[1] )
         s23 = np.sin( q[2] + q[1] )
         
-        return [c1,s1,c2,s2,c3,s3,c12,s12,c23,s23]
+        return [c1,s1,c2,s2,c3,s3,c23,s23]
     
     
     ##############################
     def forward_kinematic_effector(self, q ):
         """ """
         
-        [c1,s1,c2,s2,c3,s3,c12,s12,c23,s23] = self.trig( q )
+        [c1,s1,c2,s2,c3,s3,c23,s23] = self.trig( q )
         
-        lz1     = self.l1
-        lx2     = self.l2
-        lx3     = self.l3
+        l1     = self.l1
+        l2     = self.l2
+        l3     = self.l3
         
-        # End-effector kinmatic
-
-        x3 = c1*(lx3*c23 + lx2*c2)
-        y3 = s1*(lx3*c23 + lx2*c2)
-        z3 = lz1 + lx3*s23 + lx2*s2
+        # End-effector kinematic
+        x3 = c1 * ( l3 * c23 + l2 * c2)
+        y3 = s1 * ( l3 * c23 + l2 * c2)
+        z3 = l1 + l3 * s23 + l2 * s2
                 
         r = np.array([x3, y3, z3])
         
@@ -257,7 +246,7 @@ class DrillingRobot( ThreeLinkManipulator3D ):
     def J(self, q ):
         """ """
         
-        [c1,s1,c2,s2,c3,s3,c12,s12,c23,s23] = self.trig( q )
+        [c1,s1,c2,s2,c3,s3,c23,s23] = self.trig( q )
         
         q1 = q[0]
         q2 = q[1]
@@ -266,22 +255,22 @@ class DrillingRobot( ThreeLinkManipulator3D ):
         sin=np.sin
         cos=np.cos
         
-        lx2     = self.l2
-        lx3     = self.l3
+        l2     = self.l2
+        l3     = self.l3
         
         J = np.zeros((3,3))
         
-        J[0,0] =  -sin(q1)*(lx3*cos(q2 + q3) + lx2*cos(q2))
-        J[0,1] =  -cos(q1)*(lx3*sin(q2 + q3) + lx2*sin(q2))
-        J[0,2] =  -lx3*sin(q2 + q3)*cos(q1)
+        J[0,0] =  -sin(q1)*(l3*cos(q2 + q3) + l2*cos(q2))
+        J[0,1] =  -cos(q1)*(l3*sin(q2 + q3) + l2*sin(q2))
+        J[0,2] =  -l3*sin(q2 + q3)*cos(q1)
         
-        J[1,0] =   cos(q1)*(lx3*cos(q2 + q3) + lx2*cos(q2))
-        J[1,1] =  -sin(q1)*(lx3*sin(q2 + q3) + lx2*sin(q2))        
-        J[1,2] =  -lx3*sin(q2 + q3)*sin(q1)
+        J[1,0] =   cos(q1)*(l3*cos(q2 + q3) + l2*cos(q2))
+        J[1,1] =  -sin(q1)*(l3*sin(q2 + q3) + l2*sin(q2))        
+        J[1,2] =  -l3*sin(q2 + q3)*sin(q1)
         
         J[2,0] =  0
-        J[2,1] =  lx3*cos(q2 + q3) + lx2*cos(q2)
-        J[2,2] =  lx3*cos(q2 + q3)
+        J[2,1] =  l3*cos(q2 + q3) + l2*cos(q2)
+        J[2,2] =  l3*cos(q2 + q3)
         
         return J
     
@@ -297,7 +286,7 @@ class DrillingRobot( ThreeLinkManipulator3D ):
         
         """  
         
-        [c1,s1,c2,s2,c3,s3,c12,s12,c23,s23] = self.trig( q )
+        [c1,s1,c2,s2,c3,s3,c23,s23] = self.trig( q )
         
         q1 = q[0]
         q2 = q[1]
@@ -306,8 +295,8 @@ class DrillingRobot( ThreeLinkManipulator3D ):
         sin=np.sin
         cos=np.cos
         
-        lx2     = self.l2
-        lx3     = self.l3
+        l2     = self.l2
+        l3     = self.l3
         
         I1      = self.I1
         m2      = self.m2
@@ -315,17 +304,17 @@ class DrillingRobot( ThreeLinkManipulator3D ):
         
         H = np.zeros((3,3))
         
-        H[0,0] = I1 + (m3*(2*(lx2*cos(q2)*sin(q1) + lx3*cos(q2)*cos(q3)*sin(q1) - lx3*sin(q1)*sin(q2)*sin(q3))**2 + 2*(lx2*cos(q1)*cos(q2) + lx3*cos(q1)*cos(q2)*cos(q3) - lx3*cos(q1)*sin(q2)*sin(q3))**2))/2 + lx2**2*m2*cos(q2)**2
+        H[0,0] = I1 + (m3*(2*(l2*cos(q2)*sin(q1) + l3*cos(q2)*cos(q3)*sin(q1) - l3*sin(q1)*sin(q2)*sin(q3))**2 + 2*(l2*cos(q1)*cos(q2) + l3*cos(q1)*cos(q2)*cos(q3) - l3*cos(q1)*sin(q2)*sin(q3))**2))/2 + l2**2*m2*cos(q2)**2
         H[1,0] = 0        
         H[2,0] = 0
         
         H[0,1] = H[1,0]
-        H[1,1] = (m3*(2*lx2**2 + 4*cos(q3)*lx2*lx3 + 2*lx3**2))/2 + lx2**2*m2
-        H[2,1] = m3*(lx3**2 + lx2*cos(q3)*lx3)
+        H[1,1] = (m3*(2*l2**2 + 4*cos(q3)*l2*l3 + 2*l3**2))/2 + l2**2*m2
+        H[2,1] = m3*(l3**2 + l2*cos(q3)*l3)
         
         H[0,2] = H[2,0]
         H[1,2] = H[2,1]
-        H[2,2] = lx3**2*m3        
+        H[2,2] = l3**2*m3        
         
         return H
     
@@ -342,7 +331,7 @@ class DrillingRobot( ThreeLinkManipulator3D ):
         
         """ 
         
-        [c1,s1,c2,s2,c3,s3,c12,s12,c23,s23] = self.trig( q )
+        [c1,s1,c2,s2,c3,s3,c23,s23] = self.trig( q )
         
         q2 = q[1]
         q3 = q[2]
@@ -353,8 +342,8 @@ class DrillingRobot( ThreeLinkManipulator3D ):
         q2d     = dq[1]
         q3d     = dq[2]
         
-        lx2     = self.l2
-        lx3     = self.l3
+        l2     = self.l2
+        l3     = self.l3
         
         m2      = self.m2
         m3      = self.m3
@@ -362,16 +351,16 @@ class DrillingRobot( ThreeLinkManipulator3D ):
         C = np.zeros((3,3))
         
         C[0,0] = 0
-        C[0,1] = -q1d*(lx3**2*m3*sin(2*q2 + 2*q3) + lx2**2*m2*sin(2*q2) + lx2**2*m3*sin(2*q2) + 2*lx2*lx3*m3*sin(2*q2 + q3))
-        C[0,2] = -lx3*m3*q1d*(lx3*sin(2*q2 + 2*q3) + lx2*sin(q3) + lx2*sin(2*q2 + q3))
+        C[0,1] = -q1d*(l3**2*m3*sin(2*q2 + 2*q3) + l2**2*m2*sin(2*q2) + l2**2*m3*sin(2*q2) + 2*l2*l3*m3*sin(2*q2 + q3))
+        C[0,2] = -l3*m3*q1d*(l3*sin(2*q2 + 2*q3) + l2*sin(q3) + l2*sin(2*q2 + q3))
         
-        C[1,0] = (q1d*(lx3**2*m3*sin(2*q2 + 2*q3) + lx2**2*m2*sin(2*q2) + lx2**2*m3*sin(2*q2) + 2*lx2*lx3*m3*sin(2*q2 + q3)))/2
+        C[1,0] = (q1d*(l3**2*m3*sin(2*q2 + 2*q3) + l2**2*m2*sin(2*q2) + l2**2*m3*sin(2*q2) + 2*l2*l3*m3*sin(2*q2 + q3)))/2
         C[1,1] = 0
-        C[1,2] = -lx2*lx3*m3*sin(q3)*(2*q2d + q3d)
+        C[1,2] = -l2*l3*m3*sin(q3)*(2*q2d + q3d)
         
-        C[2,0] = lx3*m3*q1d*((lx3*sin(2*q2 + 2*q3))/2 + (lx2*sin(q3))/2 + (lx2*sin(2*q2 + q3))/2)
-        C[2,1] = (lx2*lx3*m3*sin(q3)*(2*q2d + q3d))/2
-        C[2,2] = -(lx2*lx3*m3*q2d*sin(q3))/2 
+        C[2,0] = l3*m3*q1d*((l3*sin(2*q2 + 2*q3))/2 + (l2*sin(q3))/2 + (l2*sin(2*q2 + q3))/2)
+        C[2,1] = (l2*l3*m3*sin(q3)*(2*q2d + q3d))/2
+        C[2,2] = -(l2*l3*m3*q2d*sin(q3))/2 
         
         return C
     
@@ -393,15 +382,15 @@ class DrillingRobot( ThreeLinkManipulator3D ):
         Gravitationnal forces vector : dof x 1
         """
         
-        [c1,s1,c2,s2,c3,s3,c12,s12,c23,s23] = self.trig( q )
+        [c1,s1,c2,s2,c3,s3,c23,s23] = self.trig( q )
         
         q2 = q[1]
         q3 = q[2]
         
         cos=np.cos
         
-        lx2     = self.l2
-        lx3     = self.l3
+        l2     = self.l2
+        l3     = self.l3
         
         m2      = self.m2
         m3      = self.m3
@@ -414,8 +403,8 @@ class DrillingRobot( ThreeLinkManipulator3D ):
 
         
         G[0] = 0
-        G[1] = g*(m3*(lx3*cos(q2 + q3) + lx2*cos(q2)) + lx2*m2*cos(q2))
-        G[2] = g*lx3*m3*cos(q2 + q3)
+        G[1] = g*(m3*(l3*cos(q2 + q3) + l2*cos(q2)) + l2*m2*cos(q2))
+        G[2] = g*l3*m3*cos(q2 + q3)
 
         return G
     
@@ -485,25 +474,25 @@ class DrillingRobot( ThreeLinkManipulator3D ):
         pts      = np.zeros(( 4 , 3 ))
         pts[0,:] = np.array([0,0,0])
         
-        [c1,s1,c2,s2,c3,s3,c12,s12,c23,s23] = self.trig( q )
+        [c1,s1,c2,s2,c3,s3,c23,s23] = self.trig( q )
         
         # Three robot points
 
-        lz1     = self.l1
-        lx2     = self.l2
-        lx3     = self.l3
+        l1     = self.l1
+        l2     = self.l2
+        l3     = self.l3
         
         pts[1,0] = 0
         pts[1,1] = 0
-        pts[1,2] = lz1
+        pts[1,2] = l1
         
-        pts[2,0] = lx2*c1*c2
-        pts[2,1] = lx2*c1*s1
-        pts[2,2] = lz1 + lx2*s2
+        pts[2,0] =  0 + l2 * c2 * c1
+        pts[2,1] =  0 + l2 * c2 * s1
+        pts[2,2] = l1 + l2 * s2
         
-        pts[3,0] = c1*(lx3*c23 + lx2*c2)
-        pts[3,1] = s1*(lx3*c23 + lx2*c2)
-        pts[3,2] = lz1 + lx3*s23 + lx2*s2
+        pts[3,0] = c1 * ( l3 * c23 + l2 * c2)
+        pts[3,1] = s1 * ( l3 * c23 + l2 * c2)
+        pts[3,2] = l1 + l3 * s23 + l2 * s2
         
         lines_pts.append( pts )
                 
@@ -589,21 +578,21 @@ class DrillingRobotOnJig( DrillingRobot ):
         # Drill
         ###########################
         
-        [c1,s1,c2,s2,c3,s3,c12,s12,c23,s23] = self.trig( q )
+        [c1,s1,c2,s2,c3,s3,c23,s23] = self.trig( q )
         
         pts      = np.zeros(( 2 , 3 ))
         
-        lz1     = self.l1
-        lx2     = self.l2
-        lx3     = self.l3
+        l1     = self.l1
+        l2     = self.l2
+        l3     = self.l3
         
-        pts[0,0] = c1*(lx3*c23 + lx2*c2)
-        pts[0,1] = s1*(lx3*c23 + lx2*c2) 
-        pts[0,2] = lz1 + lx3*s23 + lx2*s2 
+        pts[0,0] = c1*(l3*c23 + l2*c2)
+        pts[0,1] = s1*(l3*c23 + l2*c2) 
+        pts[0,2] = l1 + l3*s23 + l2*s2 
         
-        pts[1,0] = c1*(lx3*c23 + lx2*c2)
-        pts[1,1] = s1*(lx3*c23 + lx2*c2) 
-        pts[1,2] = lz1 + lx3*s23 + lx2*s2 - 0.2
+        pts[1,0] = c1*(l3*c23 + l2*c2)
+        pts[1,1] = s1*(l3*c23 + l2*c2) 
+        pts[1,2] = l1 + l3*s23 + l2*s2 - 0.2
         
         lines_pts.append(pts)
         
@@ -636,10 +625,36 @@ class DrillingRobotOnJig( DrillingRobot ):
 
 if __name__ == "__main__":
     
+    # Drilling robot (Asimov) kinematic check
     
-    sys = DrillingRobot()
-    sys.x0 = np.array([0,0,0.8,0,0,0])
-    sys.compute_trajectory()
-    sys.plot_trajectory()
-    sys.animate_simulation( is_3d = True )
+    if True:
+        
+        sys = SpeedControlledManipulator.from_manipulator( DrillingRobot() )
+        
+        sys.ubar = np.array([0.1,0.5,2])
+        
+        sys.compute_trajectory()
+        sys.animate_simulation( is_3d = True )
+    
+    # Drilling robot (Asimov) dynamic eq validation
+    
+    if False:
+    
+        sys = DrillingRobot()
+        sys.l2 = 1.0
+        sys.l3 = 1.0
+        sys.m2 = 1.0
+        sys.m3 = 1.0
+        sys.x0 = np.array([0,0,0.8,0,0,0])
+        sys.compute_trajectory()
+        sys.plot_trajectory()
+        sys.animate_simulation( is_3d = True )
+        
+        from pyro.dynamic.pendulum import DoublePendulum
+        
+        sys2 = DoublePendulum()
+        sys2.x0 = np.array([np.pi/2,-0.8,0,0])
+        sys2.compute_trajectory()
+        sys2.plot_trajectory()
+        sys2.animate_simulation()
         

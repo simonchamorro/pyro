@@ -33,4 +33,4 @@ clsys.animate_simulation( is_3d = True )
 
 # Exemple pour analyse
 x = clsys.traj.x  # Trajectoire des états du robot
-u = clsys.traj.u  # Trajectoire des inputs du robot
+u = clsys.traj.u  # Trajectoire des couples du robot
