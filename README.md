@@ -34,8 +34,8 @@ git clone https://github.com/SherbyRobotics/pyro.git
 cd pyro
 python setup.py install
 ```
-or to install in develop mode, which will
-create a link (.egg-link file) to this code:
+or to install in develop mode (having the `pyro` module automatically updated as you edit the code in this
+repository) use:
 
 ```bash
 
@@ -43,14 +43,11 @@ git clone https://github.com/SherbyRobotics/pyro.git
 cd pyro
 python setup.py develop
 ```
-The `pyro` module will therefore be automatically updated as you edit the code in this
-repository.
+
 
 ### Method 3: Clone repo and add to python path ###
 
-Another option for development is simply to clone and adding the folder to the pythonpath
-
-First clone the repo
+Another option for development is simply to clone the repo:
 ```bash
 git clone https://github.com/SherbyRobotics/pyro.git
 ```
