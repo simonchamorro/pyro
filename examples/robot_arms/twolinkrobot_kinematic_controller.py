@@ -15,8 +15,6 @@ from pyro.dynamic  import manipulator
 
 # Dynamic model (inputs are motor torques)
 torque_controlled_robot    = manipulator.TwoLinkManipulator()
-torque_controlled_robot.l1 = 0.5
-torque_controlled_robot.l2 = 0.3
 
 # Kinematic only model (inputs are motor velocities)
 speed_controlled_robot  = manipulator.SpeedControlledManipulator.from_manipulator( torque_controlled_robot )

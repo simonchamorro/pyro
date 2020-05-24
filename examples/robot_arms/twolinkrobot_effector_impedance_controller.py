@@ -33,7 +33,8 @@ effector_pid.kd   = np.array([  0,   0 ])
 robot_with_effector_pid = effector_pid + torque_controlled_robot 
 
 # Simulations
-
+tf = 4
 robot_with_effector_pid.x0 = np.array([0,0,0,0])
+robot_with_effector_pid.compute_trajectory( tf )
 robot_with_effector_pid.plot_trajectory('xu')
 robot_with_effector_pid.animate_simulation()

@@ -14,25 +14,25 @@ from pyro.dynamic  import manipulator
 
 # Dynamic model
 torque_controlled_robot = manipulator.FiveLinkPlanarManipulator()
-speed_controlled_robot  = manipulator.SpeedControlledManipulator.from_manipulator( torque_controlled_robot )
+sys  = manipulator.SpeedControlledManipulator.from_manipulator( torque_controlled_robot )
 
 # Controller
-kinematic_controller = robotcontrollers.EndEffectorKinematicControllerWithNullSpaceTask( speed_controlled_robot )
+ctl = robotcontrollers.EndEffectorKinematicControllerWithNullSpaceTask( sys )
 
 # Main objective
-kinematic_controller.rbar  = np.array([1.0,1.0])
-kinematic_controller.gains = np.array([1.0,1.0])
+ctl.rbar  = np.array([1.0,1.0])
+ctl.gains = np.array([1.0,1.0])
 
 # Secondary objective
-kinematic_controller.q_d         = np.array([-1,-1,-1,-1,-1])
-kinematic_controller.gains_null  = np.array([10,10,10,10,10])
+ctl.q_d         = np.array([-1,-1,-1,-1,-1])
+ctl.gains_null  = np.array([10,10,10,10,10])
 
 
 # Closed-loop dynamics
-closed_loop_robot = kinematic_controller + speed_controlled_robot
+cl_sys = ctl + sys
 
 # Simulation and plots
-closed_loop_robot.x0        = np.array([0.1,0.1,0.1,0.1,0.1])
+cl_sys.x0        = np.array([0.1,0.1,0.1,0.1,0.1])
 
-closed_loop_robot.plot_trajectory('x')
-closed_loop_robot.animate_simulation()
+cl_sys.plot_trajectory('x')
+cl_sys.animate_simulation()

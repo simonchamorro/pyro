@@ -38,8 +38,8 @@ vi = valueiteration.ValueIteration_ND( grid_sys , tcf )
 
 vi.initialize()
 vi.plot_max_J = 10
-#vi.load_data('simple_pendulum_vi_minimum_time')
-vi.compute_steps(300,True)
+vi.load_data('simple_pendulum_vi_minimum_time')
+#vi.compute_steps(300,True)
 vi.assign_interpol_controller()
 vi.plot_policy(0)
 vi.plot_cost2go(10)

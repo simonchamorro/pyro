@@ -174,7 +174,7 @@ class ContinuousDynamicSystem:
     
         
     ###########################################################################
-    # Basic domain checks, ovewload if something more complex is needed
+    # Basic domain checks, overload if something more complex is needed
     ###########################################################################
         
     #############################
@@ -421,6 +421,7 @@ class ContinuousDynamicSystem:
         Show Animation of the simulation
         ----------------------------------
         time_factor_video < 1 --> Slow motion video
+        is_3d = True for 3D animation
         note: will call compute_trajectory if no simulation data is present
 
         """

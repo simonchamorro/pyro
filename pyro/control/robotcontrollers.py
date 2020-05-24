@@ -17,15 +17,25 @@ from pyro.control import controller
 ###############################################################################
 
 class RobotController( controller.StaticController ) :
-    """     """
+    """   
+    Mother class for robot controllers
+    ---------------------------------------
+    r  : reference signal vector       k x 1
+    y  : sensor signal vector          p x 1
+    u  : control inputs vector         m x 1
+    t  : time                          1 x 1
+    ---------------------------------------
+    u = c( y , r , t )
+    """
+    
     ############################
     def __init__(self, dof = 1):
         """ """
 
         # Dimensions
-        self.k = dof 
-        self.m = dof
-        self.p = dof * 2  # y = x
+        self.k = dof      # ref signal  dimension
+        self.m = dof      # assuming fully-actuated system
+        self.p = dof * 2  # y = x ( full state feedback )
         
         controller.StaticController.__init__(self, self.k, self.m, self.p)
         
@@ -117,7 +127,7 @@ class JointPID( RobotController ) :
         u = e * self.kp + de * self.kd + ie * self.ki
         
         # Memory
-        self.e_int =  ie
+        self.e_int =  ie # TODO use dynamic controller class
         
         return u
     
@@ -197,7 +207,7 @@ class EndEffectorPID( RobotController ) :
         # Error
         e  = r_desired - r_actual
         de =           - dr
-        ie = self.e_int + e * self.dt
+        ie = self.e_int + e * self.dt # TODO use dynamic controller class
         
         # Effector space PID
         f = e * self.kp + de * self.kd + ie * self.ki
@@ -206,7 +216,7 @@ class EndEffectorPID( RobotController ) :
         u = np.dot( J.T , f )
         
         # Memory
-        self.e_int =  ie
+        self.e_int =  ie # TODO use dynamic controller class
         
         return u
     
@@ -218,12 +228,12 @@ class EndEffectorPID( RobotController ) :
 class EndEffectorKinematicController( RobotController ) :
     """ 
     Kinematic effector coordinates controller using the Jacobian of the system
-    ---------------------------------------
-    r  : reference signal vector  e   x 1
-    y  : sensor signal vector     dof x 1
-    u  : control inputs vector    dof x 1
-    t  : time                     1   x 1
-    ---------------------------------------
+    ------------------------------------------
+    r = r_d : reference signal vector  e   x 1
+    y = q   : sensor signal vector     dof x 1
+    u = dq  : control inputs vector    dof x 1
+    t       : time                     1   x 1
+    -------------------------------------------
     u = c( y , r , t ) = J(q)^T *  [ (r - r_robot(q)) * k ]
 
     """
@@ -308,13 +318,15 @@ class EndEffectorKinematicController( RobotController ) :
 class EndEffectorKinematicControllerWithNullSpaceTask( EndEffectorKinematicController ) :
     """ 
     Kinematic effector coordinates controller using the Jacobian of the system
-    ---------------------------------------
-    r  : reference signal vector  e   x 1
-    y  : sensor signal vector     dof x 1
-    u  : control inputs vector    dof x 1
-    t  : time                     1   x 1
-    ---------------------------------------
-    u = c( y , r , t ) = J(q)^T *  [ (r - r_robot(q)) * k ]
+    inlcuding secondary control loop v = (q_d - q) * k2 with joint space 
+    position target projected on the nullspace
+    ------------------------------------------
+    r = r_d : reference signal vector  e   x 1
+    y = q   : sensor signal vector     dof x 1
+    u = dq  : control inputs vector    dof x 1
+    t       : time                     1   x 1
+    -------------------------------------------
+    u = c( y , r , t ) = J# [ (r - r_robot(q)) * k ] + [I -J#J] ((q_d - q) * k2 )
 
     """
     
