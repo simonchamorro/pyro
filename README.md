@@ -12,7 +12,7 @@ To install the package, use:
 pip install git+https://github.com/SherbyRobotics/pyro
 ```
 
-It will install the files from the project. It will also check and install the required dependencies.
+It will install the files from the project. It will also check and install the required dependencies. Warning: don't use this option if you are using an Anacondo distribution.
 
 ### Method 2: Clone repo and install ###
 
@@ -23,7 +23,7 @@ Required libraries:
 * numpy
 * scipy
 * matplotlib
-* pytest (only to run tests)
+* pytest (optionnal, only to run tests)
 
 Clone the pyro repo from git, and install the pyro library to your python
 environment:
@@ -34,14 +34,27 @@ git clone https://github.com/SherbyRobotics/pyro.git
 cd pyro
 python setup.py install
 ```
+or to install in develop mode, which will
+create a link (.egg-link file) to this code:
 
-## Development ##
+```bash
 
-Use `python setup.py develop` to install in develop mode, which will
-create a link (.egg-link file) to this code. The `pyro` module
-will therefore be automatically updated as you edit the code in this
+git clone https://github.com/SherbyRobotics/pyro.git
+cd pyro
+python setup.py develop
+```
+The `pyro` module will therefore be automatically updated as you edit the code in this
 repository.
 
-Run tests: `pytest -ra ./tests` (from repository root)
+### Method 3: Clone repo and add to python path ###
 
-Run all examples: `pytest -ra ./examples` (from repository root)
+Another option for development is simply to clone and adding the folder to the pythonpath
+
+First clone the repo
+```bash
+git clone https://github.com/SherbyRobotics/pyro.git
+```
+then add the pyro folder to the pythonpath variable of your environment.
+
+
+
