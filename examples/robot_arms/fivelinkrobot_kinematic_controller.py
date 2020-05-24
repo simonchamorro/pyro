@@ -8,19 +8,24 @@ Created on Sun May 12 16:34:44 2019
 ###############################################################################
 import numpy as np
 ###############################################################################
-from pyro.control  import robotcontrollers
-from pyro.dynamic  import manipulator
+from pyro.control.robotcontrollers import EndEffectorKinematicController
+from pyro.dynamic.manipulator import FiveLinkPlanarManipulator
+from pyro.dynamic.manipulator import SpeedControlledManipulator
 ###############################################################################
 
-torque_controlled_robot = manipulator.FiveLinkPlanarManipulator()
-speed_controlled_robot  = manipulator.SpeedControlledManipulator.from_manipulator( torque_controlled_robot )
+# Dynamic model :
+# Five link robot with internal velocity controllers at the joints
+sys  = SpeedControlledManipulator.from_manipulator(FiveLinkPlanarManipulator())
 
-kinematic_controller = robotcontrollers.EndEffectorKinematicController( speed_controlled_robot , 1 )
-kinematic_controller.rbar = np.array([1.0,1.0])
+# Controller
+ctl       = EndEffectorKinematicController( sys )
+ctl.rbar  = np.array([1.0,1.0]) # target effector position
+ctl.gains = np.array([2.0,2.0]) # gains
     
-closed_loop_robot = kinematic_controller + speed_controlled_robot
-    
-closed_loop_robot.x0        = np.array([0.1,0.1,0.1,0.1,0.1])
+# Closed-loop dynamics
+cl_sys  = ctl + sys
 
-closed_loop_robot.plot_trajectory('x')
-closed_loop_robot.animate_simulation()
+# Simulation
+cl_sys.x0 = np.array([0.1,0.1,0.1,0.1,0.1])  # Initial config
+cl_sys.plot_trajectory('x')
+cl_sys.animate_simulation()

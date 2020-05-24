@@ -17,11 +17,11 @@ speed_controlled_robot  = manipulator.SpeedControlledManipulator.from_manipulato
                                              torque_controlled_robot )
 
 
-kinematic_controller = robotcontrollers.EndEffectorKinematicController( speed_controlled_robot , 1 )
+kinematic_controller = robotcontrollers.EndEffectorKinematicController( speed_controlled_robot )
 kinematic_controller.rbar = np.array([1.0,1.0,1.0])
     
 closed_loop_robot = kinematic_controller + speed_controlled_robot
     
 closed_loop_robot.x0 = np.array([0.1,0.1,0.1])
 closed_loop_robot.plot_trajectory('xu')
-closed_loop_robot.animate_simulation(time_factor_video=2, is_3d=True)
+closed_loop_robot.animate_simulation( time_factor_video=2, is_3d=True )

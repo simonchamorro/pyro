@@ -29,11 +29,11 @@ joint_pid.kd   = np.array([ 1, 0 ])
 
 # Closed-loops
 
-robot_with_joint_pid    = joint_pid    + torque_controlled_robot 
+robot_with_joint_pid    = joint_pid + torque_controlled_robot 
 
 # Simulations
-
+tf = 4
 robot_with_joint_pid.x0 = np.array([0,0,0,0])
-
+robot_with_joint_pid.compute_trajectory( tf )
 robot_with_joint_pid.plot_trajectory('xu')
 robot_with_joint_pid.animate_simulation()

@@ -4,6 +4,12 @@
 Created on Thu May 14 23:19:16 2020
 
 @author: alex
+------------------------------------
+
+
+Fichier d'amorce pour les livrables de la problématique GRO640'
+
+
 """
 
 import numpy as np
@@ -240,10 +246,12 @@ def goal2r( r_0 , r_f , t_f ):
     # Time discretization
     l = 1000 # nb of time steps
     
+    # Number of DoF for the effector only
+    m = 3
     
-    r = np.zeros((3,l))
-    dr = np.zeros((3,l))
-    ddr = np.zeros((3,l))
+    r = np.zeros((m,l))
+    dr = np.zeros((m,l))
+    ddr = np.zeros((m,l))
     
     #################################
     # Votre code ici !!!
@@ -274,10 +282,13 @@ def r2q( r, dr, ddr , manipulator ):
     # Time discretization
     l = r.shape[1]
     
+    # Number of DoF
+    n = 3
     
-    q = np.zeros((3,l))
-    dq = np.zeros((3,l))
-    ddq = np.zeros((3,l))
+    # Output dimensions
+    q = np.zeros((n,l))
+    dq = np.zeros((n,l))
+    ddq = np.zeros((n,l))
     
     #################################
     # Votre code ici !!!
@@ -307,8 +318,11 @@ def q2torque( q, dq, ddq , manipulator ):
     # Time discretization
     l = q.shape[1]
     
+    # Number of DoF
+    n = 3
     
-    tau = np.zeros((3,l))
+    # Output dimensions
+    tau = np.zeros((n,l))
     
     #################################
     # Votre code ici !!!

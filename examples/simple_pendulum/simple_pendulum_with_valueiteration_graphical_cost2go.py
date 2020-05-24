@@ -24,15 +24,18 @@ sys  = pendulum.SinglePendulum()
 grid_sys = discretizer.GridDynamicSystem( sys )
 
 # Cost Function
+qcf = costfunction.QuadraticCostFunction.from_sys( sys )
 
-xbar = np.array([-3.14,0])
-tcf = costfunction.TimeCostFunction( xbar )
+qcf.xbar = np.array([ -3.14 , 0 ]) # target
+qcf.INF  = 10000
+
 
 # VI algo
 vi = valueiteration.ValueIteration_ND( grid_sys , qcf )
 
 vi.initialize()
 #vi.load_data('simple_pendulum_vi')
+vi.plot_max_J = 10
 vi.compute_steps(200,True)
 vi.assign_interpol_controller()
 vi.plot_policy(0)
