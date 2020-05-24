@@ -15,14 +15,14 @@ from abcd1234      import CustomDrillingController
 sys = DrillingRobotOnJig()
 
 # Controller
-ctl = CustomDrillingController( )
+ctl = CustomDrillingController( ) # Empty do nothing controller template
 
 # Closed-loop dynamic
 clsys = ctl + sys
 
 # États initiaux
-clsys.x0 =  np.array([0.7,1.4,-1.3,0,0,0]) #
-#clsys.x0 =  np.array([0,1.4,-1.3,0,0,0]) #
+#clsys.x0 =  np.array([0.7,1.45,-1.4,0,0,0]) #  Tombe dans le trou
+clsys.x0 =  np.array([0,1.4,-1.3,0,0,0]) #
 
 # Simulation
 tf = 6
@@ -31,6 +31,7 @@ clsys.plot_trajectory('x')
 clsys.plot_trajectory('u')
 clsys.animate_simulation( is_3d = True )
 
-# Exemple pour analyse
-x = clsys.traj.x  # Trajectoire des états du robot
-u = clsys.traj.u  # Trajectoire des couples du robot
+# Exemple extraction des données pour analyse
+q_traj   = clsys.traj.x[:,0:3]  # Trajectoire des angles du robot
+dq_traj  = clsys.traj.x[:,3:6]  # Trajectoire des vitesses du robot
+tau_traj = clsys.traj.u         # Trajectoire des couples du robot

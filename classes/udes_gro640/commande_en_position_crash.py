@@ -25,9 +25,7 @@ ctl.rbar = np.array([0,-1])
 clsys = ctl + sys
 
 # Configurations de départs
-# clsys.x0 =  np.array([0,0.1,0])  #crash
-# clsys.x0 =  np.array([0,0.3,0]) #crash 
-clsys.x0 =  np.array([0,0.5,0]) #crash 
+clsys.x0 =  np.array([0,0.5,0]) # crash 
 #clsys.x0 =  np.array([0,0.7,0]) # fonctionne
 
 # Simulation
