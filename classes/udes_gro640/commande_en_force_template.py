@@ -8,7 +8,7 @@ Created on Fri May  1 19:51:49 2020
 import numpy as np
 
 from gro640_robots import DrillingRobotOnJig
-from abcd1234      import CustomDrillingController
+from chas2436      import CustomDrillingController
 
 
 # Model dynamique du robot

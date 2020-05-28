@@ -4,6 +4,7 @@
 Created on Thu May 14 23:19:16 2020
 
 @author: alex
+@author: Simon Chamorro CHAS2436
 ------------------------------------
 
 
@@ -44,7 +45,17 @@ def dh2T( r , d , theta, alpha ):
     T = np.zeros((4,4))
     
     ###################
-    # Votre code ici
+
+    c_t = np.cos(theta)
+    s_t = np.sin(theta)
+    c_a = np.cos(alpha)
+    s_a = np.sin(alpha)
+
+    T = np.array([[c_t, -s_t*c_a, s_t*s_a,  r*c_t], \
+                  [s_t, c_t*c_a,  -c_t*s_a, r*s_t], \
+                  [0,   s_a,      c_a,      d], \
+                  [0,   0,        0,        1]])
+
     ###################
     
     return T
@@ -73,7 +84,14 @@ def dhs2T( r , d , theta, alpha ):
     WTT = np.zeros((4,4))
     
     ###################
-    # Votre code ici
+    assert len(r) == len(d) == len(theta) == len(alpha)
+
+    for i in range(len(r)):
+        if i == 0:
+            WTT = dh2T( r[i] , d[i], theta[i], alpha[i] )
+        else:
+            WTT = WTT.dot(dh2T( r[i] , d[i] , theta[i], alpha[i] ))
+
     ###################
     
     return WTT
@@ -330,3 +348,4 @@ def q2torque( q, dq, ddq , manipulator ):
     
     
     return tau
+
