@@ -51,6 +51,7 @@ def dh2T( r , d , theta, alpha ):
     c_a = np.cos(alpha)
     s_a = np.sin(alpha)
 
+    # Transform matrix from DH params
     T = np.array([[c_t, -s_t*c_a, s_t*s_a,  r*c_t], \
                   [s_t, c_t*c_a,  -c_t*s_a, r*s_t], \
                   [0,   s_a,      c_a,      d], \
@@ -84,8 +85,11 @@ def dhs2T( r , d , theta, alpha ):
     WTT = np.zeros((4,4))
     
     ###################
+
+    # Check lenght of arrays is equal
     assert len(r) == len(d) == len(theta) == len(alpha)
 
+    # Compute transform matrix
     for i in range(len(r)):
         if i == 0:
             WTT = dh2T( r[i] , d[i], theta[i], alpha[i] )
@@ -99,7 +103,6 @@ def dhs2T( r , d , theta, alpha ):
 
 def f(q):
     """
-    
 
     Parameters
     ----------
@@ -108,17 +111,29 @@ def f(q):
 
     Returns
     -------
-    r : float 3x1 
+    x : float 3x1 
         Effector (x,y,z) position
 
     """
-    r = np.zeros((3,1))
+    x = np.zeros((3,1))
     
     ###################
-    # Votre code ici
+
+    # Robot DH Parameters
+    d     = np.array([0.072, 0.075,        0,              0,     0,              0.217,   q[5]])
+    theta = np.array([0,     np.pi + q[0], np.pi/2 + q[1], q[2],  np.pi/2 + q[3], q[4],    0   ])
+    r     = np.array([0,     0.033,        0.155,          0.136, 0,              0,       0   ])
+    alpha = np.array([0,     np.pi/2,      0,              0,     np.pi/2,       -np.pi/2, 0   ])
+
+    # Compute transform matrix
+    T = dhs2T( r , d , theta, alpha )
+
+    # End effector position
+    x = np.array([ T[0][3], T[1][3], T[2][3] ])
+
     ###################
     
-    return r
+    return x
 
 
 ###################
@@ -131,12 +146,8 @@ class CustomPositionController( EndEffectorKinematicController ) :
     def __init__(self, manipulator ):
         """ """
         
-        EndEffectorKinematicController.__init__( self, manipulator, 1)
-        
-        ###################################################
-        # Vos paramètres de loi de commande ici !!
-        ###################################################
-        
+        super().__init__( manipulator)
+        self.speed_gain = 1
     
     #############################
     def c( self , y , r , t = 0 ):
@@ -166,13 +177,21 @@ class CustomPositionController( EndEffectorKinematicController ) :
         # Error
         e  = r_desired - r_actual
         
+        # Solution
         ################
-        dq = np.zeros( self.m )  # place-holder de bonne dimension
-        
-        ##################################
-        # Votre loi de commande ici !!!
-        ##################################
 
+        # Effector space speed
+        dr_r = e * self.gains
+        
+        # Transpose Jacobian
+        J_t = np.transpose(J)
+
+        # Position control with speed regulation
+        term_1 = np.linalg.inv( np.dot(J_t, J) + self.speed_gain**2 * np.identity(3) )
+        term_2 = np.dot( J_t, dr_r)
+        dq = np.dot( term_1, term_2 ) 
+
+        ##################################
         
         return dq
     

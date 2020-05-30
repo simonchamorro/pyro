@@ -16,7 +16,16 @@ import numpy as np
 from gro640_robots import *
 from chas2436      import *
 
+def compare_arrays(a, b, e=0.0001):
+    equal = True
+    for i in range(len(a)):
+        if (abs(a[i] - b[i]) > e):
+            equal = False
+    return equal
+
+
 def test_part1():
+    # Test func dh2T
     r = 1
     d = 1 
     theta = np.pi
@@ -25,14 +34,25 @@ def test_part1():
     np.set_printoptions(suppress=True)
     print(dh2T( r , d , theta, alpha ))
 
-    r = np.array([1, 1, 1])
-    d = np.array([1, 1, 1])
-    theta = np.array([0, np.pi, np.pi])
-    alpha = np.array([0, np.pi, 0])
+    # Test func dhs2T
+    r = np.array([1, 2, 3, 4, 5])
+    d = np.array([1, 2, 3, 4, 5])
+    theta = np.array([1, 2, 3, 4, 5])
+    alpha = np.array([1, 2, 3, 4, 5])
     print(dhs2T( r , d , theta, alpha ))
+
+    q = [0, 0, 0, 0, 0, 0]
+    assert compare_arrays(f(q), [-0.033, 0, 0.655])
+    print(f(q))
+
+    q = [0, 0, 0, 0, 0]
+    x = [0]
+    q = [ang*np.pi/180 for ang in q] + x
+    print(f(q))
 
 
 def test_part2():
+    # See commande_en_position_solution_template.py
     pass
 
 
