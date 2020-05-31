@@ -7,8 +7,7 @@ Created on Thu May 14 23:19:16 2020
 @author: Simon Chamorro CHAS2436
 ------------------------------------
 
-
-Fichier d'amorce pour les livrables de la problématique GRO640'
+Problématique GRO640
 
 
 """
@@ -16,12 +15,16 @@ Fichier d'amorce pour les livrables de la problématique GRO640'
 import numpy as np
 
 from pyro.control.robotcontrollers import RobotController
+from pyro.control.robotcontrollers import EndEffectorPID
 from pyro.control.robotcontrollers import EndEffectorKinematicController
+
 
 
 ###################
 # Part 1
 ###################
+
+
 
 def dh2T( r , d , theta, alpha ):
     """
@@ -43,8 +46,6 @@ def dh2T( r , d , theta, alpha ):
     """
     
     T = np.zeros((4,4))
-    
-    ###################
 
     c_t = np.cos(theta)
     s_t = np.sin(theta)
@@ -56,8 +57,6 @@ def dh2T( r , d , theta, alpha ):
                   [s_t, c_t*c_a,  -c_t*s_a, r*s_t], \
                   [0,   s_a,      c_a,      d], \
                   [0,   0,        0,        1]])
-
-    ###################
     
     return T
 
@@ -83,8 +82,6 @@ def dhs2T( r , d , theta, alpha ):
     """
     
     WTT = np.zeros((4,4))
-    
-    ###################
 
     # Check lenght of arrays is equal
     assert len(r) == len(d) == len(theta) == len(alpha)
@@ -95,10 +92,9 @@ def dhs2T( r , d , theta, alpha ):
             WTT = dh2T( r[i] , d[i], theta[i], alpha[i] )
         else:
             WTT = WTT.dot(dh2T( r[i] , d[i] , theta[i], alpha[i] ))
-
-    ###################
     
     return WTT
+
 
 
 def f(q):
@@ -117,8 +113,6 @@ def f(q):
     """
     x = np.zeros((3,1))
     
-    ###################
-
     # Robot DH Parameters
     d     = np.array([0.072, 0.075,        0,              0,     0,              0.217,   q[5]])
     theta = np.array([0,     np.pi + q[0], np.pi/2 + q[1], q[2],  np.pi/2 + q[3], q[4],    0   ])
@@ -130,26 +124,25 @@ def f(q):
 
     # End effector position
     x = np.array([ T[0][3], T[1][3], T[2][3] ])
-
-    ###################
     
     return x
+
 
 
 ###################
 # Part 2
 ###################
     
+
+
 class CustomPositionController( EndEffectorKinematicController ) :
     
-    ############################
     def __init__(self, manipulator ):
         """ """
         
         super().__init__( manipulator)
         self.speed_gain = 1
     
-    #############################
     def c( self , y , r , t = 0 ):
         """ 
         Feedback law: u = c(y,r,t)
@@ -176,9 +169,6 @@ class CustomPositionController( EndEffectorKinematicController ) :
         
         # Error
         e  = r_desired - r_actual
-        
-        # Solution
-        ################
 
         # Effector space speed
         dr_r = e * self.gains
@@ -190,11 +180,10 @@ class CustomPositionController( EndEffectorKinematicController ) :
         term_1 = np.linalg.inv( np.dot(J_t, J) + self.speed_gain**2 * np.identity(3) )
         term_2 = np.dot( J_t, dr_r)
         dq = np.dot( term_1, term_2 ) 
-
-        ##################################
         
         return dq
     
+
     
 ###################
 # Part 3
@@ -202,30 +191,27 @@ class CustomPositionController( EndEffectorKinematicController ) :
         
 
         
-class CustomDrillingController( RobotController ) :
-    """ 
+class CustomDrillingController( EndEffectorPID ) :
 
-    """
-    
-    ############################
-    def __init__(self, dof = 3 ):
-        """ """
+    def __init__(self, robot_model ):
         
-        RobotController.__init__( self , dof )
+        EndEffectorPID.__init__( self , robot_model )
         
         # Label
         self.name = 'Custom Drilling Controller'
         
-        ###################################################
-        # Vos paramètres de loi de commande ici !!
-        ###################################################
+        self.robot = robot_model
+        self.pos_k = 400
+        self.pos_d = 200
+        self.done = False
+        self.should_drill = False
+        self.hybrid = True
         
         # Target effector force
-        self.rbar = np.array([0,0,0]) 
+        self.r_desired = np.array([0.25, 0.25, 0.4]) 
+        self.rbar = np.array([0.0, 0.0, -200.0]) 
         
-        
-    
-    #############################
+
     def c( self , y , r , t = 0 ):
         """ 
         Feedback static computation u = c(y,r,t)
@@ -240,26 +226,48 @@ class CustomDrillingController( RobotController ) :
         
         """
         
-        # Ref
-        f_e = r
-        
         # Feedback from sensors
         x = y
         [ q , dq ] = self.x2q( x )
+        r_actual = self.fwd_kin(q)
+
+        # Jacobian
+        J = self.J(q)
+        Jt = J.T
+        dr = np.dot(J, dq)
+
+        # Position error 
+        r_e = self.r_desired - r_actual
+        k_e = self.pos_k * np.identity(3)
+        b_e = self.pos_d * np.identity(3)
+
+        if self.done:
+            f_e = np.zeros(3)
+
+        elif self.should_drill:
+            # Force controller
+            # Force = ref
+            f_e = r
+            self.done = r_actual[2] <= 0.2
+
+        else:
+            # Position controller
+            f_e = np.dot(k_e, r_e) - np.dot(b_e, dr)
+            dist_hole = np.sqrt(r_e[0]**2 + r_e[1]**2)
+            self.should_drill = dist_hole < 0.001
         
-        ##################################
-        # Votre loi de commande ici !!!
-        ##################################
-        
-        tau = np.zeros(self.m)  # place-holder de bonne dimension
+        tau = np.dot( J.T , f_e )
+        tau += self.robot.g(q)
         
         return tau
         
+
     
 ###################
 # Part 4
 ###################
         
+
     
 def goal2r( r_0 , r_f , t_f ):
     """

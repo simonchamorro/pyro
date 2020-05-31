@@ -7,6 +7,7 @@ Created on Fri May  1 19:51:49 2020
 """
 import numpy as np
 
+from gro640_robots import DrillingRobot
 from gro640_robots import DrillingRobotOnJig
 from chas2436      import CustomDrillingController
 
@@ -15,13 +16,14 @@ from chas2436      import CustomDrillingController
 sys = DrillingRobotOnJig()
 
 # Controller
-ctl = CustomDrillingController( ) # Empty do nothing controller template
+model = DrillingRobot()
+ctl = CustomDrillingController( model )
 
 # Closed-loop dynamic
 clsys = ctl + sys
 
 # États initiaux
-#clsys.x0 =  np.array([0.7,1.45,-1.4,0,0,0]) #  Tombe dans le trou
+# clsys.x0 =  np.array([0.7,1.45,-1.4,0,0,0]) #  Tombe dans le trou
 clsys.x0 =  np.array([0,1.4,-1.3,0,0,0]) #
 
 # Simulation

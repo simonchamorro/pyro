@@ -105,8 +105,8 @@ for i in q1:
         Cr = arm.get_compliance_matrix()
         matrix = np.dot(np.transpose(Cr), Cr)
         eig_values, eig_vectors = np.linalg.eig(matrix)
-        min_compliance.append(min(eig_values))
-        max_compliance.append(max(eig_values))
+        min_compliance.append(np.sqrt(min(eig_values)))
+        max_compliance.append(np.sqrt(max(eig_values)))
 
 fig = plt.figure()
 ax = plt.axes(projection='3d')
