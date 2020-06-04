@@ -6,6 +6,7 @@ Created on Fri May  1 19:51:49 2020
 @author: alex
 """
 import numpy as np
+import matplotlib.pyplot as plt
 
 from gro640_robots import DrillingRobot
 from gro640_robots import DrillingRobotOnJig
@@ -37,3 +38,15 @@ clsys.animate_simulation( is_3d = True )
 q_traj   = clsys.traj.x[:,0:3]  # Trajectoire des angles du robot
 dq_traj  = clsys.traj.x[:,3:6]  # Trajectoire des vitesses du robot
 tau_traj = clsys.traj.u         # Trajectoire des couples du robot
+
+f_ext = np.zeros((np.size(dq_traj,0),3))
+
+for i in range(np.size(dq_traj,0)):
+    f_ext[i,:] = sys.f_ext(q_traj[i,:], dq_traj[i,:])
+
+fig4 = plt.figure(4)
+plt.plot(f_ext[:,0], label="f_ext X")
+plt.plot(f_ext[:,1], label="f_ext Y")
+plt.plot(f_ext[:,2], label="f_ext Z")
+plt.legend(loc="upper right")
+plt.show()

@@ -24,8 +24,10 @@ ctl.rbar  = np.array([1.0,1.0])
 ctl.gains = np.array([1.0,1.0])
 
 # Secondary objective
-ctl.q_d         = np.array([-1,-1,-1,-1,-1])
-ctl.gains_null  = np.array([10,10,10,10,10])
+# ctl.q_d         = np.array([ 1, 1, 1, 1, 1])
+# ctl.q_d         = np.array([-1,-1,-1,-1,-1])
+ctl.q_d         = np.array([ 0, np.pi/2, np.pi/4, -1, -1])
+ctl.gains_null  = np.array([20,20,20,1,1])
 
 
 # Closed-loop dynamics

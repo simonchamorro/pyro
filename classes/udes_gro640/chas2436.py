@@ -13,6 +13,7 @@ Problématique GRO640
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from pyro.control.robotcontrollers import RobotController
 from pyro.control.robotcontrollers import EndEffectorPID
@@ -115,7 +116,7 @@ def f(q):
     
     # Robot DH Parameters
     d     = np.array([0.072, 0.075,        0,              0,     0,              0.217,   q[5]])
-    theta = np.array([0,     np.pi + q[0], np.pi/2 + q[1], q[2],  np.pi/2 + q[3], q[4],    0   ])
+    theta = np.array([0,     np.pi + q[0], np.pi/2 - q[1], -q[2], np.pi/2 - q[3], -q[4],   0   ])
     r     = np.array([0,     0.033,        0.155,          0.136, 0,              0,       0   ])
     alpha = np.array([0,     np.pi/2,      0,              0,     np.pi/2,       -np.pi/2, 0   ])
 
@@ -141,7 +142,7 @@ class CustomPositionController( EndEffectorKinematicController ) :
         """ """
         
         super().__init__( manipulator)
-        self.speed_gain = 1
+        self.speed_gain = 0.5
     
     def c( self , y , r , t = 0 ):
         """ 
@@ -203,8 +204,6 @@ class CustomDrillingController( EndEffectorPID ) :
         self.robot = robot_model
         self.pos_k = 400
         self.pos_d = 200
-        self.done = False
-        self.should_drill = False
         self.hybrid = True
         
         # Target effector force
@@ -240,21 +239,24 @@ class CustomDrillingController( EndEffectorPID ) :
         r_e = self.r_desired - r_actual
         k_e = self.pos_k * np.identity(3)
         b_e = self.pos_d * np.identity(3)
+        dist_hole = np.sqrt(r_e[0]**2 + r_e[1]**2)
 
-        if self.done:
+        if r_actual[2] <= 0.2:
             f_e = np.zeros(3)
 
-        elif self.should_drill:
+        elif dist_hole < 0.01:
             # Force controller
             # Force = ref
-            f_e = r
-            self.done = r_actual[2] <= 0.2
+            if self.hybrid:
+                k_e[2][2] = 0
+                b_e[2][2] = 0
+                f_e = r + np.dot(k_e, r_e) - np.dot(b_e, dr)
+            else:
+                f_e = r
 
         else:
             # Position controller
             f_e = np.dot(k_e, r_e) - np.dot(b_e, dr)
-            dist_hole = np.sqrt(r_e[0]**2 + r_e[1]**2)
-            self.should_drill = dist_hole < 0.001
         
         tau = np.dot( J.T , f_e )
         tau += self.robot.g(q)
@@ -289,7 +291,7 @@ def goal2r( r_0 , r_f , t_f ):
 
     """
     # Time discretization
-    l = 1000 # nb of time steps
+    l = 30 # nb of time steps
     
     # Number of DoF for the effector only
     m = 3
@@ -298,12 +300,36 @@ def goal2r( r_0 , r_f , t_f ):
     dr = np.zeros((m,l))
     ddr = np.zeros((m,l))
     
-    #################################
-    # Votre code ici !!!
-    ##################################
+    # 5th polynomial 1d trajectory parameters
+    fifth_poly_matrix = np.array([[0,         0,         0,        0,      0,   1], \
+                                  [t_f**5,    t_f**4,    t_f**3,   t_f**2, t_f, 1], \
+                                  [0,         0,         0,        0,      1,   0], \
+                                  [5*t_f**4,  4*t_f**3,  3*t_f**2, 2*t_f,  1,   0], \
+                                  [0,         0,         0,        2,      0,   0], \
+                                  [20*t_f**3, 12*t_f**2, 6*t_f,    2,      0,   0]])
     
-    
+    # Initial and terminal conditions
+    s0_vec = np.array([0, 1, 0, 0, 0, 0])
+
+    # Find polynomial coefficients
+    poly_matrix_inv = np.linalg.inv(fifth_poly_matrix)
+    coeff = np.dot(poly_matrix_inv, s0_vec)
+
+    time = np.linspace(0, t_f, num=l, endpoint=True)
+    dist = np.linalg.norm(r_f - r_0)
+
+    # Compute traj, speed and accel
+    for idx, t in enumerate(time):
+        s_t = np.dot(coeff, np.array([t**5, t**4, t**3, t**2, t, 1]))
+        ds_t = np.dot(coeff, np.array([5*t**4, 4*t**3, 3*t**2, 2*t, 1, 0]))
+        dds_t = np.dot(coeff, np.array([20*t**3, 12*t**2, 6*t, 2, 0, 0]))
+
+        r[:,idx] = r_0 + s_t*(r_f - r_0)
+        dr[:,idx] = ds_t*(r_f - r_0)
+        ddr[:,idx] = dds_t*(r_f - r_0)
+
     return r, dr, ddr
+
 
 
 def r2q( r, dr, ddr , manipulator ):
@@ -335,11 +361,41 @@ def r2q( r, dr, ddr , manipulator ):
     dq = np.zeros((n,l))
     ddq = np.zeros((n,l))
     
-    #################################
-    # Votre code ici !!!
-    ##################################
+    l1 = manipulator.l1
+    l2 = manipulator.l2
+    l3 = manipulator.l3
     
-    
+    for i in range(l):
+        # Find q     
+        c3 = ((r[0,i]**2) + (r[1,i]**2) + ((r[2,i]- l1)**2) - (l2**2) - (l3**2)) / (2*l2*l3)                 
+        s3 = np.sqrt(1-(c3**2))           
+        q[0,i] = np.arctan2(r[1,i],r[0,i])         
+        q[1,i] = np.arctan2( (r[2,i] - l1), (np.sqrt(r[0,i]**2 + r[1,i]**2)) ) \
+               - np.arctan2(l3*s3, l2 + l3 * c3)         
+        q[2,i] = np.arctan2(s3,c3)
+
+        # Find dq
+        J = manipulator.J(q[:,i])
+        J_inv = np.linalg.inv(J)
+        dq[:,i] = np.dot(J_inv, dr[:,i])
+
+        # Compute dJ
+        dJq1 = np.array([[-np.cos(q[0,i])*(l2*np.cos(q[1,i])+l3*np.cos(q[1,i]+q[2,i])),         np.sin(q[0,i])*(l2*np.sin(q[1,i])+l3*np.sin(q[1,i]+q[2,i])),          l3*np.sin(q[0,i])*np.sin(q[1,i]+q[2,i])], \
+                         [-np.sin(q[0,i])*(l2*np.cos(q[1,i])+l3*np.cos(q[1,i]+q[2,i])),         -np.cos(q[0,i])*(l2*np.sin(q[1,i])+l3*np.sin(q[1,i]+q[2,i])),         -l3*np.cos(q[0,i])*np.sin(q[1,i]+q[2,i])], \
+                         [0,                                                                    0,                                                                    0]])
+
+        dJq2 = np.array([[np.sin(q[0,i])*(l2*np.sin(q[1,i])+l3*np.sin(q[1,i]+q[2,i])*dq[1,i]),  -np.cos(q[0,i])*(l2*np.cos(q[1,i])+l3*np.cos(q[1,i]+q[2,i])*dq[1,i]), -l3*np.cos(q[0,i])*np.cos(q[1,i]+q[2,i])], \
+                         [-np.cos(q[0,i])*(l2*np.sin(q[1,i])+l3*np.sin(q[1,i]+q[2,i])),         -np.sin(q[0,i])*(l2*np.cos(q[1,i])+l3*np.cos(q[1,i]+q[2,i])),         -l3*np.sin(q[0,i])*np.cos(q[1,i]+q[2,i])], \
+                         [0,                                                                    l2*np.sin(q[1,i])*dq[1,i] + l3*np.sin(q[1,i]+q[2,i])*dq[1,i],         l3*np.sin(q[1,i]+q[2,i])*dq[1,i]]])
+
+        dJq3 = np.array([[+l3*np.sin(q[0,i])*np.sin(q[1,i]+q[2,i]),                             -l3*np.cos(q[0,i])*np.cos(q[1,i]+q[2,i]),                             -l3*np.cos(q[0,i])*np.cos(q[1,i]+q[2,i])], \
+                         [-l3*np.cos(q[0,i])*np.sin(q[1,i]+q[2,i]),                             -l3*np.sin(q[0,i])*np.cos(q[1,i]+q[2,i]),                             -l3*np.sin(q[0,i])*np.cos(q[1,i]+q[2,i])], \
+                         [0,                                                                    l3*np.sin(q[1,i]+q[2,i])*dq[2,i],                                     l3*np.sin(q[1,i]+q[2,i])*dq[2,i]]])
+
+        # Find ddq
+        dJ = dq[0,i]*dJq1 + dq[1,i]*dJq2 + dq[2,i]*dJq3
+        ddq[:,i] = np.dot(J_inv, ddr[:,i] - np.dot(dJ, dq[:,i]))
+
     return q, dq, ddq
 
 
@@ -369,10 +425,18 @@ def q2torque( q, dq, ddq , manipulator ):
     # Output dimensions
     tau = np.zeros((n,l))
     
-    #################################
-    # Votre code ici !!!
-    ##################################
-    
-    
+    for i in range(l):
+        # Get robot matrices
+        H = manipulator.H(q[:,i])
+        C = manipulator.C(q[:,i], dq[:,i])
+        D = manipulator.d(q[:,i], dq[:,i])
+        B_inv = np.linalg.inv(manipulator.B(q[:,i]))
+
+        # Calculate torque for desired accel
+        tau[:,i] = np.dot(B_inv, np.dot(H, ddq[:,i]) \
+                               + np.dot(C, dq[:,i]) \
+                               + np.dot(D, dq[:,i]) \
+                               + manipulator.g(q[:,i]))
+   
     return tau
 
